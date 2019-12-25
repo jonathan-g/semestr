@@ -4,7 +4,7 @@
 \alias{reindex}
 \title{Re-index calendar entries of a single type.}
 \usage{
-reindex(df, key_col, idx_col = NULL)
+reindex(df, type, key_col = NULL, idx_col = NULL)
 }
 \arguments{
 \item{df}{A dataframe holding calendar events of a given type.

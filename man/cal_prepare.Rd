@@ -4,7 +4,7 @@
 \alias{cal_prepare}
 \title{Convert an event-specific calendar tibble to a general master calendar.}
 \usage{
-cal_prepare(df, key_col, type = NULL)
+cal_prepare(df, type, key_col = NULL)
 }
 \arguments{
 \item{df}{A dataframe holding the calendar. Columns should include:
@@ -18,16 +18,16 @@ cancelled for the date of this entry.}
 re-scheduled make-up event}
 }}
 
-\item{key_col}{The name of the column with the keys for the entries to be
-selected. This can either be quoted or unquoted (i.e., using non-standard
-tidy evaluation). If the \code{key_col} argument is missing and \code{type} is not
-\code{NULL}, then a default \code{key_col} will be constructed by appending "\verb{_key}"
-to \code{type} (e.g., "\code{class}" becomes "\code{class_key}").}
-
 \item{type}{The type of event. This should be one of \code{class}, \code{lab},
 \code{homework}, \verb{due date}, \code{exam}, \code{holiday}, or \code{event}.
 If \code{type} is \code{NULL}, the value is constructed by removing "\verb{_key}" from
 the end of the \code{key_col} argument (e.g., "\code{class_key}" becomes "\code{class}").}
+
+\item{key_col}{The name of the column with the keys for the entries to be
+dplyr::selected. This can either be quoted or unquoted (i.e., using non-standard
+tidy evaluation). If the \code{key_col} argument is missing and \code{type} is not
+\code{NULL}, then a default \code{key_col} will be constructed by appending "\verb{_key}"
+to \code{type} (e.g., "\code{class}" becomes "\code{class_key}").}
 }
 \value{
 A tibble with columns:

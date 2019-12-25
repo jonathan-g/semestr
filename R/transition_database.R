@@ -11,8 +11,8 @@ with( transition_env, {
   type2col <- c(class = "class", lab = "lab", homework = "hw",
                 "due date" = "due", exam = "exam", holiday = "holiday",
                 event = "evt")
-  col2type <- set_names(names(type2col), type2col)
-  idx2type <- set_names(names(type2idx), type2idx)
+  col2type <- purrr::set_names(names(type2col), type2col)
+  idx2type <- purrr::set_names(names(type2idx), type2idx)
   # Prefixes are prefixed in front of topic keys in thelow
   # calendar to identify what kind of item they refer to.
   prefixes <- c(class = "CLS", lab = "LAB", homework = "HW", due_date = "DUE",
@@ -55,7 +55,7 @@ pull_env <- function(env) {
 #'     re-scheduled make-up event}
 #' }
 #' @param key_col The name of the column with the keys for the entries to be
-#'   selected. This can either be quoted or unquoted (i.e., using non-standard
+#'   dplyr::selected. This can either be quoted or unquoted (i.e., using non-standard
 #'   tidy evaluation). If the `key_col` argument is missing and `type` is not
 #'   `NULL`, then a default `key_col` will be constructed by appending "`_key`"
 #'   to `type` (e.g., "`class`" becomes "`class_key`").
@@ -86,37 +86,37 @@ pull_env <- function(env) {
 do_index <- function(df, type, key_col = NULL) {
   pull_env(transition_env)
 
-  assert_that(! all(is.null(key_col), is.null(type)),
+  assertthat::assert_that(! all(is.null(key_col), is.null(type)),
               msg = "Either type or key_col must be specified in do_index.")
 
   if (is.null(key_col)) {
-    assert_that(type %in% col2type,
-                msg = str_c('Bad type name "', type, '" in do_index.'))
+    assertthat::assert_that(type %in% col2type,
+                msg = stringr::str_c('Bad type name "', type, '" in do_index.'))
     key_col <- stringr::str_c(type2col[type], "_key")
   }
-  qcol <- enquo(key_col)
+  qcol <- rlang::enquo(key_col)
   # message("enquosed")
   # print(qcol)
-  if (is_character(quo_get_expr(qcol))) {
+  if (rlang::is_character( rlang::quo_get_expr(qcol) )) {
     # message("character")
     key <- key_col
-    key_col <- ensym(key_col)
-    qcol <- enquo(key_col)
+    key_col <- rlang::ensym(key_col)
+    qcol <- rlang::enquo(key_col)
   } else {
     # message("not character")
-    key <- as.character(quo_get_expr(qcol))
+    key <- as.character(rlang::quo_get_expr(qcol))
   }
   key <- stringr::str_replace(key, "_key$", "")
   # message("key = ", key)
   if (is.null(type)) {
-    assertthat(key %in% type2col)
+    assertthat::assert_that(key %in% type2col)
     type <- col2type[key]
   }
 
   num_col_name <- stringr::str_c(key, "_num")
-  num_col <- ensym(num_col_name)
-  qnum <- enquo(num_col)
-  if (as.character(quo_get_expr(qcol)) %in% names(df)) {
+  num_col <- rlang::ensym(num_col_name)
+  qnum <- rlang::enquo(num_col)
+  if (as.character(rlang::quo_get_expr(qcol)) %in% names(df)) {
     df <- df %>% dplyr::select(date, !!qcol, cancelled, make_up) %>%
       dplyr::arrange(date) %>%
       dplyr::filter(!is.na(!!qcol)) %>%
@@ -127,7 +127,7 @@ do_index <- function(df, type, key_col = NULL) {
                       base_mods['make_up'] * make_up
       )
   } else {
-    df <- tibble(cal_id = integer(0), date = character(0),
+    df <- tibble::tibble(cal_id = integer(0), date = character(0),
                  !!qcol := character(0),
                  cancelled = integer(0), make_up = integer(0),
                  cal_type = character(0),
@@ -177,42 +177,42 @@ do_index <- function(df, type, key_col = NULL) {
 reindex <- function(df, type, key_col = NULL, idx_col = NULL) {
   pull_env(transition_env)
 
-  assert_that(! all(is.null(type), is.null(key_col)),
+  assertthat::assert_that(! all(is.null(type), is.null(key_col)),
               msg = "Either type or key_col must be specified in reindex.")
 
   if (is.null(key_col)) {
-    assert_that(type %in% col2type,
-                msg = str_c('Bad type name "', type, '" in reindex.'))
+    assertthat::assert_that(type %in% col2type,
+                msg = stringr::str_c('Bad type name "', type, '" in reindex.'))
 
-    key_col <- str_c(type2col[type], "_key")
+    key_col <- stringr::str_c(type2col[type], "_key")
   }
 
-  qkcol <- enquo(key_col)
-  if (is_character(quo_get_expr(qkcol))) {
+  qkcol <- rlang::enquo(key_col)
+  if (is_character(rlang::quo_get_expr(qkcol))) {
     key = key_col
-    key_col <- ensym(key_col)
-    qkcol <- enquo(key_col)
+    key_col <- rlang::ensym(key_col)
+    qkcol <- rlang::enquo(key_col)
   } else {
-    key = as.character(quo_get_expr(qkcol))
+    key = as.character(rlang::quo_get_expr(qkcol))
   }
   key_base <- key %>% stringr::str_replace("_key$", "")
 
   if (is.null(idx_col)) {
     idx_col <- stringr::str_c(key_base, "_num")
   }
-  qicol <- enquo(idx_col)
+  qicol <- rlang::enquo(idx_col)
 
-  if (is_character(quo_get_expr(qicol))) {
-    idx_col <- ensym(idx_col)
-    qicol <- enquo(idx_col)
+  if (is_character(rlang::quo_get_expr(qicol))) {
+    idx_col <- rlang::ensym(idx_col)
+    qicol <- rlang::enquo(idx_col)
   }
 
-  if (as.character(quo_get_expr(qicol)) %in% names(df)) {
+  if (as.character(rlang::quo_get_expr(qicol)) %in% names(df)) {
     dfi <- df %>% dplyr::arrange(!!qicol) %>%
-      dplyr::select(!!qkcol) %>% distinct() %>%
+      dplyr::select(!!qkcol) %>% dplyr::distinct() %>%
       dplyr::mutate(!!qicol := seq_along(!!qkcol))
     dfx <- df %>% dplyr::select(-!!qicol) %>%
-      left_join(dfi, by = key)
+      dplyr::left_join(dfi, by = key)
   } else {
     dfx <- df
   }
@@ -236,7 +236,7 @@ reindex <- function(df, type, key_col = NULL, idx_col = NULL) {
 #'     re-scheduled make-up event}
 #' }
 #' @param key_col The name of the column with the keys for the entries to be
-#'   selected. This can either be quoted or unquoted (i.e., using non-standard
+#'   dplyr::selected. This can either be quoted or unquoted (i.e., using non-standard
 #'   tidy evaluation). If the `key_col` argument is missing and `type` is not
 #'   `NULL`, then a default `key_col` will be constructed by appending "`_key`"
 #'   to `type` (e.g., "`class`" becomes "`class_key`").
@@ -267,35 +267,35 @@ reindex <- function(df, type, key_col = NULL, idx_col = NULL) {
 cal_prepare <- function(df, type, key_col = NULL) {
   pull_env(transition_env)
 
-  assert_that(! all(is.null(type), is.null(key_col)),
+  assertthat::assert_that(! all(is.null(type), is.null(key_col)),
               msg = "Either type or key_col must be specified in cal_prepare")
 
   if (is.null(key_col)) {
-    assert_that(type %in% col2type,
-                msg = str_c('Bad type name: "', type, '" in cal_prepare'))
+    assertthat::assert_that(type %in% col2type,
+                msg = stringr::str_c('Bad type name: "', type, '" in cal_prepare'))
     key_col <- stringr::str_c(type2col[type], "_key")
   }
-  qcol <- enquo(key_col)
+  qcol <- rlang::enquo(key_col)
   # message("enquosed")
   # print(qcol)
-  if (is_character(quo_get_expr(qcol))) {
+  if (is_character(rlang::quo_get_expr(qcol))) {
     # message("character")
     key <- key_col
-    key_col <- ensym(key_col)
-    qcol <- enquo(key_col)
+    key_col <- rlang::ensym(key_col)
+    qcol <- rlang::enquo(key_col)
   } else {
     # message("not character")
-    key <- as.character(quo_get_expr(qcol))
+    key <- as.character(rlang::quo_get_expr(qcol))
   }
   key <- stringr::str_replace(key, "_key$", "")
   # message("key = ", key)
   if (is.null(type)) {
-    assertthat(key %in% type2col)
+    assertthat::assert_that(key %in% type2col)
     type <- col2type[key]
   }
   prefix <- prefixes[type]
 
-  if (as.character(quo_get_expr(qcol)) %in% names(df)) {
+  if (as.character(rlang::quo_get_expr(qcol)) %in% names(df)) {
     df <- df %>%
       dplyr::mutate(topic_key = stringr::str_c(prefix, !!qcol, sep = "_")) %>%
       dplyr::select(-!!qcol)
@@ -311,6 +311,8 @@ build_master_calendar <- function(master_db_file) {
 
   cal <- dplyr::tbl(master_db, "master_calendar") %>% dplyr::collect()
 
+  DBI::dbDisconnect(master_db)
+
   base_classes <- cal %>% do_index("class") %>% reindex("class") %>%
     dplyr::mutate(week = class_num %/% 3 + 1)
   labs <- cal %>% do_index("lab") %>% reindex("lab")
@@ -320,7 +322,11 @@ build_master_calendar <- function(master_db_file) {
   holidays <- cal %>% do_index("holiday") %>% reindex("holiday")
   events <- cal %>% do_index("event") %>% reindex("event")
 
-  calendar <- bind_rows(
+  topics <- cal %>% dplyr::select(topic_key = class_key, topic) %>%
+    dplyr::filter(! is.na(topic_key), ! is.na(topic)) %>%
+    add_key_prefix("class")
+
+  calendar <- dplyr::bind_rows(
     cal_prepare(base_classes, "class"),
     cal_prepare(labs, "lab"),
     cal_prepare(exams, "exam"),
@@ -330,7 +336,7 @@ build_master_calendar <- function(master_db_file) {
     cal_prepare(events, "event")
   ) %>% dplyr::arrange(date, cal_id) %>%
     dplyr::select(cal_id, date, class_num, week, topic_key, cal_type,
-                  cancelled, make_up, everything())
+                  cancelled, make_up, tidyselect::everything())
 
   classes <- cal %>% do_index("class") %>% reindex("class") %>%
     dplyr::mutate(week = class_num %/% 3 + 1)
@@ -342,7 +348,7 @@ build_master_calendar <- function(master_db_file) {
   holidays <- cal %>% do_index("holiday") %>% reindex("holiday")
   events <- cal %>% do_index("event") %>% reindex("event")
 
-  calendar <- bind_rows(
+  calendar <- dplyr::bind_rows(
     cal_prepare(classes, "class"),
     cal_prepare(labs, "lab"),
     cal_prepare(exams, "exam"),
@@ -352,16 +358,26 @@ build_master_calendar <- function(master_db_file) {
     cal_prepare(events, "event")
   ) %>% dplyr::arrange(date, cal_id) %>%
     dplyr::select(cal_id, date, class_num, week, topic_key, cal_type,
-                  cancelled, make_up, everything())
+                  cancelled, make_up, tidyselect::everything())
+
+  calendar <- calendar %>% left_join(topics, by = "topic_key")
 
   invisible(calendar)
 }
 
-strip_topic_key <- function(df, type) {
+strip_key_prefix <- function(df, type) {
   pull_env(transition_env)
 
-  target <- str_c("^", prefixes[type], "_")
-  df <- df %>% mutate(topic_key = str_replace(topic_key, target, ""))
+  target <- stringr::str_c("^", prefixes[type], "_")
+  df <- df %>% dplyr::mutate(topic_key = stringr::str_replace(topic_key, target, ""))
+  invisible(df)
+}
+
+add_key_prefix <- function(df, type) {
+  pull_env(transition_env)
+
+  df <- df %>% dplyr::mutate(topic_key =
+                             stringr::str_c(prefixes[type], topic_key, sep = "_"))
   invisible(df)
 }
 
@@ -369,15 +385,28 @@ extract_links <- function(df, type, num_col = NULL) {
   pull_env(transition_env)
 
   if (is.null(num_col)) {
-    assert_that(type %in% col2type,
-                msg = str_c('Bad type name "', type, '" in extract_links.'))
-    num_col <- str_c(type2col[type], "_num")
+    assertthat::assert_that(type %in% col2type,
+                msg = stringr::str_c('Bad type name "', type, '" in extract_links.'))
+    num_col <- stringr::str_c(type2col[type], "_num")
   }
-  num_col <- ensym(num_col)
-  df <- df %>% filter(cal_type == type) %>%
-    select(cal_id, topic_key, !!num_col) %>%
-    strip_topic_key(type)
+  num_col <- rlang::ensym(num_col)
+  df <- df %>% dplyr::filter(cal_type == type) %>%
+    dplyr::select(cal_id, topic_key, !!num_col) %>%
+    strip_key_prefix(type)
   invisible(df)
+}
+
+extract_topic_keys <- function(cal, type) {
+  pull_env(transition_env)
+
+  cal %>% dplyr::filter(cal_type == type) %>% strip_key_prefix(type) %$%
+    topic_key
+}
+
+check_link_keys <- function(cal, links, type) {
+  link_keys <- links$topic_key
+  cal_keys <- extract_topic_keys(cal, type)
+  setdiff(link_keys, cal_keys)
 }
 
 build_database <- function(dest_db_file, master_db_file, base_db_file) {
@@ -386,8 +415,12 @@ build_database <- function(dest_db_file, master_db_file, base_db_file) {
   master_calendar <- build_master_calendar(master_db_file)
 
   calendar <- master_calendar %>%
-    select(cal_id, date, class_num, week, topic_key, cal_type, cancelled,
-           make_up) %>% arrange(date, cal_id, cal_type)
+    dplyr::select(cal_id, date, class_num, week, topic_key, cal_type, cancelled,
+           make_up) %>% dplyr::arrange(date, cal_id, cal_type)
+
+  class_topics <- master_calendar %>% dplyr::filter(cal_type == "class") %>%
+    dplyr::select(topic_key, topic) %>%
+    strip_key_prefix("class")
 
   class_links   <- extract_links(master_calendar, "class"   )
   lab_links     <- extract_links(master_calendar, "lab"     )
@@ -397,6 +430,103 @@ build_database <- function(dest_db_file, master_db_file, base_db_file) {
   holiday_links <- extract_links(master_calendar, "holiday" )
   event_links   <- extract_links(master_calendar, "event"   )
 
+  base_db <- DBI::dbConnect(RSQLite::SQLite(), base_db_file)
+
+  exams <- dplyr::tbl(base_db, "exams") %>%
+    dplyr::select(-exam_id) %>% dplyr::collect()
+  events <- dplyr::tbl(base_db, "events") %>%
+    dplyr::select(-event_id) %>% dplyr::collect()
+  holidays <- dplyr::tbl(base_db, "holidays") %>%
+    dplyr::select(-holiday_id) %>% dplyr::collect()
+  notices <- dplyr::tbl(base_db, "notices") %>%
+    dplyr::select(-notice_id) %>% dplyr::collect()
+
+  reading_items <- dplyr::tbl(base_db, "reading_items") %>% dplyr::collect()
+  reading_sources <- dplyr::tbl(base_db, "reading_sources") %>% dplyr::collect()
+
+  hw_assignments <- dplyr::tbl(base_db, "homework_assignments") %>%
+    dplyr::collect()
+  hw_items <- dplyr::tbl(base_db, "homework_items") %>% dplyr::collect()
+  hw_topics <- dplyr::tbl(base_db, "homework_topics") %>% dplyr::collect()
+  hw_solutions <- dplyr::tbl(base_db, "homework_solutions") %>% dplyr::collect()
+
+  lab_assignments <- dplyr::tbl(base_db, "lab_assignments") %>% dplyr::collect()
+  lab_items <- dplyr::tbl(base_db, "lab_items") %>% dplyr::collect()
+  lab_solutions <- dplyr::tbl(base_db, "lab_solutions") %>% dplyr::collect()
+
+  due_dates <- tibble(due_key = character(0), due_title = character(0),
+                      due_desc = character(0))
+
+  text_codes <- dplyr::tbl(base_db, "text_codes") %>% dplyr::collect()
+
+  DBI::dbDisconnect(base_db)
+
+  db_dest <- DBI::dbConnect(RSQLite::SQLite(), dest_db_file)
+
+  #
+  # Calendar
+  #
+  copy_to(db_dest, calendar, "calendar", overwrite = TRUE, temporary = FALSE)
+
+  #
+  # Links
+  #
+  copy_to(db_dest, class_links, "rd_links", overwrite = TRUE, temporary = FALSE)
+  copy_to(db_dest, lab_links, "lab_links", overwrite = TRUE, temporary = FALSE)
+  copy_to(db_dest, hw_links, "hw_links", overwrite = TRUE, temporary = FALSE)
+  copy_to(db_dest, due_links, "due_links", overwrite = TRUE, temporary = FALSE)
+  copy_to(db_dest, exam_links, "exam_links", overwrite = TRUE,
+          temporary = FALSE)
+  copy_to(db_dest, holiday_links, "holiday_links", overwrite = TRUE,
+          temporary = FALSE)
+  copy_to(db_dest, event_links, "event_links", overwrite = TRUE,
+          temporary = FALSE)
+
+  #
+  # Reading assignments
+  #
+  copy_to(db_dest, class_topics, "class_topics", overwrite = TRUE, temporary = FALSE)
+  copy_to(db_dest, reading_items, "rd_items", overwrite = TRUE,
+          temporary = FALSE)
+  copy_to(db_dest, reading_sources, "rd_src", overwrite = TRUE,
+          temporary = FALSE)
+
+  #
+  # Homework assignments
+  #
+  copy_to(db_dest, hw_assignments, "hw_asgt", overwrite = TRUE,
+          temporary = FALSE)
+  copy_to(db_dest, hw_items, "hw_items", overwrite = TRUE, temporary = FALSE)
+  copy_to(db_dest, hw_solutions, "hw_sol", overwrite = TRUE, temporary = FALSE)
+
+  #
+  # Lab Assignments
+  #
+  copy_to(db_dest, lab_assignments, "lab_asgt", overwrite = TRUE,
+          temporary = FALSE)
+  copy_to(db_dest, lab_items, "lab_items", overwrite = TRUE, temporary = FALSE)
+  copy_to(db_dest, lab_solutions, "lab_sol", overwrite = TRUE,
+          temporary = FALSE)
+
+  #
+  # Due dates
+  #
+  copy_to(db_dest, due_dates, "due_dates", overwrite = TRUE,
+          temporary = FALSE)
+
+  #
+  # Events
+  #
+  copy_to(db_dest, events, "events", overwrite = TRUE,
+          temporary = FALSE)
+  copy_to(db_dest, notices, "notices", overwrite = TRUE,
+          temporary = FALSE)
+  copy_to(db_dest, holidays, "holidays", overwrite = TRUE,
+          temporary = FALSE)
+
+
+
+  DBI::dbDisconnect(db_dest)
 
 }
 
