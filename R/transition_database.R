@@ -122,7 +122,7 @@ do_index <- function(df, type, key_col = NULL) {
       dplyr::filter(!is.na(!!qcol)) %>%
       dplyr::mutate(cal_type = type,
                     !!num_col := seq_along(date),
-                    cal_id = bases[type] + !!num_col +
+                    cal_id = bases[type2idx[type]] + !!num_col +
                       base_mods['cancelled'] * cancelled +
                       base_mods['make_up'] * make_up
       )
@@ -293,7 +293,7 @@ cal_prepare <- function(df, type, key_col = NULL) {
     assertthat::assert_that(key %in% type2col)
     type <- col2type[key]
   }
-  prefix <- prefixes[type]
+  prefix <- prefixes[type2idx[type]]
 
   if (as.character(rlang::quo_get_expr(qcol)) %in% names(df)) {
     df <- df %>%
@@ -360,24 +360,32 @@ build_master_calendar <- function(master_db_file) {
     dplyr::select(cal_id, date, class_num, week, topic_key, cal_type,
                   cancelled, make_up, tidyselect::everything())
 
-  calendar <- calendar %>% left_join(topics, by = "topic_key")
+  calendar <- calendar %>% dplyr::left_join(topics, by = "topic_key")
 
   invisible(calendar)
 }
 
-strip_key_prefix <- function(df, type) {
+strip_key_prefix <- function(df, type, key_col = "topic_key") {
+  key_col = ensym(key_col)
+  key_col = enquo(key_col)
+
   pull_env(transition_env)
 
-  target <- stringr::str_c("^", prefixes[type], "_")
-  df <- df %>% dplyr::mutate(topic_key = stringr::str_replace(topic_key, target, ""))
+  target <- stringr::str_c("^", prefixes[type2idx[type]], "_")
+  df <- df %>%
+    dplyr::mutate(!!key_col := stringr::str_replace(!!key_col, target, ""))
   invisible(df)
 }
 
-add_key_prefix <- function(df, type) {
+add_key_prefix <- function(df, type, key_col = "topic_key") {
+  key_col = ensym(key_col)
+  key_col = enquo(key_col)
+
   pull_env(transition_env)
 
-  df <- df %>% dplyr::mutate(topic_key =
-                             stringr::str_c(prefixes[type], topic_key, sep = "_"))
+  df <- df %>%
+    dplyr::mutate(!!key_col := stringr::str_c(prefixes[type2idx[type]],
+                                             !!key_col, sep = "_"))
   invisible(df)
 }
 
@@ -419,42 +427,83 @@ build_database <- function(dest_db_file, master_db_file, base_db_file) {
            make_up) %>% dplyr::arrange(date, cal_id, cal_type)
 
   class_topics <- master_calendar %>% dplyr::filter(cal_type == "class") %>%
-    dplyr::select(topic_key, topic) %>%
-    strip_key_prefix("class")
+    dplyr::select(topic_key, topic) %>% dplyr::mutate(rd_key = topic_key) %>%
+    strip_key_prefix("class", rd_key)
 
-  class_links   <- extract_links(master_calendar, "class"   )
-  lab_links     <- extract_links(master_calendar, "lab"     )
-  hw_links      <- extract_links(master_calendar, "homework")
-  exam_links    <- extract_links(master_calendar, "exam"    )
-  due_links     <- extract_links(master_calendar, "due date")
-  holiday_links <- extract_links(master_calendar, "holiday" )
-  event_links   <- extract_links(master_calendar, "event"   )
+  class_links   <- extract_links(master_calendar, "class"   ) %>%
+   dplyr::rename(rd_key = topic_key)
+  lab_links     <- extract_links(master_calendar, "lab"     ) %>%
+   dplyr::rename(lab_key = topic_key)
+  hw_links      <- extract_links(master_calendar, "homework") %>%
+   dplyr::rename(hw_key = topic_key)
+  exam_links    <- extract_links(master_calendar, "exam"    ) %>%
+   dplyr::rename(exam_key = topic_key)
+  due_links     <- extract_links(master_calendar, "due date") %>%
+   dplyr::rename(due_key = topic_key)
+  holiday_links <- extract_links(master_calendar, "holiday" ) %>%
+   dplyr::rename(holiday_key = topic_key)
+  event_links   <- extract_links(master_calendar, "event"   ) %>%
+   dplyr::rename(event_key = topic_key)
 
   base_db <- DBI::dbConnect(RSQLite::SQLite(), base_db_file)
 
   exams <- dplyr::tbl(base_db, "exams") %>%
-    dplyr::select(-exam_id) %>% dplyr::collect()
+    dplyr::select(-exam_id) %>% dplyr::collect() %>%
+    strip_key_prefix("exam", "exam_key")
   events <- dplyr::tbl(base_db, "events") %>%
     dplyr::select(-event_id) %>% dplyr::collect()
   holidays <- dplyr::tbl(base_db, "holidays") %>%
-    dplyr::select(-holiday_id) %>% dplyr::collect()
+    dplyr::select(-holiday_id) %>% dplyr::collect() %>%
+    strip_key_prefix("holiday", "holiday_key")
   notices <- dplyr::tbl(base_db, "notices") %>%
-    dplyr::select(-notice_id) %>% dplyr::collect()
+    dplyr::select(-notice_id) %>% dplyr::collect() %>%
+    dplyr::rename(topic_key = topic_id) %>%
+    strip_key_prefix("class")
 
-  reading_items <- dplyr::tbl(base_db, "reading_items") %>% dplyr::collect()
-  reading_sources <- dplyr::tbl(base_db, "reading_sources") %>% dplyr::collect()
+  reading_items <- dplyr::tbl(base_db, "reading_items") %>%
+    dplyr::collect() %>% dplyr::rename(rd_key = rd_group) %>%
+    strip_key_prefix("class", "rd_key")
+  reading_sources <- dplyr::tbl(base_db, "reading_sources") %>%
+    dplyr::collect() %>% dplyr::rename(src_key = source_id)
 
   hw_assignments <- dplyr::tbl(base_db, "homework_assignments") %>%
-    dplyr::collect()
-  hw_items <- dplyr::tbl(base_db, "homework_items") %>% dplyr::collect()
-  hw_topics <- dplyr::tbl(base_db, "homework_topics") %>% dplyr::collect()
-  hw_solutions <- dplyr::tbl(base_db, "homework_solutions") %>% dplyr::collect()
+    dplyr::collect() %>%
+    dplyr::rename(hw_key = hw_group, hw_due_key = hw_due_date) %>%
+    strip_key_prefix("homework", "hw_key") %>%
+    strip_key_prefix("due date", "hw_due_key")
+  hw_items <- dplyr::tbl(base_db, "homework_items") %>% dplyr::collect() %>%
+    dplyr::rename(hw_key = hw_group) %>%
+    strip_key_prefix("homework", "hw_key")
+  hw_topics <- dplyr::tbl(base_db, "homework_topics") %>% dplyr::collect() %>%
+    dplyr::rename(hw_key = hw_group) %>%
+    strip_key_prefix("homework", "hw_key")
+  hw_solutions <- dplyr::tbl(base_db, "homework_solutions") %>%
+    dplyr::collect() %>%
+    dplyr::rename(hw_key = hw_group, hw_sol_pub_key = hw_sol_pub_date) %>%
+    strip_key_prefix("homework", "hw_key") %>%
+    strip_key_prefix("due date", "hw_sol_pub_key")
+  hw_topics <- dplyr::tbl(base_db, "homework_topics") %>%
+    dplyr::collect() %>%
+    dplyr::rename(hw_key = hw_group, topic = hw_topic) %>%
+    strip_key_prefix("homework", "hw_key")
 
-  lab_assignments <- dplyr::tbl(base_db, "lab_assignments") %>% dplyr::collect()
-  lab_items <- dplyr::tbl(base_db, "lab_items") %>% dplyr::collect()
-  lab_solutions <- dplyr::tbl(base_db, "lab_solutions") %>% dplyr::collect()
+  lab_assignments <- dplyr::tbl(base_db, "lab_assignments") %>%
+    dplyr::collect() %>%
+    dplyr::rename( lab_key = lab_group, report_due_key = report_due_date,
+                   presentation_key = presentation_date) %>%
+    strip_key_prefix("lab", "lab_key") %>%
+    strip_key_prefix("due date", "report_due_key") %>%
+    strip_key_prefix("due date", "presentation_key")
+  lab_items <- dplyr::tbl(base_db, "lab_items") %>% dplyr::collect() %>%
+    dplyr::rename(lab_key = lab_group) %>%
+    strip_key_prefix("lab", "lab_key")
+  lab_solutions <- dplyr::tbl(base_db, "lab_solutions") %>%
+    dplyr::collect() %>%
+    dplyr::rename(lab_key = lab_group, lab_sol_pub_key = lab_sol_pub_date) %>%
+    strip_key_prefix("lab", "lab_key") %>%
+    strip_key_prefix("due date", "lab_sol_pub_key")
 
-  due_dates <- tibble(due_key = character(0), due_title = character(0),
+  due_dates <- tibble::tibble(due_key = character(0), due_title = character(0),
                       due_desc = character(0))
 
   text_codes <- dplyr::tbl(base_db, "text_codes") %>% dplyr::collect()
@@ -466,65 +515,96 @@ build_database <- function(dest_db_file, master_db_file, base_db_file) {
   #
   # Calendar
   #
-  copy_to(db_dest, calendar, "calendar", overwrite = TRUE, temporary = FALSE)
+  dplyr::copy_to(db_dest, calendar, "calendar", overwrite = TRUE,
+                 temporary = FALSE)
 
   #
   # Links
   #
-  copy_to(db_dest, class_links, "rd_links", overwrite = TRUE, temporary = FALSE)
-  copy_to(db_dest, lab_links, "lab_links", overwrite = TRUE, temporary = FALSE)
-  copy_to(db_dest, hw_links, "hw_links", overwrite = TRUE, temporary = FALSE)
-  copy_to(db_dest, due_links, "due_links", overwrite = TRUE, temporary = FALSE)
-  copy_to(db_dest, exam_links, "exam_links", overwrite = TRUE,
-          temporary = FALSE)
-  copy_to(db_dest, holiday_links, "holiday_links", overwrite = TRUE,
-          temporary = FALSE)
-  copy_to(db_dest, event_links, "event_links", overwrite = TRUE,
-          temporary = FALSE)
+  dplyr::copy_to(db_dest, class_links, "rd_links",
+                 overwrite = TRUE, temporary = FALSE)
+  dplyr::copy_to(db_dest, lab_links, "lab_links",
+                 overwrite = TRUE, temporary = FALSE)
+  dplyr::copy_to(db_dest, hw_links, "hw_links",
+                 overwrite = TRUE, temporary = FALSE)
+  dplyr::copy_to(db_dest, due_links, "due_links",
+                 overwrite = TRUE, temporary = FALSE)
+  dplyr::copy_to(db_dest, exam_links, "exam_links",
+                 overwrite = TRUE, temporary = FALSE)
+  dplyr::copy_to(db_dest, holiday_links, "holiday_links",
+                 overwrite = TRUE, temporary = FALSE)
+  dplyr::copy_to(db_dest, event_links, "event_links",
+                 overwrite = TRUE, temporary = FALSE)
 
   #
   # Reading assignments
   #
-  copy_to(db_dest, class_topics, "class_topics", overwrite = TRUE, temporary = FALSE)
-  copy_to(db_dest, reading_items, "rd_items", overwrite = TRUE,
-          temporary = FALSE)
-  copy_to(db_dest, reading_sources, "rd_src", overwrite = TRUE,
-          temporary = FALSE)
+  dplyr::copy_to(db_dest, class_topics, "class_topics",
+                 overwrite = TRUE, temporary = FALSE)
+  dplyr::copy_to(db_dest, reading_items, "rd_items",
+                 overwrite = TRUE, temporary = FALSE)
+  dplyr::copy_to(db_dest, reading_sources, "rd_src",
+                 overwrite = TRUE, temporary = FALSE)
 
   #
   # Homework assignments
   #
-  copy_to(db_dest, hw_assignments, "hw_asgt", overwrite = TRUE,
-          temporary = FALSE)
-  copy_to(db_dest, hw_items, "hw_items", overwrite = TRUE, temporary = FALSE)
-  copy_to(db_dest, hw_solutions, "hw_sol", overwrite = TRUE, temporary = FALSE)
+  dplyr::copy_to(db_dest, hw_assignments, "hw_asgt",
+                 overwrite = TRUE, temporary = FALSE)
+  dplyr::copy_to(db_dest, hw_items, "hw_items",
+                 overwrite = TRUE, temporary = FALSE)
+  dplyr::copy_to(db_dest, hw_solutions, "hw_sol",
+                 overwrite = TRUE, temporary = FALSE)
+  dplyr::copy_to(db_dest, hw_topics, "hw_topics",
+                 overwrite = TRUE, temporary = FALSE)
 
   #
   # Lab Assignments
   #
-  copy_to(db_dest, lab_assignments, "lab_asgt", overwrite = TRUE,
-          temporary = FALSE)
-  copy_to(db_dest, lab_items, "lab_items", overwrite = TRUE, temporary = FALSE)
-  copy_to(db_dest, lab_solutions, "lab_sol", overwrite = TRUE,
-          temporary = FALSE)
+  dplyr::copy_to(db_dest, lab_assignments, "lab_asgt",
+                 overwrite = TRUE, temporary = FALSE)
+  dplyr::copy_to(db_dest, lab_items, "lab_items",
+                 overwrite = TRUE, temporary = FALSE)
+  dplyr::copy_to(db_dest, lab_solutions, "lab_sol",
+                 overwrite = TRUE, temporary = FALSE)
 
   #
   # Due dates
   #
-  copy_to(db_dest, due_dates, "due_dates", overwrite = TRUE,
-          temporary = FALSE)
+  dplyr::copy_to(db_dest, due_dates, "due_dates",
+                 overwrite = TRUE, temporary = FALSE)
 
   #
   # Events
   #
-  copy_to(db_dest, events, "events", overwrite = TRUE,
-          temporary = FALSE)
-  copy_to(db_dest, notices, "notices", overwrite = TRUE,
-          temporary = FALSE)
-  copy_to(db_dest, holidays, "holidays", overwrite = TRUE,
-          temporary = FALSE)
+  dplyr::copy_to(db_dest, exams, "exams",
+                 overwrite = TRUE, temporary = FALSE)
+  dplyr::copy_to(db_dest, events, "events",
+                 overwrite = TRUE, temporary = FALSE)
+  dplyr::copy_to(db_dest, notices, "notices",
+                 overwrite = TRUE, temporary = FALSE)
+  dplyr::copy_to(db_dest, holidays, "holidays",
+                 overwrite = TRUE, temporary = FALSE)
+  dplyr::copy_to(db_dest, text_codes, "text_codes",
+                 overwrite = TRUE, temporary = FALSE)
 
+  meta_data <- tibble::tibble(
+    type = unique(idx2type),
+    idx = type2idx[type],
+    col = type2col[type],
+    prefix = prefixes[idx],
+    base = bases[idx]
+  )
 
+  meta_base_mod <- tibble::tibble(
+    key = names(base_mods),
+    mod = base_mods
+  )
+
+  dplyr::copy_to(db_dest, meta_data, "metadata",
+                 overwrite = TRUE, temporary = FALSE)
+  dplyr::copy_to(db_dest, meta_base_mod, "base_mods",
+                 overwrite = TRUE, temporary = FALSE)
 
   DBI::dbDisconnect(db_dest)
 
