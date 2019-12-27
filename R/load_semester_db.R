@@ -117,7 +117,19 @@ add_key_prefix <- function(df, metadata, type, col = "topic_key") {
 #'   and a named list `metadata` containing named character vectors of
 #'   metadata that are used to decode and manipulate calendar entries.
 #'
-load_semester_db <- function(db_file) {
+load_semester_db <- function(db_file, root_crit = NULL) {
+  if (is.null(root_crit)) {
+    root_crit <- make_root_criteria(".semestr.here",
+                                    rprojroot::has_file_pattern("^.*\\.RProj$"),
+                                    rprojroot::has_dir(".Rproj.user"),
+                                    rprojroot::has_dir("content"))
+
+  } else {
+    root_crit <- rprojroot::as.root_criterion(root_crit)
+  }
+
+  root_dir <- rprojroot::find_root(root_crit, dirname(db_file))
+
   db <- DBI::dbConnect(RSQLite::SQLite(), db_file)
 
   md_1 <- dplyr::tbl(db, "metadata") %>% dplyr::collect()
@@ -156,26 +168,31 @@ load_semester_db <- function(db_file) {
 
   DBI::dbDisconnect(db)
 
+  calendar <- calendar %>%
+    dplyr::mutate(date = lubridate::as_datetime(date, tz = get_semestr_tz()))
+
   due_dates <- due_links %>% dplyr::left_join(due_dates, by = "due_key")
 
   hw_asgt <- hw_asgt %>% dplyr::inner_join(hw_links, by = "hw_key") %>%
     dplyr::left_join(hw_topics, by = "hw_key") %>%
-    dplyr::left_join(due_dates, by = c("hw_due_key" = "due_key")) %>%
-    dplyr::mutate_at(dplyr::vars(hw_is_numbered),
+    dplyr::left_join(
+      dplyr::select(due_dates, due_key, due_cal_id = cal_id),
+      by = "due_key") %>%
+    dplyr::mutate_at(dplyr::vars(is_numbered),
                      ~as.logical(.) %>% tidyr::replace_na(FALSE))
   hw_items <- hw_items %>% dplyr::inner_join(hw_links, by = "hw_key") %>%
     dplyr::mutate_at(dplyr::vars(undergraduate_only, graduate_only,
-                                 hw_break_before, hw_prologue, hw_epilogue),
+                                 break_before, prologue, epilogue),
                      ~as.logical(.) %>% tidyr::replace_na(FALSE))
   hw_sol <- hw_sol %>% dplyr::inner_join(hw_links, by = "hw_key") %>%
-    dplyr::inner_join( dplyr::select(due_dates, hw_sol_pub_key = due_key,
+    dplyr::inner_join( dplyr::select(due_dates, sol_pub_key = due_key,
                                      sol_pub_cal_id  = cal_id),
-                       by = "hw_sol_pub_key")
+                       by = "sol_pub_key")
 
   rd_items <- rd_items %>% dplyr::inner_join(rd_links, by = "rd_key") %>%
     dplyr::left_join(rd_src, by = "src_key") %>%
     dplyr::mutate_at(dplyr::vars(undergraduate_only, graduate_only, optional,
-                                 rd_prologue, rd_epilogue, textbook, handout),
+                                 prologue, epilogue, textbook, handout),
                      ~as.logical(.) %>% tidyr::replace_na(FALSE))
 
   lab_asgt <- lab_asgt %>% dplyr::inner_join(lab_links, by = "lab_key") %>%
@@ -187,9 +204,9 @@ load_semester_db <- function(db_file) {
                       by = "presentation_key")
   lab_items <- lab_items %>% dplyr::inner_join(lab_links, by = "lab_key")
   lab_sol <- lab_sol %>% dplyr::inner_join(lab_links, by = "lab_key") %>%
-    dplyr::inner_join( dplyr::select(due_dates, lab_sol_pub_key = due_key,
+    dplyr::inner_join( dplyr::select(due_dates, sol_pub_key = due_key,
                                      sol_pub_cal_id  = cal_id),
-                       by = "lab_sol_pub_key")
+                       by = "sol_pub_key")
 
   events <- events %>% dplyr::inner_join(event_links, by = "event_key")
   exams <- exams %>% dplyr::inner_join(exam_links, by = "exam_key")
@@ -197,6 +214,36 @@ load_semester_db <- function(db_file) {
   notices <- notices %>%
     dplyr::inner_join( dplyr::select(calendar, cal_id, topic_key),
                        by = "topic_key")
+
+  bad_codes <- text_codes %>% dplyr::filter(is.na(code_value))
+  if (nrow(bad_codes) > 0) {
+    warning("Text codes with missing values: [",
+            str_c(bad_codes$code_name, collapse = ", "), "]")
+    text_codes <- text_codes %>%
+      dplyr::mutate(code_value = ifelse(is.na(code_value), "", code_value))
+  }
+  text_codes <- list(
+    md = text_codes %>% { set_names(.$code_value, .$code_name) },
+    latex = text_codes %>% { set_names(.$latex_value, .$code_name) }
+  )
+
+  first_class <- 1
+  last_class <- NA
+
+  if(is.na(first_class)) first_class <- min(calendar$class_num, na.rm = T)
+  if (is.na(last_class)) last_class <- max(calendar$class_num, na.rm = T)
+
+  first_date <- calendar %>%
+    dplyr::filter(class_num == first_class) %$% date
+  last_date <- calendar %>%
+    dplyr::filter(class_num == last_class) %$% date
+
+  year_taught <- lubridate::year(first_date)
+
+  # Pub date should be last day of previous month.
+  pub_date <- first_date %>% lubridate::as_date(tz = get_semestr_tz()) %>%
+    lubridate::rollback()
+  if (lubridate::today() < pub_date) pub_date <- lubridate::today()
 
   semester <- list(
     calendar = calendar, due_dates = due_dates, due_links = due_links,
@@ -210,7 +257,13 @@ load_semester_db <- function(db_file) {
     holidays = holidays, holiday_links = holiday_links,
     events = events, event_links = event_links,
     notices = notices, text_codes = text_codes,
-    metadata = metadata
+    metadata = metadata,
+    root_dir = root_dir,
+    semester_dates = list(
+      first_class = first_class, last_class = last_class,
+      first_date = first_date, last_date = last_date,
+      year_taught = year_taught, pub_date = pub_date
+    )
   )
 
   invisible(semester)

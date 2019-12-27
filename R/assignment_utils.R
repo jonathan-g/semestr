@@ -2,9 +2,14 @@ any_true <- function(vec) {
   any(purrr::map_lgl(vec, isTRUE))
 }
 
-append_newline_if_needed <- function(txt) {
+append_newline_if_needed <- function(txt, start_par = FALSE, extra_lines = 0) {
   txt <- stringr::str_trim(txt)
   txt[stringr::str_detect(txt, '[^\n]$')] <- stringr::str_c(txt, '\n')
+  if (start_par)
+    txt <- stringr::str_c("\n", txt)
+  if (extra_lines > 0)
+    txt <- stringr::str_c(txt, stringr::str_c(rep('\n', extra_lines),
+                                              collapse = ''))
   txt
 }
 
@@ -136,15 +141,85 @@ enumerate <- function(text, pad_len = 0, enum_type = "#.") {
     stringr::str_c(collapse = "\n")
 }
 
-expand_codes <- function(text, delim = c("<%", "%>")) {
-  rlang::exec(knit_expand, !!!text_codes, text = text, delim = delim)
+expand_codes <- function(text, semester, delim = c("<%", "%>")) {
+  text_codes <- semester$text_codes$md
+  rlang::exec(knitr::knit_expand, !!!text_codes, text = text, delim = delim)
 }
 
-expand_code <- function(text) {
-  stringr::str_c("<%", text, "%>") %>% expand_codes()
+expand_code <- function(text, semester) {
+  stringr::str_c("<%", text, "%>") %>% expand_codes(semester)
 }
 
-merge_dates <- function(df, semester) {
-  df <- df %>% dplyr::left_join( dplyr::select(semester, cal_id, date),
-                                 by = "cal_id")
+merge_dates <- function(df, semester, id_col = "cal_id", date_col = "date", ...) {
+  qid_col  <- ensym(id_col)
+  qid_col  <- enquo(qid_col)
+  date_col <- ensym(date_col)
+  date_col <- enquo(date_col)
+  dots <- enquos(...)
+
+  df <- df %>% dplyr::left_join( dplyr::select(semester$calendar,
+                                               !!qid_col := cal_id,
+                                               !!date_col := date,
+                                               !!!dots),
+                                 by = id_col)
+}
+
+pub_date <- function() {
+  pub_date <- first_date %>% as_date(tz = get_semestr_tz()) %>% rollback()
+  if (today() < pub_date) pub_date <- today()
+  pub_date
+}
+
+
+set_md_extensions <- function(ext_str, append = FALSE) {
+  if (append) {
+    ext_str = stringr::str_c(getOption("semestr.md_extensions"), ext_str,
+                             sep = "", collapse = "")
+  }
+  exts <- ext_str %>% stringr::str_split(" +", simplify = TRUE) %>%
+    as.character() %>%
+    stringr::str_extract_all("[[:space:]+\\-]+[a-zA-Z0-9_]+") %>%
+    purrr::simplify() %>%
+    stringr::str_trim()
+  ext_df <- tibble::tibble(str = exts,
+                           bare = stringr::str_replace_all(str, "^[+\\-]", ""),
+                           num = seq_along(str))
+  ext_df <- ext_df %>% dplyr::group_by(bare) %>% dplyr::top_n(1, wt = num) %>%
+    dplyr::ungroup()
+  ext_str <- unique(ext_df$str) %>%
+    stringr::str_c(sep = "", collapse = "")
+  invisible(ext_str)
+}
+
+get_md_extensions <- function() {
+  exts <- getOption("semestr.md_extensions")
+  if (is.null(exts)) {
+    exts <- "+tex_math_single_backslash+compact_definition_lists"
+  }
+  exts
+}
+
+get_semestr_tz <- function() {
+  tz <- getOption("semestr.tz")
+  if (is.null(tz) || is.na(tz)) {
+    tz <- "America/Chicago"
+  }
+  tz
+}
+
+make_root_criteria <- function(crit, ... ) {
+  dots <- list(...)
+  crit <- rprojroot::as.root_criterion(crit)
+  for (c in dots) {
+    crit <- crit | rprojroot::as.root_criterion(c)
+  }
+  crit
+}
+
+dbg_checkpoint <- function(tag, value) {
+  qtag <- ensym(tag)
+  qtag <- enquo(qtag)
+  if (exists("semestr.debug") && semester.debug ) {
+    assign(as_label(qtag), value, envir = global_env())
+  }
 }
