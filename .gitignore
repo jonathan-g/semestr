@@ -3,3 +3,5 @@
 .RData
 *.Rproj
 cache/
+/content/**/*.Rmd
+/static/slides/**/*
