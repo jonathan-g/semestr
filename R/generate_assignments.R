@@ -13,7 +13,7 @@ generate_assignments <- function(semester, md_extensions = get_md_extensions()) 
     add_key_prefix(c("FINAL_EXAM", "ALT_FINAL_EXAM"),
                    semester$metadata, "exam"))
 
-  schedule <- schedule %>% filter(! id %in% final_exams$id)
+  schedule <- schedule %>% dplyr::filter(! id %in% final_exams$id)
 
   hw_due <- semester$due_dates %>%
     dplyr::filter(type == "homework", action %in% c("homework", "report")) %>%
@@ -29,12 +29,12 @@ generate_assignments <- function(semester, md_extensions = get_md_extensions()) 
     dplyr::select( key = hw_key, id = due_cal_id) %>%
     dplyr::left_join(dplyr::select(semester$calendar, id = cal_id, date),
               by = c("id")) %>%
-    dplyr::mutate(cal_type = "hw", date = as_date(date, tz = metadata$tz))
+    dplyr::mutate(cal_type = "hw", date = lubridate::as_date(date, tz = metadata$tz))
 
   schedule <- schedule %>% dplyr::bind_rows(missing_hw_entries)
 
   sched_check <- schedule %>% dplyr::group_by(date, cal_type) %>%
-    dplyr::summarize(count = n()) %>% dplyr::ungroup() %>%
+    dplyr::summarize(count = dplyr::n()) %>% dplyr::ungroup() %>%
     dplyr::filter(count > 1) %>% dplyr::group_by(date) %>%
     dplyr::summarize(bad_indices = stringr::str_c(cal_type,
                                                   collapse = ", ")) %>%
@@ -55,13 +55,13 @@ generate_assignments <- function(semester, md_extensions = get_md_extensions()) 
   class_nums <- semester$calendar %>%
     dplyr::select(id_class = cal_id, class_num)
 
-  take_home_exam <- top_n(final_exams, 1, wt = date)
+  take_home_exam <- dplyr::top_n(final_exams, 1, wt = date)
   take_home_exam$key <- add_key_prefix("TAKE_HOME_FINAL_EXAM", metadata, "exam")
   take_home_exam_topics <- tibble::tibble(key_exam = take_home_exam$key,
                                           topic_exam = "Take-home final exam due")
-  exam_topics <- bind_rows(exam_topics, take_home_exam_topics)
+  exam_topics <- dplyr::bind_rows(exam_topics, take_home_exam_topics)
 
-  holiday_topics <- holidays %>% rename(topic_holiday = holiday_name,
+  holiday_topics <- semester$holidays %>% dplyr::rename(topic_holiday = holiday_name,
                                         key_holiday = holiday_key) %>%
     add_key_prefix(metadata, type = "holiday", col = "key_holiday")
 
@@ -70,7 +70,8 @@ generate_assignments <- function(semester, md_extensions = get_md_extensions()) 
   # first non-NA value, or uses NA if all columns are missing values.
   t_topic <- function(...) {
     dots <- list(...)
-    cols <- names(dots) %>% purrr::keep(~str_starts(.x, fixed("topic")))
+    cols <- names(dots) %>%
+      purrr::keep(~stringr::str_starts(.x, stringr::fixed("topic")))
     dots <- dots[cols]
     res <- purrr::discard(dots, is.na)
     if (length(res) == 0) {
@@ -81,20 +82,20 @@ generate_assignments <- function(semester, md_extensions = get_md_extensions()) 
   }
 
   schedule <- schedule %>%
-    # bind_rows(final_exams) %>%
-    bind_rows(take_home_exam) %>%
-    mutate(page = NA_character_) %>%
+    # dplyr::bind_rows(final_exams) %>%
+    dplyr::bind_rows(take_home_exam) %>%
+    dplyr::mutate(page = NA_character_) %>%
     tidyr::pivot_wider(names_from = cal_type, values_from = c(id, key,
                                                               page)) %>%
-    select(-page_exam, -page_holiday) %>%
-    mutate(page_lecture = NA_character_) %>%
+    dplyr::select(-page_exam, -page_holiday) %>%
+    dplyr::mutate(page_lecture = NA_character_) %>%
     dplyr::left_join( topics, by = "key_class") %>%
     dplyr::left_join( class_nums, by = "id_class" ) %>%
     dplyr::left_join( exam_topics, by = "key_exam") %>%
     dplyr::left_join( holiday_topics, by = "key_holiday")
 
-  schedule <- schedule %>% mutate(topic = pmap_chr(., t_topic)) %>%
-    select(-starts_with("topic_"))
+  schedule <- schedule %>% dplyr::mutate(topic = purrr::pmap_chr(., t_topic)) %>%
+    dplyr::select(-dplyr::starts_with("topic_"))
 
 
   for (col in metadata$type2col) {
@@ -189,7 +190,7 @@ generate_assignments <- function(semester, md_extensions = get_md_extensions()) 
                 " on ", d)
         rd_fname <- sprintf("reading_%02d.Rmd", cal_entry$class_num)
         rd_path <- rd_fname %>% file.path(root_dir, "content", "reading", .)
-        rd_url <- rd_fname %>% str_replace("\\.Rmd$", "") %>%
+        rd_url <- rd_fname %>% stringr::str_replace("\\.Rmd$", "") %>%
           file.path("/reading", .)
         rd_page <- make_reading_page(cal_entry$id_class, semester,
                                      md_extensions = md_extensions)

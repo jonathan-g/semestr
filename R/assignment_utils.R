@@ -295,8 +295,9 @@ concat_with_nl <- function(s, ..., start_par = FALSE, extra_lines = 0,
   s <- append_newline_if_needed(s, FALSE, 0, TRUE)
   s2 <- append_newline_if_needed(as.character(unlist(dots)),
                                  start_par, extra_lines, collapse)
-  if (str_starts(s2, fixed("\n")) && str_ends(s, fixed("\n\n"))) {
-    s <- s %>% str_replace_all("\n+$", "\n")
+  if (stringr::str_starts(s2, stringr::fixed("\n")) &&
+      stringr::str_ends(s, stringr::fixed("\n\n"))) {
+    s <- s %>% stringr::str_replace_all("\n+$", "\n")
   }
   stringr::str_c(s, s2)
 }
@@ -460,8 +461,9 @@ make_pub_date <- function(first_date, tz = NULL) {
   if (is.null(tz)) {
     tz = get_semestr_tz()
   }
-  pub_date <- first_date %>% as_date(tz = tz) %>% rollback()
-  if (today() < pub_date) pub_date <- today()
+  pub_date <- first_date %>% lubridate::as_date(tz = tz) %>%
+    lubridate::rollback()
+  if (lubridate::today() < pub_date) pub_date <- lubridate::today()
   pub_date
 }
 

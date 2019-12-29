@@ -179,11 +179,11 @@ make_reading_page <- function(cal_id, semester,
 
   delim <- "---"
   header <- tibble::tibble(title = rd_topic,
-                           class_date = as_date(rd_date) %>% as.character(),
+                           class_date = lubridate::as_date(rd_date) %>% as.character(),
                            class_number = class_num, weight = class_num,
                            slug = sprintf("reading_%02d", class_num),
                            pubdate = as.character(semester$semester_dates$pub_date),
-                           date = as_date(rd_date) %>% as.character(),
+                           date = lubridate::as_date(rd_date) %>% as.character(),
                            output = list("blogdown::html_page" =
                                            list(md_extensions = md_extensions))
   ) %>%

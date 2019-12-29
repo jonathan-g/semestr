@@ -268,7 +268,7 @@ make_hw_asgt_page <- function(key, semester, use_solutions = FALSE,
           ", slug = ", hw_slug, ")")
 
   delim <- "---"
-  header <- tibble(title = hw_topic,
+  header <- tibble::tibble(title = hw_topic,
                    due_date = lubridate::as_date(hw_date) %>% as.character(),
                    assignment_type = hw_type,
                    short_assignment_type = short_hw_type,
@@ -296,7 +296,7 @@ generate_hw_assignment <- function(key, semester, use_solutions = FALSE,
   hw_page <- make_hw_asgt_page(key, semester, use_solutions, md_extensions)
 
   hw_slug <- make_hw_slug(assignment)
-  hw_fname <- str_c(hw_slug, ".Rmd")
+  hw_fname <- stringr::str_c(hw_slug, ".Rmd")
   message("Making homework page for assignment ",
           ifelse(is.na(assignment$hw_num), assignment$hw_key,
                  stringr::str_c("# ", assignment$hw_num)),
@@ -304,7 +304,7 @@ generate_hw_assignment <- function(key, semester, use_solutions = FALSE,
           ", slug = ", hw_slug, ", filename = ", hw_fname, ")")
   hw_path <- hw_fname %>% file.path(semester$metadata$root_dir,
                                     "content", "assignment", .)
-  hw_url <- hw_fname %>% str_replace("\\.Rmd$", "")
+  hw_url <- hw_fname %>% stringr::str_replace("\\.Rmd$", "")
   cat(hw_page, file = hw_path)
   c(page = hw_page, url = hw_url)
 }
