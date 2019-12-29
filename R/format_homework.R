@@ -1,3 +1,19 @@
+get_hw_assignment <- function(key, semester) {
+  assignment <- semester$hw_asgt %>% dplyr::filter(hw_key == key) %>%
+    merge_dates(semester) %>%
+    merge_dates(semester, id_col = "due_cal_id", date_col = "due_date") %>%
+    dplyr::arrange(hw_id)
+
+  assertthat::assert_that(nrow(assignment) == 1,
+                          msg = stringr::str_c(
+                            "There should only be one homework assignment for a given key: ",
+                            "key ", key, " has ", nrow(assignment), " assignments.")
+  )
+
+  assignment <- as.list(assignment)
+  assignment
+}
+
 make_hw_slug <- function(hw_asgt) {
   message("Making HW slug for ", hw_asgt$hw_key,
           ", is_numbered = ", hw_asgt$is_numbered,
@@ -65,25 +81,20 @@ make_hw_solution <- function(solution, assignment, slug = NA_character_,
 
 make_hw_asgt_content <- function(key, semester, use_solutions = FALSE,
                                      md_extensions = get_md_extensions()) {
-  assignment <- semester$hw_asgt %>% dplyr::filter(hw_key == key) %>%
-    merge_dates(semester) %>%
-    merge_dates(semester, id_col = "due_cal_id", date_col = "due_date") %>%
-    dplyr::arrange(hw_id)
-
-  assertthat::assert_that(nrow(assignment) == 1,
-                          msg = stringr::str_c(
-                            "There should only be one homework assignment for a given key: ",
-                            "key ", key, " has ", nrow(assignment), " assignments.")
-  )
+  assignment <- get_hw_assignment(key, semester)
 
   items <- semester$hw_items %>% dplyr::filter(hw_key == key) %>%
     merge_dates(semester) %>%
     dplyr::arrange(hw_item_id)
   if (use_solutions) {
-    solutions <- semester$hw_sol %>% dplyr::filter(hw_key == key) %>%
-      dplyr::left_join( dplyr::select(assignment, hw_key,
-                                      due_cal_id, due_date),
-                        by = "hw_key") %>%
+    solutions <- semester$hw_sol %>% dplyr::filter(hw_key == key)
+
+    dbg_checkpoint(g_hw_asgt, assignment)
+    dbg_checkpoint(g_sol, solutions)
+
+    solutions <- solutions %>%
+      dplyr::mutate( due_cal_id = assignment$due_cal_id,
+                     due_date = assignment$due_date) %>%
       merge_dates(semester, id_col = "sol_pub_cal_id",
                   date_col = "sol_pub_date") %>%
       dplyr::mutate(sol_pub_date =
@@ -242,18 +253,7 @@ make_hw_asgt_content <- function(key, semester, use_solutions = FALSE,
 
 make_hw_asgt_page <- function(key, semester, use_solutions = FALSE,
                          md_extensions = get_md_extensions()) {
-  assignment <- semester$hw_asgt %>% dplyr::filter(hw_key == key) %>%
-    merge_dates(semester) %>%
-    merge_dates(semester, id_col = "due_cal_id", date_col = "due_date") %>%
-    dplyr::arrange(hw_id)
-
-  assertthat::assert_that(nrow(assignment) == 1,
-                          msg = stringr::str_c(
-                            "There should only be one homework assignment for a given key: ",
-                            "key ", key, " has ", nrow(assignment), " assignments.")
-  )
-
-  assignment <- as.list(assignment)
+  assignment <- get_hw_assignment(key, semester)
 
   hw_date <- assignment$date
   hw_topic <- assignment$topic
@@ -286,10 +286,27 @@ make_hw_asgt_page <- function(key, semester, use_solutions = FALSE,
     make_hw_asgt_content(key, semester, use_solutions, md_extensions),
     sep = "\n"
   ) %>% expand_codes(semester)
+  invisible(hw_page)
 }
 
-generate_hw_assignment <- function() {
+generate_hw_assignment <- function(key, semester, use_solutions = FALSE,
+                                   md_extensions = get_md_extensions()) {
+  assignment <- get_hw_assignment(key, semester)
 
+  hw_page <- make_hw_asgt_page(key, semester, use_solutions, md_extensions)
+
+  hw_slug <- make_hw_slug(assignment)
+  hw_fname <- str_c(hw_slug, ".Rmd")
+  message("Making homework page for assignment ",
+          ifelse(is.na(assignment$hw_num), assignment$hw_key,
+                 stringr::str_c("# ", assignment$hw_num)),
+          " (index = ", assignment$hw_id,
+          ", slug = ", hw_slug, ", filename = ", hw_fname, ")")
+  hw_path <- hw_fname %>% file.path(semester$metadata$root_dir,
+                                    "content", "assignment", .)
+  hw_url <- hw_fname %>% str_replace("\\.Rmd$", "")
+  cat(hw_page, file = hw_path)
+  c(page = hw_page, url = hw_url)
 }
 
 make_short_hw_assignment <- function(key, semester) {

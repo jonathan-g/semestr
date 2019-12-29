@@ -359,6 +359,8 @@ format_date_range_by_class_no <- function(calendar, classes, abbr = TRUE) {
 }
 
 format_date_range_by_topic_id <- function(calendar, topics, abbr = TRUE) {
+  dbg_checkpoint(g_calendar, calendar)
+  dbg_checkpoint(g_topics, topics)
   dates <- calendar %>% dplyr::filter(topic_id %in% topics) %>%
     dplyr::summarize(start = min(date, na.rm = T), stop = max(date, na.rm = T))
   format_date_range(dates, abbr)

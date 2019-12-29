@@ -194,7 +194,9 @@ make_reading_page <- function(cal_id, semester,
     # make_short_hw_assignment(homework) %>% escape_dollar(),
     make_reading_assignment(reading) %>% escape_dollar(),
     sep = "\n"
-  ) %>% expand_codes(semester)
+  )
+  dbg_checkpoint(g_rd_page, rd_page)
+  rd_page <- rd_page %>% expand_codes(semester)
 
   rd_page
 }

@@ -5,6 +5,24 @@ make_lab_slug <- function(lab_asgt) {
   slug
 }
 
+get_lab_assignment <- function(key, semester) {
+  assignment <- semester$lab_asgt %>% dplyr::filter(lab_key == key) %>%
+    merge_dates(semester) %>%
+    merge_dates(semester, id_col = "report_cal_id",
+                date_col = "report_date") %>%
+    merge_dates(semester, id_col = "pres_cal_id", date_col = "pres_date")
+
+  assertthat::assert_that(nrow(assignment) == 1,
+                          msg = stringr::str_c(
+                            "There should only be one lab assignment for a given key: ",
+                            "key ", key, " has ", nrow(assignment),
+                            " assignments.")
+  )
+
+  assignment <- as.list(assignment)
+  assignment
+}
+
 make_lab_solution_content <- function(sol, semester) {
   adj_nl(sol$sol_markdown)
 }
@@ -113,20 +131,7 @@ make_lab_docs <- function(lab_key, semester,
 
 make_lab_assignment_content <- function(key, semester, use_solutions = FALSE,
                                         md_extensions = md_extensions) {
-  assignment <- semester$lab_asgt %>% dplyr::filter(lab_key == key) %>%
-    merge_dates(semester) %>%
-    merge_dates(semester, id_col = "report_cal_id",
-                date_col = "report_date") %>%
-    merge_dates(semester, id_col = "pres_cal_id", date_col = "pres_date")
-
-  assertthat::assert_that(nrow(assignment) == 1,
-                          msg = stringr::str_c(
-                            "There should only be one lab assignment for a given key: ",
-                            "key ", key, " has ", nrow(assignment),
-                            " assignments.")
-  )
-
-  assignment <- as.list(assignment)
+  assignment <- get_lab_assignment(key, semester)
 
   output <- adj_nl("# Overview:", assignment$description, start_par = TRUE,
                    extra_lines = 1)
@@ -202,22 +207,6 @@ make_lab_assignment_content <- function(key, semester, use_solutions = FALSE,
 
 make_lab_assignment_page <- function(key, semester, use_solutions = FALSE,
                                      md_extensions = get_md_extensions()) {
-  assignment <- semester$lab_asgt %>% dplyr::filter(lab_key == key) %>%
-    merge_dates(semester) %>%
-    merge_dates(semester, id_col = "report_cal_id",
-                date_col = "report_date") %>%
-    merge_dates(semester, id_col = "pres_cal_id", date_col = "pres_date") %>%
-    dplyr::arrange(lab_id)
-
-  assertthat::assert_that(nrow(assignment) == 1,
-                          msg = stringr::str_c(
-                            "There should only be one lab assignment for a given key: ",
-                            "key ", key, " has ", nrow(assignment),
-                            " assignments.")
-  )
-
-  assignment <- as.list(assignment)
-
   lab_date <- assignment$date
   lab_title <- assignment$title
   lab_idx <- assignment$lab_id
@@ -251,40 +240,24 @@ make_lab_assignment_page <- function(key, semester, use_solutions = FALSE,
     make_lab_assignment_content(key, semester, use_solutions, md_extensions),
     sep = "\n"
   ) %>% expand_codes(semester)
-
-
+  invisible(lab_page)
 }
 
 generate_lab_assignment <- function(key, semester, use_solutions = FALSE,
                                     md_extensions = get_md_extensions()) {
-  assignment <- semester$lab_asgt %>% dplyr::filter(lab_key == key) %>%
-    merge_dates(semester) %>%
-    merge_dates(semester, id_col = "report_cal_id",
-                date_col = "report_date") %>%
-    merge_dates(semester, id_col = "pres_cal_id", date_col = "pres_date") %>%
-    dplyr::arrange(lab_id)
-  docs <- semester$lab_items %>% dplyr::filter(lab_key == key) %>%
-    merge_dates(semester) %>%
-    dplyr::arrange(lab_item_id)
-  solutions <- semester$lab_sol %>% dplyr::filter(lab_key == key) %>%
-    dplyr::left_join( dplyr::select(assignment, lab_key,
-                                    report_cal_id, report_date,
-                                    pres_cal_id, pres_date), by = "lab_key") %>%
-    merge_dates(semester, id_col = "sol_pub_cal_id",
-                date_col = "sol_pub_date") %>%
-    merge_dates(semester, date_col = "lab_date") %>%
-    dplyr::mutate(sol_pub_date =
-                    lubridate::as_datetime(sol_pub_date,
-                                           tz = semester$metadata$tz)) %>%
-    dplyr::filter(sol_pub_date <= lubridate::now()) %>%
-    dplyr::arrange(lab_sol_id)
+  assignment <- get_lab_assignment(key, semester)
+
+  lab_num <- assignment$lab_num
 
   fname <- sprintf("lab_%02d_assignment.Rmd", assignment$lab_num)
   lab_path <- fname %>% file.path(semester$metadata$root_dir,
                                   "content", "labs", .)
   lab_url <- fname %>% stringr::str_replace("\\.Rmd$", "")
-  lab_assignment_page <- make_lab_assignment_page(assignment, docs, solutions,
-                                                  semester, md_extensions)
+  message("Making lab assignment page for lab # ", lab_num,
+          " (index = ", assignment$lab_id,
+          ", filename = ", fname, ")")
+  lab_assignment_page <- make_lab_assignment_page(key, semester, use_solutions,
+                                                  md_extensions)
   cat(lab_assignment_page, file = lab_path)
   c(path = lab_path, url = lab_url)
 }
