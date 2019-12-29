@@ -1,11 +1,25 @@
+make_lab_slug <- function(lab_asgt) {
+  message("Making lab slug for ", lab_asgt$lab_key,
+          ", lab_num = ", lab_asgt$lab_num)
+  slug <- sprintf("lab_%02d", lab_asgt$lab_num)
+  slug
+}
+
+make_lab_solution_content <- function(sol, semester) {
+  adj_nl(sol$sol_markdown)
+}
+
 make_lab_solution_page <- function(sol, semester,
                                    md_extensions = get_md_extensions()) {
+  dbg_checkpoint(g_sol, sol)
+  sol <- as.list(sol)
   delim <- "---"
   header <- list(
     title = sol$sol_title,
     author = sol$sol_author,
     lab_number = sol$lab_num,
     lab_date = as_date(sol$lab_date) %>% as.character(),
+    sol_date = as_date(sol$sol_pub_date) %>% as.character(),
     pubdate = as.character(sol$sol_pub_date),
     date = as_date(sol$report_date) %>% as.character(),
     pdf_url = sol$sol_pdf_url,
@@ -19,24 +33,29 @@ make_lab_solution_page <- function(sol, semester,
     ) %>%
     yaml::as.yaml() %>% stringr::str_trim("right") %>%
     stringr::str_c(delim, ., delim, sep = "\n")
-  lab_solution_page <- stringr::str_c(
-    header,
-    sol$sol_markdown,
-    sep = "\n"
-  ) %>% expand_codes(semester)
+  lab_solution_page <- cat_nl( header,
+                               make_lab_solution_content(sol, semester)) %>%
+    expand_codes(semester)
   lab_solution_page
 }
 
 make_lab_solution <- function(sol, semester,
                               md_extensions = get_md_extensions()) {
+  dbg_checkpoint(g_sol, sol)
+
   fname <- sprintf("lab_%02d_%s.Rmd", sol$lab_num, sol$sol_filename)
   solution_path <- fname %>%
-    file.path(semester$root_dir, "content", "lab_solutions/", .)
+    file.path(semester$metadata$root_dir, "content", "lab_solutions/", .)
   solution_url <- fname %>% stringr::str_replace("\\.Rmd$", "") %>%
     file.path("/lab_solutions", .)
   lab_solution_page <- make_lab_solution_page(sol, semester, md_extensions)
   cat(lab_solution_page, file = solution_path)
-  c(key = !!lab_key, path = solution_path, url = solution_url)
+  c(title = sol$sol_title, key = sol$lab_key, path = solution_path,
+    url = solution_url)
+}
+
+make_lab_doc_content <- function(doc, semester) {
+  doc$markdown
 }
 
 make_lab_doc_page <- function(doc, semester,
@@ -63,22 +82,20 @@ make_lab_doc_page <- function(doc, semester,
     ) %>%
     yaml::as.yaml() %>% stringr::str_trim("right") %>%
     stringr::str_c(delim, ., delim, sep = "\n")
-  lab_doc_page <- stringr::str_c(
-    header,
-    doc$document_markdown,
-    sep = "\n"
-  ) %>% expand_codes(semester)
+  lab_doc_page <- cat_nl(header, make_lab_doc_content(doc, semester)) %>%
+    expand_codes(semester)
   lab_doc_page
 }
 
 make_lab_doc <- function(lab, semester, md_extensions = get_md_extensions()) {
   fname <- sprintf("lab_%02d_%s.Rmd", lab$lab_num, lab$doc_filename)
-  doc_path <- fname %>% file.path(semester$root_dir, "content", "lab_docs", .)
+  doc_path <- fname %>% file.path(semester$metadata$root_dir,
+                                  "content", "lab_docs", .)
   doc_url <- fname %>% stringr::str_replace("\\.Rmd$", "") %>%
     file.path("/lab_docs", .)
   lab_doc_page <- make_lab_doc_page(lab, semester, md_extensions)
   cat(lab_doc_page, file = doc_path)
-  c(key = lab$lab_key, path = doc_path, url = doc_url)
+  c(title = lab$document_title, key = lab$lab_key, path = doc_path, url = doc_url)
 }
 
 make_lab_docs <- function(lab_key, semester,
@@ -90,11 +107,127 @@ make_lab_docs <- function(lab_key, semester,
 
   lab_docs <- purrr::map( purrr::transpose(labs),
                           ~make_lab_doc(.x, semester, md_extensions))
+  dbg_checkpoint(g_lab_docs_out, lab_docs)
   invisible(lab_docs)
 }
 
-make_lab_assignment_page <- function(assignment, docs, solutions, semester,
+make_lab_assignment_content <- function(key, semester, use_solutions = FALSE,
+                                        md_extensions = md_extensions) {
+  assignment <- semester$lab_asgt %>% dplyr::filter(lab_key == key) %>%
+    merge_dates(semester) %>%
+    merge_dates(semester, id_col = "report_cal_id",
+                date_col = "report_date") %>%
+    merge_dates(semester, id_col = "pres_cal_id", date_col = "pres_date")
+
+  assertthat::assert_that(nrow(assignment) == 1,
+                          msg = stringr::str_c(
+                            "There should only be one lab assignment for a given key: ",
+                            "key ", key, " has ", nrow(assignment),
+                            " assignments.")
+  )
+
+  assignment <- as.list(assignment)
+
+  output <- adj_nl("# Overview:", assignment$description, start_par = TRUE,
+                   extra_lines = 1)
+
+  docs <- semester$lab_items %>% dplyr::filter(lab_key == key) %>%
+    merge_dates(semester) %>%
+    dplyr::arrange(lab_item_id)
+
+  dbg_checkpoint(g_lab_key, key)
+  dbg_checkpoint(g_docs, docs)
+
+  output <- cat_nl(output, "## Reading", TRUE)
+  if (nrow(docs) > 0) {
+    output <- cat_nl(output,
+                     stringr::str_c("**Before you come to lab**, please read the following document",
+                                    ifelse(nrow(docs) > 1, "s", ""), ":"),
+                     extra_lines = 1)
+    doc_links <- make_lab_docs(key, semester, md_extensions = md_extensions)
+    dbg_checkpoint(g_doc_links, doc_links)
+    if (is.list(doc_links)) {
+      doc_links <- purrr::transpose(doc_links)
+    } else {
+      doc_links <- as_list(doc_links)
+    }
+    doc_items <- stringr::str_c("[", doc_links$title, "](",
+                                doc_links$url, '){target="_blank"}') %>%
+      itemize()
+    output <- cat_nl(output, doc_items)
+  } else {
+    output <- cat_nl(output, "No reading has been posted yet for this lab.")
+  }
+  url <- assignment$assignment_url
+  output <- cat_nl(output, "## Assignment", start_par = TRUE, extra_lines = 1)
+  if (! is.na(url)) {
+    output <- cat_nl(output,
+                     stringr::str_c("Accept the assignment at GitHub Classroom at <",
+                                    url, ">."))
+  } else {
+    output <- cat_nl(output, "## Assignment",
+                     "The GitHub Classroom has not been posted yet.",
+                     start_par = TRUE)
+  }
+
+  if (use_solutions) {
+
+    solutions <- semester$lab_sol %>% dplyr::filter(lab_key == key) %>%
+      merge_dates(semester) %>%
+      merge_dates(semester, id_col = "sol_pub_cal_id",
+                  date_col = "sol_pub_date") %>%
+      dplyr::filter(sol_pub_date <= lubridate::now()) %>%
+      arrange(sol_pub_date)
+
+    if (nrow(solutions) > 0) {
+      output <- cat_nl(output, "## Solutions",
+                       "**Solutions for Lab Exercises**:",
+                       start_par = TRUE)
+      sol_links <- map(purrr::transpose(solutions),
+                       ~make_lab_solution(.x, semester, md_extensions))
+      if (is.list(sol_links)) {
+        sol_links <- purrr::transpose(sol_links)
+      }
+      output <- cat_nl(output,
+                       stringr::str_c("[", sol_links$sol_title, "](",
+                                      sol_links$url, '){target="_blank"}') %>%
+                         itemize())
+    }
+    output <- cat_nl(header, output) %>%
+      expand_codes(semester)
+    output
+
+  }
+}
+
+make_lab_assignment_page <- function(key, semester, use_solutions = FALSE,
                                      md_extensions = get_md_extensions()) {
+  assignment <- semester$lab_asgt %>% dplyr::filter(lab_key == key) %>%
+    merge_dates(semester) %>%
+    merge_dates(semester, id_col = "report_cal_id",
+                date_col = "report_date") %>%
+    merge_dates(semester, id_col = "pres_cal_id", date_col = "pres_date") %>%
+    dplyr::arrange(lab_id)
+
+  assertthat::assert_that(nrow(assignment) == 1,
+                          msg = stringr::str_c(
+                            "There should only be one lab assignment for a given key: ",
+                            "key ", key, " has ", nrow(assignment),
+                            " assignments.")
+  )
+
+  assignment <- as.list(assignment)
+
+  lab_date <- assignment$date
+  lab_title <- assignment$title
+  lab_idx <- assignment$lab_id
+  lab_num <- assignment$lab_num
+  lab_slug <- make_lab_slug(assignment)
+  pub_date <- semester$semester_dates$pub_date
+
+  message("Making lab page for Lab #", lab_num, " (index = ", lab_idx,
+          ", slug = ", lab_slug, ")")
+
   delim <- "---"
 
   header <- list(
@@ -112,63 +245,24 @@ make_lab_assignment_page <- function(assignment, docs, solutions, semester,
   ) %>% purrr::discard(is.na) %>%
     yaml::as.yaml() %>% stringr::str_trim("right") %>%
     stringr::str_c(delim, ., delim, sep = "\n")
-  output <- assignment$description
-  if (nrow(docs) > 0) {
-    output <- output %>% stringr::str_c(
-      "", "## Reading", "",
-      stringr::str_c("**Before you come to lab**, please read the following document",
-            ifelse(nrow(docs) > 1, "s", ""),
-            ":"), "",
-      sep = "\n")
-    for (i in seq(nrow(docs))) {
-      this_doc <- docs[i,]
-      doc_links <- make_lab_doc(this_doc, semester, md_extensions)
-      output <- output %>% stringr::str_c("\n* [", this_doc$document_title,
-                                          "](", doc_links['url'], ")")
-    }
-  } else {
-    output <- output %>% stringr::str_c(
-      "", "## Reading", "",
-      "No reading has been posted yet for this lab.",
-      "", sep = "\n")
-  }
-  url <- assignment$assignment_url
-  if (! is.na(url)) {
-    output <- output %>%
-      stringr::str_c("", "## Assignment", "",
-                     stringr::str_c("Accept the assignment at GitHub Classroom at <",
-                                    url, ">."),
-                     "", sep = "\n")
-  } else {
-    output <- output %>% stringr::str_c("", "## Assignment", "",
-                               "The GitHub Classroom has not been posted yet.",
-                               "", sep = "\n")
-  }
-  if (nrow(solutions) > 0) {
-    output <- output %>% stringr::str_c(
-      "", "## Solutions", "",
-      "**Solutions for Lab Exercises**:", "",
-      sep = "\n")
-    for (i in seq(nrow(solutions))) {
-      this_sol <- solutions[i,]
-      sol_links <- make_lab_solution(this_sol, semester, md_extensions)
-      output <- output %>%
-        stringr::str_c("\n* [", this_sol$sol_title, "](", sol_links['url'], ")")
-    }
-  }
-  output <- stringr::str_c(header, output, sep = "\n") %>%
-    expand_codes(semester)
-  output
+
+  lab_page <- stringr::str_c(
+    header,
+    make_lab_assignment_content(key, semester, use_solutions, md_extensions),
+    sep = "\n"
+  ) %>% expand_codes(semester)
+
+
 }
 
-make_lab_assignment <- function(key, semester,
-                                md_extensions = get_md_extensions()) {
+generate_lab_assignment <- function(key, semester, use_solutions = FALSE,
+                                    md_extensions = get_md_extensions()) {
   assignment <- semester$lab_asgt %>% dplyr::filter(lab_key == key) %>%
     merge_dates(semester) %>%
     merge_dates(semester, id_col = "report_cal_id",
                 date_col = "report_date") %>%
     merge_dates(semester, id_col = "pres_cal_id", date_col = "pres_date") %>%
-    dplyr::arrange(lab_asg_id)
+    dplyr::arrange(lab_id)
   docs <- semester$lab_items %>% dplyr::filter(lab_key == key) %>%
     merge_dates(semester) %>%
     dplyr::arrange(lab_item_id)
@@ -181,12 +275,13 @@ make_lab_assignment <- function(key, semester,
     merge_dates(semester, date_col = "lab_date") %>%
     dplyr::mutate(sol_pub_date =
                     lubridate::as_datetime(sol_pub_date,
-                                           tz = get_semestr_tz())) %>%
+                                           tz = semester$metadata$tz)) %>%
     dplyr::filter(sol_pub_date <= lubridate::now()) %>%
     dplyr::arrange(lab_sol_id)
 
   fname <- sprintf("lab_%02d_assignment.Rmd", assignment$lab_num)
-  lab_path <- fname %>% file.path(semester$root_dir, "content", "labs", .)
+  lab_path <- fname %>% file.path(semester$metadata$root_dir,
+                                  "content", "labs", .)
   lab_url <- fname %>% stringr::str_replace("\\.Rmd$", "")
   lab_assignment_page <- make_lab_assignment_page(assignment, docs, solutions,
                                                   semester, md_extensions)

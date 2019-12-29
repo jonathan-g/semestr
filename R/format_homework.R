@@ -1,11 +1,11 @@
-make_hw_slug <- function(hw) {
-  message("Making HW slug for ", hw$hw_key,
-          ", is_numbered = ", hw$is_numbered,
-          ", hw_num = ", hw$hw_num)
-  if (hw$has_numbered_hw) {
-    slug <- sprintf("homework_%02d", hw$hw_num)
+make_hw_slug <- function(hw_asgt) {
+  message("Making HW slug for ", hw_asgt$hw_key,
+          ", is_numbered = ", hw_asgt$is_numbered,
+          ", hw_num = ", hw_asgt$hw_num)
+  if (hw_asgt$is_numbered) {
+    slug <- sprintf("homework_%02d", hw_asgt$hw_num)
   } else {
-    slug <- hw$slug
+    slug <- hw_asgt$slug
   }
   slug
 }
@@ -35,17 +35,18 @@ make_hw_solution_page <- function(solution, semester, slug = NA_character_,
                       list(md_extensions = md_extensions,
                            toc = TRUE))
     ) %>%
-    as.yaml() %>% stringr::str_trim("right") %>%
+    yaml::as.yaml() %>% stringr::str_trim("right") %>%
     stringr::str_c(delim, ., delim, sep = "\n")
   hw_solution_page <- stringr::str_c(
     header,
     solution$hw_sol_markdown,
     sep = "\n"
-  ) %>% expand_codes()
+  ) %>% expand_codes(semester)
   hw_solution_page
 }
 
-make_hw_solution <- function(solution, assignment, slug = NA_character_) {
+make_hw_solution <- function(solution, assignment, slug = NA_character_,
+                             md_extensions = get_md_extensions()) {
   if (is.na(slug)) {
     slug = sprintf("homework_%02d", assignment$hw_num)
   }
@@ -56,60 +57,25 @@ make_hw_solution <- function(solution, assignment, slug = NA_character_) {
     file.path("/homework_solutions", .)
   message("Making solutions file for homework #", assignment$hw_num, ": ",
           solution_path)
-  hw_solution_page <- make_hw_solution_page(solution, assignment, slug)
+  hw_solution_page <- make_hw_solution_page(solution, assignment, slug,
+                                            md_extensions)
   cat(hw_solution_page, file = solution_path)
   c(path = solution_path, url = solution_url)
 }
 
-make_hw_page <- function(assignment, items, semester,
-                         md_extensions = get_md_extensions()) {
-  hw_date <- cal_entry$date
-  this_assignment <- homework_assignments %>%
-    dplyr::filter(homework_id == cal_entry$homework_id)
-  hw_topic <- head(this_assignment$hw_topic, 1)
-  hw_idx <- cal_entry$hw_index
-  hw_num <- cal_entry$hw_num
-  hw_slug <- make_hw_slug(cal_entry)
-  hw_type = this_assignment$hw_type %>% unique()
-  short_hw_type = this_assignment$short_hw_type %>% unique()
-  if (length(hw_type) != 1) {
-    stop("Error: multiple assignment types.")
-  }
-  if (length(short_hw_type) != 1) {
-    stop("Error: multiple short assignment types: ",
-         stringr::str_c(short_hw_type, collapse = ", "))
-  }
-
-  message("Making homework page for HW #", hw_num, " (index = ", hw_idx,
-          ", slug = ", hw_slug, ")")
-
-  delim <- "---"
-  header <- tibble(title = hw_topic,
-                   due_date = as.character(hw_date),
-                   assignment_type = hw_type,
-                   short_assignment_type = short_hw_type,
-                   assignment_number = hw_num, weight = hw_idx,
-                   slug = hw_slug,
-                   pubdate = as.character(pub_date),
-                   date = as.character(hw_date),
-                   output = list("blogdown::html_page" =
-                                   list(md_extensions = md_extensions))
-  ) %>% purrr::discard(is.na) %>%
-    as.yaml() %>% stringr::str_trim("right") %>%
-    stringr::str_c(delim, ., delim, sep = "\n")
-  hw_page <- stringr::str_c(
-    header,
-    make_homework_assignment(this_assignment, homework_solutions, hw_slug),
-    sep = "\n"
-  ) %>% expand_codes()
-}
-
-make_homework_assignment <- function(key, semester, use_solutions = FALSE,
+make_hw_asgt_content <- function(key, semester, use_solutions = FALSE,
                                      md_extensions = get_md_extensions()) {
   assignment <- semester$hw_asgt %>% dplyr::filter(hw_key == key) %>%
     merge_dates(semester) %>%
     merge_dates(semester, id_col = "due_cal_id", date_col = "due_date") %>%
     dplyr::arrange(hw_id)
+
+  assertthat::assert_that(nrow(assignment) == 1,
+                          msg = stringr::str_c(
+                            "There should only be one homework assignment for a given key: ",
+                            "key ", key, " has ", nrow(assignment), " assignments.")
+  )
+
   items <- semester$hw_items %>% dplyr::filter(hw_key == key) %>%
     merge_dates(semester) %>%
     dplyr::arrange(hw_item_id)
@@ -122,7 +88,7 @@ make_homework_assignment <- function(key, semester, use_solutions = FALSE,
                   date_col = "sol_pub_date") %>%
       dplyr::mutate(sol_pub_date =
                       lubridate::as_datetime(sol_pub_date,
-                                             tz = get_semestr_tz())) %>%
+                                             tz = semester$metadata$tz)) %>%
       dplyr::filter(sol_pub_date <= lubridate::now()) %>%
       dplyr::arrange(lab_sol_id)
   }
@@ -153,7 +119,7 @@ make_homework_assignment <- function(key, semester, use_solutions = FALSE,
     output <- output %>% stringr::str_c("## Solutions:\n\n")
     for (i in seq(nrow(solutions))) {
       this_sol <- solutions[i,]
-      sol <- make_hw_solution(this_sol, this_assignment, slug)
+      sol <- make_hw_solution(this_sol, assignment, slug, md_extensions)
       output <- output %>% stringr::str_c("* [", this_sol$hw_sol_title, "](",
                                           sol['url'], ")\n")
     }
@@ -259,16 +225,71 @@ make_homework_assignment <- function(key, semester, use_solutions = FALSE,
         purrr::map_lgl(is.null) %>% all()) {
       output <- stringr::str_c(output, everyone_note_items, sep = "\n")
     } else {
-      everyone_note_items <- stringr::str_c("**Everyone:**", everyone_note_items, collapse = "\n")
-      ugrad_note_items <- stringr::str_c("**Undergraduates:**", ugrad_note_items, collapse = "\n")
-      grad_note_items <- stringr::str_c("**Graduate Students:**", grad_note_items, collapse = "\n")
-      notes <- c(everyone_note_items, ugrad_note_items, grad_note_items) %>% itemize()
-      output <- stringr::str_c(output, "",
-                      append_newline_if_needed(notes),
-                      "", sep = "\n")
+      everyone_note_items <- stringr::str_c("**Everyone:**",
+                                            everyone_note_items,
+                                            collapse = "\n")
+      ugrad_note_items <- stringr::str_c("**Undergraduates:**",
+                                         ugrad_note_items, collapse = "\n")
+      grad_note_items <- stringr::str_c("**Graduate Students:**",
+                                        grad_note_items, collapse = "\n")
+      notes <- c(everyone_note_items, ugrad_note_items, grad_note_items) %>%
+        itemize()
+      output <- stringr::str_c(output, adj_nl(notes, TRUE, 1), sep = "\n")
     }
   }
   output
+}
+
+make_hw_asgt_page <- function(key, semester, use_solutions = FALSE,
+                         md_extensions = get_md_extensions()) {
+  assignment <- semester$hw_asgt %>% dplyr::filter(hw_key == key) %>%
+    merge_dates(semester) %>%
+    merge_dates(semester, id_col = "due_cal_id", date_col = "due_date") %>%
+    dplyr::arrange(hw_id)
+
+  assertthat::assert_that(nrow(assignment) == 1,
+                          msg = stringr::str_c(
+                            "There should only be one homework assignment for a given key: ",
+                            "key ", key, " has ", nrow(assignment), " assignments.")
+  )
+
+  assignment <- as.list(assignment)
+
+  hw_date <- assignment$date
+  hw_topic <- assignment$topic
+  hw_idx <- assignment$hw_id
+  hw_num <- assignment$hw_num
+  hw_slug <- make_hw_slug(assignment)
+  hw_type = assignment$hw_type
+  short_hw_type = assignment$short_hw_type
+  pub_date <- semester$semester_dates$pub_date
+
+  message("Making homework page for HW #", hw_num, " (index = ", hw_idx,
+          ", slug = ", hw_slug, ")")
+
+  delim <- "---"
+  header <- tibble(title = hw_topic,
+                   due_date = lubridate::as_date(hw_date) %>% as.character(),
+                   assignment_type = hw_type,
+                   short_assignment_type = short_hw_type,
+                   assignment_number = hw_num, weight = hw_idx,
+                   slug = hw_slug,
+                   pubdate = as.character(pub_date),
+                   date = as.character(hw_date),
+                   output = list("blogdown::html_page" =
+                                   list(md_extensions = md_extensions))
+  ) %>% purrr::discard(is.na) %>%
+    yaml::as.yaml() %>% stringr::str_trim("right") %>%
+    stringr::str_c(delim, ., delim, sep = "\n")
+  hw_page <- stringr::str_c(
+    header,
+    make_hw_asgt_content(key, semester, use_solutions, md_extensions),
+    sep = "\n"
+  ) %>% expand_codes(semester)
+}
+
+generate_hw_assignment <- function() {
+
 }
 
 make_short_hw_assignment <- function(key, semester) {
@@ -276,7 +297,16 @@ make_short_hw_assignment <- function(key, semester) {
     merge_dates(semester) %>%
     merge_dates(semester, id_col = "due_cal_id", date_col = "due_date") %>%
     dplyr::arrange(hw_id)
-  items <- semester$hw_items %>% dplyr::filter(hw_key == key) %>%
+
+  assertthat::assert_that(nrow(assignment) == 1,
+                          msg = stringr::str_c(
+                            "There should only be one homework assignment for a given key: ",
+                            "key ", key, " has ", nrow(assignment), " assignments.")
+  )
+
+
+
+    items <- semester$hw_items %>% dplyr::filter(hw_key == key) %>%
     merge_dates(semester) %>%
     dplyr::arrange(hw_item_id)
 

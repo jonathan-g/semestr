@@ -1,101 +1,3 @@
-#' Expose contents of an environment in the current environment
-#'
-#' Expose the contents of an environment in the current environment.
-#' Similar to [attach], but it exposes the contents only in the
-#' current environment and does not change the global search.
-#'
-#' @param env The environment to attach locally.
-#'
-pull_env <- function(env) {
-  for (n in ls(env)) {
-    assign(n, get(n, envir = env), envir = parent.frame())
-  }
-}
-
-#' Determine the type of calendar entry from its calendar id.
-#'
-#' @param cal_id an integer calendar ID number.
-#' @param metadata A list of metadata as returned from [load_semester_db].
-#'
-#' @return A string identifying the type of calendar entry. Current values
-#'   are "class", "reading", "homework", "lab", "exam", "due date", "holiday",
-#'   and "event".
-#'
-item_type <- function(cal_id, metadata) {
-  base <- as.integer(cal_id) %>%
-    divide_by_int(1000) %>% multiply_by(1000) %>% as.character()
-  metadata$rev_base[base]
-}
-
-#' Determine the modification type of calendar entry from its calendar id.
-#'
-#' Modifications include cancelled and re-scheduled (make-up) classes.
-#'
-#' @param cal_id an integer calendar ID number.
-#' @param metadata A list of metadata as returned from [load_semester_db].
-#'
-#' @return A string identifying the type of modification. Current values are
-#'   "cancelled" and "make-up"
-#'
-item_mod <- function(cal_id, metadata) {
-  base_mod <- as.integer(cal_id) %/% mod(1000) %>%
-    divide_by_int(100) %>% multiply_by(100) %>% as.character()
-  metadata$rev_mod[base_mod]
-}
-
-#' Strip prefixes off keys.
-#'
-#' Keys in the master calendar's `topic_key` column have prefixes according to
-#' the type of calennder entry they represent (e.g., "`LAB_`" for labs,
-#' "`CLS_`" for classes/reading assignments, "`EXAM_`" for exams, etc.). This
-#' function strips those off.
-#'
-#' @param df The data frame to process.
-#' @param metadata A list containing metadata for the differennt types.
-#' @param type The type of calendar entry to strip (e.g., "`class`", "`lab`",
-#' etc.)
-#' @param col The column where the keys are located (by default "`topic_key`").
-#'
-#' @return A data frame with the prefixes stripped from the specified column.
-#'
-#' @seealso add_key_prefix
-#'
-strip_key_prefix <- function(df, metadata, type, col = "topic_key") {
-  col <- ensym(col)
-  col <- enquo(col)
-
-  target <- stringr::str_c("^", metadata$prefixes[metadata$type2idx[type]], "_")
-  df <- df %>% dplyr::mutate(!!col := stringr::str_replace(!!col, target, ""))
-
-  invisible(df)
-}
-
-#' Add prefixes to keys.
-#'
-#' Keys in the master calendar's `topic_key` column have prefixes according to
-#' the type of calennder entry they represent (e.g., "`LAB_`" for labs,
-#' "`CLS_`" for classes/reading assignments, "`EXAM_`" for exams, etc.). This
-#' function adds those prefixes.
-#'
-#' @param df The data frame to process.
-#' @param metadata A list containing metadata for the differennt types.
-#' @param type The type of prefix to add (e.g., "`class`", "`lab`",
-#' etc.)
-#' @param col The column where the keys are located (by default "`topic_key`").
-#'
-#' @return A data frame with the prefixes stripped from the specified column.
-#'
-#' @seealso strip_key_prefix
-#'
-add_key_prefix <- function(df, metadata, type, col = "topic_key") {
-  col <- ensym(col)
-  col <- enquo(col)
-
-  df <- df %>% dplyr::mutate(!!col := stringr::str_c(prefixes[type], !!col,
-                                                     sep = "_"))
-  invisible(df)
-}
-
 #' Load schedule for semester from database
 #'
 #' Loads schedule for class meetings, reading and homework assignments,
@@ -129,6 +31,8 @@ load_semester_db <- function(db_file, root_crit = NULL) {
   }
 
   root_dir <- rprojroot::find_root(root_crit, dirname(db_file))
+  slide_dir <- file.path(root_dir, "static", "slides")
+  tz <- get_semestr_tz()
 
   db <- DBI::dbConnect(RSQLite::SQLite(), db_file)
 
@@ -152,7 +56,9 @@ load_semester_db <- function(db_file, root_crit = NULL) {
                    idx2type = idx2type, col2type = col2type,
                    idx2col  = idx2col,  col2idx  = col2idx,
                    prefixes = prefixes, bases = bases, rev_base = rev_base,
-                   mods = mods, rev_mods = rev_mods)
+                   mods = mods, rev_mods = rev_mods,
+                   root_dir = root_dir, slide_dir = slide_dir,
+                   tz = tz)
 
   for (t in c("calendar", "due_dates", "events",
               "exams", "holidays", "notices",
@@ -169,9 +75,31 @@ load_semester_db <- function(db_file, root_crit = NULL) {
   DBI::dbDisconnect(db)
 
   calendar <- calendar %>%
-    dplyr::mutate(date = lubridate::as_datetime(date, tz = get_semestr_tz()))
+    dplyr::mutate(date = lubridate::as_datetime(date, tz = tz))
+
+  duplicates <- purrr::keep(calendar$cal_id, duplicated)
+  assertthat::assert_that(is_empty(duplicates),
+                          msg = stringr::str_c("Duplicated cal_ids: (",
+                                               stringr::str_c(duplicates, collapse = ", "),
+                                               ")."))
 
   due_dates <- due_links %>% dplyr::left_join(due_dates, by = "due_key")
+
+  missing_due_dates <- calendar %>%
+    dplyr::filter(cal_type == "due date") %$% cal_id %>%
+    setdiff(due_dates$cal_id)
+  valid_due_dates <-
+    assertthat::assert_that(length(missing_due_dates) == 0,
+                            msg = stringr::str_c("Missing due dates: (",
+                                                 stringr::str_c(missing_due_dates, collapse = ", "),
+                                                 ")."))
+  if (! isTRUE(valid_due_dates)) {
+    warning(valid_due_dates)
+  }
+
+  calendar <- calendar %>%
+    dplyr::left_join( dplyr::select(due_dates, cal_id, due_type = type,
+                                    due_action = action), by = "cal_id")
 
   hw_asgt <- hw_asgt %>% dplyr::inner_join(hw_links, by = "hw_key") %>%
     dplyr::left_join(hw_topics, by = "hw_key") %>%
@@ -189,11 +117,55 @@ load_semester_db <- function(db_file, root_crit = NULL) {
                                      sol_pub_cal_id  = cal_id),
                        by = "sol_pub_key")
 
+  missing_hw <- calendar %>%
+    dplyr::filter(cal_type == "homework") %$% cal_id %>%
+    setdiff(hw_asgt$cal_id)
+  valid_hw <-
+    assertthat::assert_that(length(missing_hw) == 0,
+                            msg = stringr::str_c("Missing homework assignments: (",
+                                                 stringr::str_c(missing_hw, collapse = ", "),
+                                                 ")."))
+  if (! isTRUE(valid_hw)) {
+    warning(valid_hw)
+  }
+
+
+  # ## Reconcile homeworks with due dates ...
+  # ## Incomplete, to be finished later...
+  # for (i in seq(nrow(hw_asgt))) {
+  #   row <- hw_asgt[1,]
+  #   hw_key <- add_key_prefix(row$hw_key, metadata, "homework")
+  #   due_key <- add_key_prefix(row$due_kwy, metadata, "due date")
+  #   cal_row <- which(calendar$topic_key == hw_key)
+  #   assertthat::assert_that(length(cal_row) <= 1,
+  #                           msg = stringr::str_c("Each homework assignment should have a unique calendar entry: ",
+  #                                                hw_key))
+  #   due_row <- which(calendar$topic_key == due_key)
+  #   assertthat::assert_that(length(cal_row) <= 1,
+  #                           msg = stringr::str_c("Each due date should have a unique calendar entry: ",
+  #                                                due_key))
+  #   # ...
+  #   }
+
   rd_items <- rd_items %>% dplyr::inner_join(rd_links, by = "rd_key") %>%
     dplyr::left_join(rd_src, by = "src_key") %>%
     dplyr::mutate_at(dplyr::vars(undergraduate_only, graduate_only, optional,
                                  prologue, epilogue, textbook, handout),
                      ~as.logical(.) %>% tidyr::replace_na(FALSE))
+
+  missing_reading <- calendar %>%
+    dplyr::filter(cal_type == "class") %$% cal_id %>%
+    setdiff(rd_items$cal_id)
+  valid_reading <-
+    assertthat::validate_that(length(missing_reading) == 0,
+                              msg = stringr::str_c("Missing reading assignments: (",
+                                                   stringr::str_c(missing_reading,
+                                                                  collapse = ", "),
+                                                   ")."))
+  if (! isTRUE(valid_reading)) {
+    warning(valid_reading)
+  }
+
 
   lab_asgt <- lab_asgt %>% dplyr::inner_join(lab_links, by = "lab_key") %>%
     dplyr::left_join( dplyr::select(due_dates, report_due_key = due_key,
@@ -202,6 +174,20 @@ load_semester_db <- function(db_file, root_crit = NULL) {
     dplyr::left_join( dplyr::select(due_dates, presentation_key = due_key,
                                     pres_cal_id = cal_id),
                       by = "presentation_key")
+
+  missing_labs <- calendar %>%
+    dplyr::filter(cal_type == "lab") %$% cal_id %>%
+    setdiff(lab_asgt$cal_id)
+  valid_labs <-
+    assertthat::validate_that(length(missing_labs) == 0,
+                              msg = stringr::str_c("Missing lab assignments: (",
+                                                   stringr::str_c(missing_labs,
+                                                                  collapse = ", "),
+                                                   ")."))
+  if (! isTRUE(valid_labs)) {
+    warning(valid_labs)
+  }
+
   lab_items <- lab_items %>% dplyr::inner_join(lab_links, by = "lab_key")
   lab_sol <- lab_sol %>% dplyr::inner_join(lab_links, by = "lab_key") %>%
     dplyr::inner_join( dplyr::select(due_dates, sol_pub_key = due_key,
@@ -209,8 +195,48 @@ load_semester_db <- function(db_file, root_crit = NULL) {
                        by = "sol_pub_key")
 
   events <- events %>% dplyr::inner_join(event_links, by = "event_key")
+
+  missing_events <- calendar %>%
+    dplyr::filter(cal_type == "event") %$% cal_id %>%
+    setdiff(events$cal_id)
+  valid_events <-
+    assertthat::validate_that(length(missing_events) == 0,
+                              msg = stringr::str_c("Missing events: (",
+                                                   stringr::str_c(missing_events,
+                                                                  collapse = ", "),
+                                                   ")."))
+  if (! isTRUE(valid_events)) {
+    warning(valid_events)
+  }
+
   exams <- exams %>% dplyr::inner_join(exam_links, by = "exam_key")
+
+  missing_exams <- calendar %>%
+    dplyr::filter(cal_type == "exam") %$% cal_id %>%
+    setdiff(exams$cal_id)
+  valid_exams <-
+    assertthat::assert_that(length(missing_exams) == 0,
+                            msg = stringr::str_c("Missing exams: (",
+                                                 stringr::str_c(missing_exams,
+                                                                collapse = ", "),
+                                                 ")."))
+  if (! isTRUE(valid_exams)) {
+    warning(valid_exams)
+  }
+
+
   holidays <- holidays %>% dplyr::inner_join(holiday_links, by = "holiday_key")
+
+  missing_holidays <- calendar %>%
+    dplyr::filter(cal_type == "holiday") %$% cal_id %>%
+    setdiff(holidays$cal_id)
+  valid_holidays <-
+    assertthat::assert_that(length(missing_holidays) == 0,
+                            msg = stringr::str_c("Missing holidays: (",
+                                                 stringr::str_c(missing_holidays,
+                                                                collapse = ", "),
+                                                 ")."))
+
   notices <- notices %>%
     dplyr::inner_join( dplyr::select(calendar, cal_id, topic_key),
                        by = "topic_key")
@@ -241,9 +267,7 @@ load_semester_db <- function(db_file, root_crit = NULL) {
   year_taught <- lubridate::year(first_date)
 
   # Pub date should be last day of previous month.
-  pub_date <- first_date %>% lubridate::as_date(tz = get_semestr_tz()) %>%
-    lubridate::rollback()
-  if (lubridate::today() < pub_date) pub_date <- lubridate::today()
+  pub_date <- make_pub_date(first_date, tz)
 
   semester <- list(
     calendar = calendar, due_dates = due_dates, due_links = due_links,
@@ -258,7 +282,6 @@ load_semester_db <- function(db_file, root_crit = NULL) {
     events = events, event_links = event_links,
     notices = notices, text_codes = text_codes,
     metadata = metadata,
-    root_dir = root_dir,
     semester_dates = list(
       first_class = first_class, last_class = last_class,
       first_date = first_date, last_date = last_date,
