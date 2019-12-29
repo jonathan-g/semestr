@@ -51,9 +51,10 @@ make_lab_solution_page <- function(sol, semester,
     ) %>%
     yaml::as.yaml() %>% stringr::str_trim("right") %>%
     stringr::str_c(delim, ., delim, sep = "\n")
+  context <- make_context(sol, "lab solution", semester)
   lab_solution_page <- cat_nl( header,
                                make_lab_solution_content(sol, semester)) %>%
-    expand_codes(semester)
+    expand_codes(context, semester)
   lab_solution_page
 }
 
@@ -100,8 +101,9 @@ make_lab_doc_page <- function(doc, semester,
     ) %>%
     yaml::as.yaml() %>% stringr::str_trim("right") %>%
     stringr::str_c(delim, ., delim, sep = "\n")
+  context <- make_context(doc, "lab doc", semester)
   lab_doc_page <- cat_nl(header, make_lab_doc_content(doc, semester)) %>%
-    expand_codes(semester)
+  expand_codes(context, semester)
   lab_doc_page
 }
 
@@ -198,10 +200,10 @@ make_lab_assignment_content <- function(key, semester, use_solutions = FALSE,
                                       sol_links$url, '){target="_blank"}') %>%
                          itemize())
     }
-    output <- output %>% expand_codes(semester)
-    output
-
   }
+  context <- make_context(assignment, "lab", semester)
+  output <- output %>% expand_codes(context, semester)
+  output
 }
 
 make_lab_assignment_page <- function(key, semester, use_solutions = FALSE,
@@ -238,11 +240,12 @@ make_lab_assignment_page <- function(key, semester, use_solutions = FALSE,
     yaml::as.yaml() %>% stringr::str_trim("right") %>%
     stringr::str_c(delim, ., delim, sep = "\n")
 
+  context <- make_context(assignment, "lab", semester)
   lab_page <- stringr::str_c(
     header,
     make_lab_assignment_content(key, semester, use_solutions, md_extensions),
     sep = "\n"
-  ) %>% expand_codes(semester)
+  ) %>% expand_codes(context, semester)
   invisible(lab_page)
 }
 

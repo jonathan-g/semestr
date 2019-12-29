@@ -40,9 +40,9 @@ make_hw_solution_page <- function(solution, semester, slug = NA_character_,
   delim <- "---"
   header <- list(
     title = solution$hw_sol_title,
-    hw_number = assignment$hw_num,
+    hw_number = solution$hw_num,
     pubdate = as.character(solution$hw_sol_pub_date),
-    date = as.character(assignment$hw_due_date),
+    date = as.character(solution$hw_due_date),
     pdf_url = solution$hw_sol_pdf_url,
     slug = stringr::str_c(slug, "_", solution$hw_sol_filename)) %>%
     purrr::discard(is.na) %>%
@@ -53,11 +53,12 @@ make_hw_solution_page <- function(solution, semester, slug = NA_character_,
     ) %>%
     yaml::as.yaml() %>% stringr::str_trim("right") %>%
     stringr::str_c(delim, ., delim, sep = "\n")
+  context <- make_context(solution, "homework solution", semester)
   hw_solution_page <- stringr::str_c(
     header,
     solution$hw_sol_markdown,
     sep = "\n"
-  ) %>% expand_codes(semester)
+  ) %>% expand_codes(context, semester)
   hw_solution_page
 }
 
@@ -281,11 +282,12 @@ make_hw_asgt_page <- function(key, semester, use_solutions = FALSE,
   ) %>% purrr::discard(is.na) %>%
     yaml::as.yaml() %>% stringr::str_trim("right") %>%
     stringr::str_c(delim, ., delim, sep = "\n")
+  context <- make_context(assignment, "homework", semester)
   hw_page <- stringr::str_c(
     header,
     make_hw_asgt_content(key, semester, use_solutions, md_extensions),
     sep = "\n"
-  ) %>% expand_codes(semester)
+  ) %>% expand_codes(context, semester)
   invisible(hw_page)
 }
 

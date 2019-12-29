@@ -116,6 +116,21 @@ generate_assignments <- function(semester, md_extensions = get_md_extensions()) 
   root_dir <- metadata$root_dir
   slide_dir <- metadata$slide_dir
 
+  if (exists("calendar", envir = .globals)) {
+    if (bindingIsLocked("calendar", .globals)) {
+      unlockBinding("calendar", .globals)
+    }
+  }
+  assign("schedule", semester$calendar, envir = .globals)
+  if (exists("schedule", envir = .globals)) {
+    if (bindingIsLocked("schedule", .globals)) {
+      unlockBinding("schedule", .globals)
+    }
+  }
+  assign("schedule", schedule, envir = .globals)
+
+
+
   for (d in dates) {
     cal_entry <- schedule %>% dplyr::filter(date == d)
     dbg_checkpoint(g_cal_entry, cal_entry)
@@ -228,7 +243,7 @@ generate_assignments <- function(semester, md_extensions = get_md_extensions()) 
     dplyr::arrange(date) %>% dplyr::mutate(date = as.character(date)) %>%
     rowwise() %>% do(lessons = as.list(.)) %>%
     map(~map(.x, ~discard(.x, is.na))) %>%
-    yaml::as.yaml() %>% expand_codes()  -> foo
+    yaml::as.yaml() %>% expand_codes(context, semester)  -> foo
   %T>%
     cat(file = file.path(root_dir, "data", "lessons.yml")) -> lesson_plan
 

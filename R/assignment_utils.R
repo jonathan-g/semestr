@@ -434,13 +434,40 @@ enumerate <- function(text, pad_len = 0, enum_type = "#.") {
     stringr::str_c(collapse = "\n")
 }
 
-expand_codes <- function(text, semester, delim = c("<%", "%>")) {
+expand_codes <- function(text, context, semester, delim = c("<%", "%>"), envir = NULL) {
+  unlock_list <- list()
+  if (is.null(envir)) {
+    envir <- new.env(parent = emptyenv())
+    for (sym in c("calendar", "semester_dates", "metadata")) {
+      assign(sym, get(sym, envir = .globals), envir = envir)
+      lockBinding(sym, envir)
+    }
+    assign("context", context, envir = envir)
+    lockBinding("context", envir)
+  } else {
+    for (sym in ls(envir = envir)) {
+      if (! bindingIsLocked(sym, envir)) {
+        unlock_list <- c(unlock_list, sym)
+        lockBinding(sym, envir)
+      }
+      if (exists("context", envir = envir)) {
+        unlockBinding("context", envir)
+      }
+      assign("context", context, envir = envir)
+      lockBinding("context", envir)
+    }
+  }
+
   text_codes <- semester$text_codes$md
-  rlang::exec(knitr::knit_expand, !!!text_codes, text = text, delim = delim)
+  rlang::exec(knitr::knit_expand, !!!text_codes, text = text, delim = delim,
+              .env = envir)
+  for (sym in unlock_list) {
+    unlockBinding(sym, envir)
+  }
 }
 
-expand_code <- function(text, semester) {
-  stringr::str_c("<%", text, "%>") %>% expand_codes(semester)
+expand_code <- function(text, context, semester) {
+  stringr::str_c("<%", text, "%>") %>% expand_codes(context, semester)
 }
 
 merge_dates <- function(df, semester, id_col = "cal_id", date_col = "date", ...) {
@@ -523,4 +550,87 @@ dbg_checkpoint <- function(tag, value) {
   if (exists("semestr.debug") && semestr.debug ) {
     assign(as_label(qtag), value, envir = global_env())
   }
+}
+
+
+make_reading_context <- function(asgt, semester) {
+  context <- list(
+    type = "class",
+    key = asgt$rd_key,
+    cal_id = asgt$cal_id
+    date = asgt$date,
+    class_num = asgt$class_numm,
+    title = asgt$topic,
+  )
+  context
+}
+
+make_hw_context <- function(asgt, semester) {
+  context <- list(
+    type = "homework",
+    key = asgt$hw_key,
+    cal_id = asgt$cal_id,
+    due_cal_id = asgt$due_cal_id,
+    date = asgt$date,
+    due_date = asgt$due_date,
+    title = asgt$title
+  )
+  context
+}
+
+make_hw_sol_context <- function(asgt, semester) {
+  sol <- asgt
+  asgt <- get_hw_assignment(sol$hw_key, semester)
+  context <- list(
+    type = "homework",
+    key = asgt$hw_key,
+    cal_id = asgt$cal_id,
+    due_cal_id = asgt$due_cal_id,
+    date = asgt$date,
+    due_date = asgt$due_date,
+    sol_title = sol$sol_title,
+    title = asgt$title,
+    sol_pub_cal_id = sol$sol_pub_cal_id,
+    sol_pub_date <- dplyr::select(semester$calendar)
+  )
+  context
+
+}
+
+make_lab_context <- function(asgt, semester) {
+
+}
+
+make_lab_sol_context <- function(asgt, semester) {
+
+}
+
+make_lab_doc_context <- function(asgt, semester) {
+
+}
+
+make_exam_context <- function(asgt, semester) {
+
+}
+
+
+make_context <- function(asgt, type, semester) {
+  dbg_checkpoint("g_context_asgt", asgt)
+  dbg_checkpoint("g_context_type", type)
+  if (type == "reading") {
+    return(make_reading_context(asgt, semester))
+  } else if (type == "lab") {
+    return(make_lab_context(asgt, semester))
+  } else if (type == "lab solution") {
+    return(make_lab_sol_context(asgt, semester))
+  } else if (type == "homework") {
+    return(make_hw_context(asgt, semester))
+  } else if (type == "homework solution") {
+    return(make_hw_sol_context(asgt, semester))
+  } else if (type == "exam") {
+    return(make_exam_context(asgt, semester))
+  } else {
+    stop("Unknown context type ", type)
+  }
+
 }

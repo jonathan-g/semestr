@@ -1,3 +1,8 @@
+
+# Package-level globals (idea copied from rmarkdown::render.R)
+.globals <- new.env(parent = emptyenv())
+
+
 #' Load schedule for semester from database
 #'
 #' Loads schedule for class meetings, reading and homework assignments,
@@ -77,13 +82,18 @@ load_semester_db <- function(db_file, root_crit = NULL) {
   calendar <- calendar %>%
     dplyr::mutate(date = lubridate::as_datetime(date, tz = tz))
 
+  bare_dates <- calendar %>% dplyr::select(cal_id, date)
+
   duplicates <- purrr::keep(calendar$cal_id, duplicated)
   assertthat::assert_that(is_empty(duplicates),
                           msg = stringr::str_c("Duplicated cal_ids: (",
                                                stringr::str_c(duplicates, collapse = ", "),
                                                ")."))
 
-  due_dates <- due_links %>% dplyr::left_join(due_dates, by = "due_key")
+  due_dates <- due_links %>% dplyr::left_join(due_dates, by = "due_key") %>%
+    left_join(bare_dates, by = "cal_id")
+
+  bare_due_dates <- due_dates %>% dplyr::selct(due_key, due_date = date)
 
   missing_due_dates <- calendar %>%
     dplyr::filter(cal_type == "due date") %$% cal_id %>%
@@ -288,6 +298,10 @@ load_semester_db <- function(db_file, root_crit = NULL) {
       year_taught = year_taught, pub_date = pub_date
     )
   )
+
+  assign("metadata", metadata, envir = .globals)
+  assign("semester_dates", semester_dates, envir = .globals)
+  assign("semester_data", semester, envir = .globals)
 
   invisible(semester)
 }

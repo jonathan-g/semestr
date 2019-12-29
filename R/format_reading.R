@@ -167,6 +167,9 @@ make_reading_page <- function(cal_id, semester,
   class_num <- unique(reading$class_num)
   assertthat::assert_that(length(rd_date) == 1,
                           msg = "A calendar ID should have a unique class # (make_reading)")
+  key <- unique(reading$rd_key)
+  assertthat::assert_that(length(key) == 1,
+                          msg = "A calendar ID should have a unique reading key # (make_reading)")
 
   homework <- semester$hw_asgt %>% dplyr::filter(cal_id == !!cal_id) %>%
     merge_dates(semester) %>%
@@ -196,7 +199,11 @@ make_reading_page <- function(cal_id, semester,
     sep = "\n"
   )
   dbg_checkpoint(g_rd_page, rd_page)
-  rd_page <- rd_page %>% expand_codes(semester)
+  asgt <- reading %>% dplyr::select(cal_id, rd_key, rd_date, rd_topic, class_num) %>%
+    distinct()
+  assertthat::assert_that(nrow(asgt) == 1, msg = "A calendar ID should have a consistent reading assignment (make_reading)")
+  context <- make_context(asgt, "reading", semester)
+  rd_page <- rd_page %>% expand_codes(context, semester)
 
   rd_page
 }
