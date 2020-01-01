@@ -6,12 +6,7 @@ make_lab_slug <- function(lab_asgt) {
 }
 
 get_lab_assignment <- function(key, semester) {
-  assignment <- semester$lab_asgt %>% dplyr::filter(lab_key == key) %>%
-    merge_dates(semester) %>%
-    merge_dates(semester, id_col = "report_cal_id",
-                date_col = "report_date") %>%
-    merge_dates(semester, id_col = "pres_cal_id", date_col = "pres_date")
-
+  assignment <- semester$lab_asgt %>% dplyr::filter(lab_key == key)
   assertthat::assert_that(nrow(assignment) == 1,
                           msg = stringr::str_c(
                             "There should only be one lab assignment for a given key: ",
@@ -122,8 +117,8 @@ make_lab_docs <- function(lab_key, semester,
                           md_extensions = get_md_extensions()) {
   lab_key <- enquo(lab_key)
   labs <- semester$lab_items %>%
-    dplyr::filter(lab_key == !!lab_key, ! is.na(doc_filename)) %>%
-    merge_dates(semester)
+    dplyr::filter(lab_key == !!lab_key, ! is.na(doc_filename)) # %>%
+    # merge_dates(semester)
 
   lab_docs <- purrr::map( purrr::transpose(labs),
                           ~make_lab_doc(.x, semester, md_extensions))
@@ -139,7 +134,7 @@ make_lab_assignment_content <- function(key, semester, use_solutions = FALSE,
                    extra_lines = 1)
 
   docs <- semester$lab_items %>% dplyr::filter(lab_key == key) %>%
-    merge_dates(semester) %>%
+    # merge_dates(semester) %>%
     dplyr::arrange(lab_item_id)
 
   dbg_checkpoint(g_lab_key, key)
@@ -180,9 +175,9 @@ make_lab_assignment_content <- function(key, semester, use_solutions = FALSE,
   if (use_solutions) {
 
     solutions <- semester$lab_sol %>% dplyr::filter(lab_key == key) %>%
-      merge_dates(semester) %>%
-      merge_dates(semester, id_col = "sol_pub_cal_id",
-                  date_col = "sol_pub_date") %>%
+      # merge_dates(semester) %>%
+      # merge_dates(semester, id_col = "sol_pub_cal_id",
+      #             date_col = "sol_pub_date") %>%
       dplyr::filter(sol_pub_date <= lubridate::now()) %>%
       dplyr::arrange(sol_pub_date)
 

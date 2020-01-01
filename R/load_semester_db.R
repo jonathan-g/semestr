@@ -2,6 +2,7 @@
 # Package-level globals (idea copied from rmarkdown::render.R)
 .globals <- new.env(parent = emptyenv())
 
+.globals$expand_packages <- c("lubridate", "stringr", "purrr")
 
 #' Load schedule for semester from database
 #'
@@ -90,10 +91,7 @@ load_semester_db <- function(db_file, root_crit = NULL) {
                                                stringr::str_c(duplicates, collapse = ", "),
                                                ")."))
 
-  due_dates <- due_links %>% dplyr::left_join(due_dates, by = "due_key") %>%
-    left_join(bare_dates, by = "cal_id")
-
-  bare_due_dates <- due_dates %>% dplyr::selct(due_key, due_date = date)
+  due_dates <- due_links %>% dplyr::left_join(due_dates, by = "due_key")
 
   missing_due_dates <- calendar %>%
     dplyr::filter(cal_type == "due date") %$% cal_id %>%
@@ -146,11 +144,11 @@ load_semester_db <- function(db_file, root_crit = NULL) {
   #   row <- hw_asgt[1,]
   #   hw_key <- add_key_prefix(row$hw_key, metadata, "homework")
   #   due_key <- add_key_prefix(row$due_kwy, metadata, "due date")
-  #   cal_row <- which(calendar$topic_key == hw_key)
+  #   cal_row <- which(calendar$cal_key == hw_key)
   #   assertthat::assert_that(length(cal_row) <= 1,
   #                           msg = stringr::str_c("Each homework assignment should have a unique calendar entry: ",
   #                                                hw_key))
-  #   due_row <- which(calendar$topic_key == due_key)
+  #   due_row <- which(calendar$cal_key == due_key)
   #   assertthat::assert_that(length(cal_row) <= 1,
   #                           msg = stringr::str_c("Each due date should have a unique calendar entry: ",
   #                                                due_key))
@@ -248,8 +246,8 @@ load_semester_db <- function(db_file, root_crit = NULL) {
                                                  ")."))
 
   notices <- notices %>%
-    dplyr::inner_join( dplyr::select(calendar, cal_id, topic_key),
-                       by = "topic_key")
+    dplyr::inner_join( dplyr::select(calendar, cal_id, cal_key),
+                       by = "cal_key")
 
   bad_codes <- text_codes %>% dplyr::filter(is.na(code_value))
   if (nrow(bad_codes) > 0) {
@@ -262,6 +260,49 @@ load_semester_db <- function(db_file, root_crit = NULL) {
     md = text_codes %>% { set_names(.$code_value, .$code_name) },
     latex = text_codes %>% { set_names(.$latex_value, .$code_name) }
   )
+
+  # Add dates to items
+  rd_items <- rd_items %>% dplyr::left_join(bare_dates, by = "cal_id")
+  hw_asgt <- hw_asgt %>% dplyr::left_join(bare_dates, by = "cal_id") %>%
+    dplyr::left_join( dplyr::rename(bare_dates, due_cal_id = cal_id,
+                                   due_date = date), by = "due_cal_id")
+  hw_items <- hw_items %>% dplyr::left_join(bare_dates, by = "cal_id")
+  lab_asgt <- lab_asgt %>% dplyr::left_join(bare_dates, by = "cal_id") %>%
+    dplyr::left_join( dplyr::rename(bare_dates, report_cal_id = cal_id,
+                                    report_date = date), by = "report_cal_id") %>%
+    dplyr::left_join( dplyr::rename(bare_dates, pres_cal_id = cal_id,
+                                    pres_date = date), by = "pres_cal_id")
+  lab_items <- lab_items %>% dplyr::left_join(bare_dates, by = "cal_id")
+
+  hw_sol <- hw_sol %>% dplyr::left_join(bare_dates, by = "cal_id") %>%
+    dplyr::left_join( dplyr::select(bare_dates, sol_pub_cal_id = cal_id,
+                                    sol_pub_date = date), by = "sol_pub_cal_id")
+  lab_sol <- lab_sol %>% dplyr::left_join(bare_dates, by = "cal_id") %>%
+    dplyr::left_join( dplyr::select(bare_dates, sol_pub_cal_id = cal_id,
+                                    sol_pub_date = date), by = "sol_pub_cal_id")
+
+  holidays <- holidays  %>% dplyr::left_join(bare_dates, by = "cal_id")
+  exams <- exams  %>% dplyr::left_join(bare_dates, by = "cal_id")
+  events <- events  %>% dplyr::left_join(bare_dates, by = "cal_id")
+
+  rd_items <- rd_items %>% dplyr::mutate(cal_key = add_key_prefix(rd_key, metadata, "class"))
+  rd_links <- rd_links %>% dplyr::mutate(cal_key = add_key_prefix(rd_key, metadata, "class"))
+
+  hw_asgt <- hw_asgt %>% dplyr::mutate(cal_key = add_key_prefix(hw_key, metadata, "homework"))
+  hw_items <- hw_items %>% dplyr::mutate(cal_key = add_key_prefix(hw_key, metadata, "homework"))
+  hw_sol <- hw_sol %>% dplyr::mutate(cal_key = add_key_prefix(hw_key, metadata, "homework"),
+                                     pub_cal_key = add_key_prefix(sol_pub_key, metadata, "due date"))
+  hw_links <- hw_links %>% dplyr::mutate(cal_key = add_key_prefix(hw_key, metadata, "homework"))
+
+  lab_asgt <- lab_asgt %>% dplyr::mutate(cal_key = add_key_prefix(lab_key, metadata, "lab"))
+  lab_items <- lab_items %>% dplyr::mutate(cal_key = add_key_prefix(lab_key, metadata, "lab"))
+  lab_sol <- lab_sol %>% dplyr::mutate(cal_key = add_key_prefix(lab_key, metadata, "lab"),
+                                     pub_cal_key = add_key_prefix(sol_pub_key, metadata, "due date"))
+  lab_links <- lab_links %>% dplyr::mutate(cal_key = add_key_prefix(lab_key, metadata, "lab"))
+
+  holidays <- holidays %>% dplyr::mutate(cal_key = add_key_prefix(holiday_key, metadata, "holiday"))
+  exams <- exams %>% dplyr::mutate(cal_key = add_key_prefix(exam_key, metadata, "exam"))
+  events <- events %>% dplyr::mutate(cal_key = add_key_prefix(event_key, metadata, "event"))
 
   first_class <- 1
   last_class <- NA
@@ -279,6 +320,12 @@ load_semester_db <- function(db_file, root_crit = NULL) {
   # Pub date should be last day of previous month.
   pub_date <- make_pub_date(first_date, tz)
 
+  semester_dates <- list(
+    first_class = first_class, last_class = last_class,
+    first_date = first_date, last_date = last_date,
+    year_taught = year_taught, pub_date = pub_date
+  )
+
   semester <- list(
     calendar = calendar, due_dates = due_dates, due_links = due_links,
     rd_items = rd_items, rd_src = rd_src, rd_links = rd_links,
@@ -291,12 +338,7 @@ load_semester_db <- function(db_file, root_crit = NULL) {
     holidays = holidays, holiday_links = holiday_links,
     events = events, event_links = event_links,
     notices = notices, text_codes = text_codes,
-    metadata = metadata,
-    semester_dates = list(
-      first_class = first_class, last_class = last_class,
-      first_date = first_date, last_date = last_date,
-      year_taught = year_taught, pub_date = pub_date
-    )
+    metadata = metadata, semester_dates = semester_dates
   )
 
   assign("metadata", metadata, envir = .globals)

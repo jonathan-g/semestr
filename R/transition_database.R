@@ -255,7 +255,7 @@ reindex <- function(df, type, key_col = NULL, idx_col = NULL) {
 #'     cancelled.}
 #'   \item{make_up}{An integer indicating whether the entry represents a
 #'     re-scheduled make-up session.}
-#'   \item{topic_key}{A column with a text key for that entry. }
+#'   \item{cal_key}{A column with a text key for that entry. }
 #'   \item{cal_type}{A string indicating the type of entry (class, lab, etc.)}
 #'   \item{...}{Other entries, such as a numerical index for events of a
 #'     given type. In general, we expect (but do not require) that there is
@@ -297,7 +297,7 @@ cal_prepare <- function(df, type, key_col = NULL) {
 
   if (as.character(rlang::quo_get_expr(qcol)) %in% names(df)) {
     df <- df %>%
-      dplyr::mutate(topic_key = stringr::str_c(prefix, !!qcol, sep = "_")) %>%
+      dplyr::mutate(cal_key = stringr::str_c(prefix, !!qcol, sep = "_")) %>%
       dplyr::select(-!!qcol)
   }
   invisible(df)
@@ -322,8 +322,8 @@ build_master_calendar <- function(master_db_file) {
   holidays <- cal %>% do_index("holiday") %>% reindex("holiday")
   events <- cal %>% do_index("event") %>% reindex("event")
 
-  topics <- cal %>% dplyr::select(topic_key = class_key, topic) %>%
-    dplyr::filter(! is.na(topic_key), ! is.na(topic)) %>%
+  topics <- cal %>% dplyr::select(cal_key = class_key, topic) %>%
+    dplyr::filter(! is.na(cal_key), ! is.na(topic)) %>%
     add_key_prefix("class")
 
   calendar <- dplyr::bind_rows(
@@ -335,7 +335,7 @@ build_master_calendar <- function(master_db_file) {
     cal_prepare(holidays, "holiday"),
     cal_prepare(events, "event")
   ) %>% dplyr::arrange(date, cal_id) %>%
-    dplyr::select(cal_id, date, class_num, week, topic_key, cal_type,
+    dplyr::select(cal_id, date, class_num, week, cal_key, cal_type,
                   cancelled, make_up, tidyselect::everything())
 
   classes <- cal %>% do_index("class") %>% reindex("class") %>%
@@ -357,15 +357,15 @@ build_master_calendar <- function(master_db_file) {
     cal_prepare(holidays, "holiday"),
     cal_prepare(events, "event")
   ) %>% dplyr::arrange(date, cal_id) %>%
-    dplyr::select(cal_id, date, class_num, week, topic_key, cal_type,
+    dplyr::select(cal_id, date, class_num, week, cal_key, cal_type,
                   cancelled, make_up, tidyselect::everything())
 
-  calendar <- calendar %>% dplyr::left_join(topics, by = "topic_key")
+  calendar <- calendar %>% dplyr::left_join(topics, by = "cal_key")
 
   invisible(calendar)
 }
 
-strip_key_prefix <- function(df, type, key_col = "topic_key") {
+strip_key_prefix <- function(df, type, key_col = "cal_key") {
   key_col = ensym(key_col)
   key_col = enquo(key_col)
 
@@ -377,7 +377,7 @@ strip_key_prefix <- function(df, type, key_col = "topic_key") {
   invisible(df)
 }
 
-add_key_prefix <- function(df, type, key_col = "topic_key") {
+add_key_prefix <- function(df, type, key_col = "cal_key") {
   key_col = ensym(key_col)
   key_col = enquo(key_col)
 
@@ -399,21 +399,21 @@ extract_links <- function(df, type, num_col = NULL) {
   }
   num_col <- rlang::ensym(num_col)
   df <- df %>% dplyr::filter(cal_type == type) %>%
-    dplyr::select(cal_id, topic_key, !!num_col) %>%
+    dplyr::select(cal_id, cal_key, !!num_col) %>%
     strip_key_prefix(type)
   invisible(df)
 }
 
-extract_topic_keys <- function(cal, type) {
+extract_cal_keys <- function(cal, type) {
   pull_env(transition_env)
 
   cal %>% dplyr::filter(cal_type == type) %>% strip_key_prefix(type) %$%
-    topic_key
+    cal_key
 }
 
 check_link_keys <- function(cal, links, type) {
-  link_keys <- links$topic_key
-  cal_keys <- extract_topic_keys(cal, type)
+  link_keys <- links$cal_key
+  cal_keys <- extract_cal_keys(cal, type)
   setdiff(link_keys, cal_keys)
 }
 
@@ -423,27 +423,27 @@ build_database <- function(dest_db_file, master_db_file, base_db_file) {
   master_calendar <- build_master_calendar(master_db_file)
 
   calendar <- master_calendar %>%
-    dplyr::select(cal_id, date, class_num, week, topic_key, cal_type, cancelled,
+    dplyr::select(cal_id, date, class_num, week, cal_key, cal_type, cancelled,
            make_up) %>% dplyr::arrange(date, cal_id, cal_type)
 
   class_topics <- master_calendar %>% dplyr::filter(cal_type == "class") %>%
-    dplyr::select(topic_key, topic) %>% dplyr::mutate(rd_key = topic_key) %>%
+    dplyr::select(cal_key, topic) %>% dplyr::mutate(rd_key = cal_key) %>%
     strip_key_prefix("class", rd_key)
 
   class_links   <- extract_links(master_calendar, "class"   ) %>%
-   dplyr::rename(rd_key = topic_key)
+   dplyr::rename(rd_key = cal_key)
   lab_links     <- extract_links(master_calendar, "lab"     ) %>%
-   dplyr::rename(lab_key = topic_key)
+   dplyr::rename(lab_key = cal_key)
   hw_links      <- extract_links(master_calendar, "homework") %>%
-   dplyr::rename(hw_key = topic_key)
+   dplyr::rename(hw_key = cal_key)
   exam_links    <- extract_links(master_calendar, "exam"    ) %>%
-   dplyr::rename(exam_key = topic_key)
+   dplyr::rename(exam_key = cal_key)
   due_links     <- extract_links(master_calendar, "due date") %>%
-   dplyr::rename(due_key = topic_key)
+   dplyr::rename(due_key = cal_key)
   holiday_links <- extract_links(master_calendar, "holiday" ) %>%
-   dplyr::rename(holiday_key = topic_key)
+   dplyr::rename(holiday_key = cal_key)
   event_links   <- extract_links(master_calendar, "event"   ) %>%
-   dplyr::rename(event_key = topic_key)
+   dplyr::rename(event_key = cal_key)
 
   base_db <- DBI::dbConnect(RSQLite::SQLite(), base_db_file)
 
@@ -457,7 +457,7 @@ build_database <- function(dest_db_file, master_db_file, base_db_file) {
     strip_key_prefix("holiday", "holiday_key")
   notices <- dplyr::tbl(base_db, "notices") %>%
     dplyr::select(-notice_id) %>% dplyr::collect() %>%
-    dplyr::rename(topic_key = topic_id) %>%
+    dplyr::rename(cal_key = topic_id) %>%
     strip_key_prefix("class")
 
   reading_items <- dplyr::tbl(base_db, "reading_items") %>%

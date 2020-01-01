@@ -155,7 +155,7 @@ make_reading_page <- function(cal_id, semester,
                               md_extensions = get_md_extensions()){
   cal_id <- enquo(cal_id)
   reading <- semester$rd_items %>% dplyr::filter(cal_id == !!cal_id) %>%
-    merge_dates(semester) %>%
+    # merge_dates(semester) %>%
     dplyr::left_join( dplyr::select(semester$class_topics, topic, rd_key),
                by = "rd_key")
   rd_date <- unique(reading$date)
@@ -172,13 +172,14 @@ make_reading_page <- function(cal_id, semester,
                           msg = "A calendar ID should have a unique reading key # (make_reading)")
 
   homework <- semester$hw_asgt %>% dplyr::filter(cal_id == !!cal_id) %>%
-    merge_dates(semester) %>%
+    # merge_dates(semester) %>%
     dplyr::left_join( dplyr::select(semester$hw_items, -hw_num, -cal_id),
                       by = "hw_key")
 
   # For debugging...
   dbg_checkpoint(this_class_num, class_num)
   dbg_checkpoint(this_class_date, rd_date)
+  dbg_checkpoint(g_reading, reading)
 
   delim <- "---"
   header <- tibble::tibble(title = rd_topic,
@@ -199,8 +200,9 @@ make_reading_page <- function(cal_id, semester,
     sep = "\n"
   )
   dbg_checkpoint(g_rd_page, rd_page)
-  asgt <- reading %>% dplyr::select(cal_id, rd_key, rd_date, rd_topic, class_num) %>%
-    distinct()
+  asgt <- reading %>%
+    dplyr::select(cal_id, rd_key, cal_key, date, topic, class_num) %>%
+    dplyr::distinct()
   assertthat::assert_that(nrow(asgt) == 1, msg = "A calendar ID should have a consistent reading assignment (make_reading)")
   context <- make_context(asgt, "reading", semester)
   rd_page <- rd_page %>% expand_codes(context, semester)

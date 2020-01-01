@@ -1,9 +1,5 @@
 get_hw_assignment <- function(key, semester) {
-  assignment <- semester$hw_asgt %>% dplyr::filter(hw_key == key) %>%
-    merge_dates(semester) %>%
-    merge_dates(semester, id_col = "due_cal_id", date_col = "due_date") %>%
-    dplyr::arrange(hw_id)
-
+  assignment <- semester$hw_asgt %>% dplyr::filter(hw_key == key)
   assertthat::assert_that(nrow(assignment) == 1,
                           msg = stringr::str_c(
                             "There should only be one homework assignment for a given key: ",
@@ -85,7 +81,7 @@ make_hw_asgt_content <- function(key, semester, use_solutions = FALSE,
   assignment <- get_hw_assignment(key, semester)
 
   items <- semester$hw_items %>% dplyr::filter(hw_key == key) %>%
-    merge_dates(semester) %>%
+    # merge_dates(semester) %>%
     dplyr::arrange(hw_item_id)
   if (use_solutions) {
     solutions <- semester$hw_sol %>% dplyr::filter(hw_key == key)
@@ -96,8 +92,8 @@ make_hw_asgt_content <- function(key, semester, use_solutions = FALSE,
     solutions <- solutions %>%
       dplyr::mutate( due_cal_id = assignment$due_cal_id,
                      due_date = assignment$due_date) %>%
-      merge_dates(semester, id_col = "sol_pub_cal_id",
-                  date_col = "sol_pub_date") %>%
+      # merge_dates(semester, id_col = "sol_pub_cal_id",
+      #             date_col = "sol_pub_date") %>%
       dplyr::mutate(sol_pub_date =
                       lubridate::as_datetime(sol_pub_date,
                                              tz = semester$metadata$tz)) %>%
@@ -312,21 +308,10 @@ generate_hw_assignment <- function(key, semester, use_solutions = FALSE,
 }
 
 make_short_hw_assignment <- function(key, semester) {
-  assignment <- semester$hw_asgt %>% dplyr::filter(hw_key == key) %>%
-    merge_dates(semester) %>%
-    merge_dates(semester, id_col = "due_cal_id", date_col = "due_date") %>%
-    dplyr::arrange(hw_id)
+  get_hw_assignment(key, semester)
 
-  assertthat::assert_that(nrow(assignment) == 1,
-                          msg = stringr::str_c(
-                            "There should only be one homework assignment for a given key: ",
-                            "key ", key, " has ", nrow(assignment), " assignments.")
-  )
-
-
-
-    items <- semester$hw_items %>% dplyr::filter(hw_key == key) %>%
-    merge_dates(semester) %>%
+  items <- semester$hw_items %>% dplyr::filter(hw_key == key) %>%
+    # merge_dates(semester) %>%
     dplyr::arrange(hw_item_id)
 
   d <- assignment$date %>% unique()

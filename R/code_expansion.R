@@ -1,4 +1,4 @@
-.expand_env <- new.env(parent = baseenv())
+.expand_env <- new.env(parent = emptyenv())
 
 make_fn_body <- function(..., expr_lst = NULL) {
   if (is.null(expr_lst)) {
@@ -42,48 +42,64 @@ merge_fn_bodies <- function(..., body_lst = NULL) {
   body
 }
 
-build_pkg_handlers <- function(n_levels = 1) {
-  packages <- .GlobalEnv$.globals$expand_packages
+# build_pkg_handlers <- function(n_levels = 1) {
+#   packages <- .GlobalEnv$.globals$expand_packages
+#
+#   .local_envir = expr(rlang::call_frame(n = !!n_levels)$env)
+#
+#   att <- purrr::map(packages, function(x) {
+#     q <- ensym(x) %>% as_label()
+#     p <- stringr::str_c("package:", q)
+#     list(
+#       expr(if (! (!!q) %in% .packages()) {
+#         attachNamespace(!!q)
+#         # withr::defer(detach(!!p, character.only = TRUE),
+#         #              envir = !!.local_envir)
+#       })
+#     )
+#   }) %>% unlist()
+#   att <- make_fn_body(expr_lst = att)
+#
+#   det <- purrr::map(packages, function(x) {
+#     q <- ensym(x) %>% as_label()
+#     p <- stringr::str_c("package:", q)
+#     list(
+#       expr(detach(!!p, character.only = TRUE))
+#     )
+#   }) %>% flatten()
+#   det <- make_fn_body(expr_lst = det)
+#
+#   list(attach = att, detach = det)
+# }
+#
 
-  .local_envir = expr(rlang::call_frame(n = !!n_levels)$env)
-
-  att <- purrr::map(packages, function(x) {
-    q <- ensym(x) %>% as_label()
-    p <- stringr::str_c("package:", q)
-    list(
-      expr(if (! (!!q) %in% .packages()) {
-        attachNamespace(!!q)
-        # withr::defer(detach(!!p, character.only = TRUE),
-        #              envir = !!.local_envir)
-      })
-    )
-  }) %>% unlist()
-  att <- make_fn_body(expr_lst = att)
-
-  det <- purrr::map(packages, function(x) {
-    q <- ensym(x) %>% as_label()
-    p <- stringr::str_c("package:", q)
-    list(
-      expr(detach(!!p, character.only = TRUE))
-    )
-  }) %>% flatten()
-  det <- make_fn_body(expr_lst = det)
-
-  list(attach = att, detach = det)
-}
-
-
-
-expand_codes <- function(text, context, semester, delim = c("<%", "%>"), envir = NULL) {
+expand_codes <- function(text, context, semester, delim = c("<%", "%>"),
+                         envir = NULL, extra_packages = NULL) {
   dbg_checkpoint(g_expansion_text, text)
   dbg_checkpoint(g_expansion_context, context)
+
+  if (exists("expand_packages", envir = .globals)) {
+    for (p in .globals$expand_packages) {
+      withr::local_package(p, character.only = TRUE)
+    }
+  }
+  if (! is.null(extra_packages)) {
+    for (p in extra_packages) {
+      withr::local_package(p, character.only = TRUE)
+    }
+  }
 
   unlock_list <- list()
   local_env <- envir
   if (is.null(local_env)) {
-    local_env <- new.env(parent = .expand_env)
+    local_env <- new.env(parent = as.environment(search()[2]))
+
     for (sym in c("calendar", "semester_dates", "metadata")) {
       assign(sym, get(sym, envir = .globals), envir = local_env)
+      lockBinding(sym, local_env)
+    }
+    for (sym in ls(.expand_env)) {
+      assign(sym, get(sym, envir = .expand_env), envir = local_env)
       lockBinding(sym, local_env)
     }
     assign("context", context, envir = local_env)
@@ -108,29 +124,10 @@ expand_codes <- function(text, context, semester, delim = c("<%", "%>"), envir =
   dbg_checkpoint(g_text_codes, text_codes)
   dbg_checkpoint(g_expansion_delims, delim)
 
-  pkg_handler <- build_pkg_handlers()
-
-  init <- unpack_fn_body(pkg_handler$attach)
-
   expand_expr <- c(
-    expr(attachNamespace("stringr")),
-    expr(attach("package:stringr")),
     expr(
-      message("Packages = (", paste(.packages(), collapse = ", "), ")")
-    ),
-    expr(
-      message("str_c ", ifelse(exists("str_c"), "does", "does not"), " exist.")
-    ),
-    expr(
-      message("str_c is at ", find("str_c"))
-    ),
-    expr(
-      message("search = (", paste(search(), collapse = ", "), ")")
+     knitr::knit_expand( !!!text_codes, text = !!text, delim = !!delim)
     )
-    #
-    # expr(
-    #   knitr::knit_expand( !!!text_codes, text = !!text, delim = !!delim)
-    # )
   )
 
   expand_body <- make_fn_body(expr_lst = expand_expr)
@@ -140,6 +137,7 @@ expand_codes <- function(text, context, semester, delim = c("<%", "%>"), envir =
   for (sym in unlock_list) {
     unlockBinding(sym, local_env)
   }
+  retval
 }
 
 expand_code <- function(text, context, semester) {
