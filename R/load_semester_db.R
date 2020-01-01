@@ -2,8 +2,6 @@
 # Package-level globals (idea copied from rmarkdown::render.R)
 .globals <- new.env(parent = emptyenv())
 
-.globals$expand_packages <- c("lubridate", "stringr", "purrr")
-
 #' Load schedule for semester from database
 #'
 #' Loads schedule for class meetings, reading and homework assignments,

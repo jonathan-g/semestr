@@ -1,5 +1,21 @@
 .expand_env <- new.env(parent = emptyenv())
 
+.expand_env$globals <- list()
+
+.expand_env$packages <- c("magrittr", "dplyr", "lubridate", "purrr", "stringr",
+                          "tidyr")
+
+.expand_env$imports <-
+  c("add_period", "escape_dollar", "format_class_date", "format_class_day_date",
+    "format_date_by_cal_id", "format_date_by_class_num", "format_date_by_key",
+    "format_date_range", "format_date_range_by_cal_id",
+    "format_date_range_by_class_num", "format_date_range_by_event_id",
+    "format_date_range_by_key", "format_day_date_by_cal_id",
+    "format_day_date_by_class_num", "format_day_date_by_key",
+    "format_day_date_range", "format_handout_reading",
+    "format_handout_reading_item", "format_month", "format_page_range",
+    "format_textbook_reading", "format_textbook_reading_item", "format_wday")
+
 make_fn_body <- function(..., expr_lst = NULL) {
   if (is.null(expr_lst)) {
     # message("building expr_lst from dots")
@@ -78,13 +94,18 @@ expand_codes <- function(text, context, semester, delim = c("<%", "%>"),
   dbg_checkpoint(g_expansion_text, text)
   dbg_checkpoint(g_expansion_context, context)
 
-  if (exists("expand_packages", envir = .globals)) {
-    for (p in .globals$expand_packages) {
+  loaded <- .packages()
+
+  if (exists("packages", envir = .expand_env)) {
+    for (p in setdiff(.expand_env$packages, loaded)) {
       withr::local_package(p, character.only = TRUE)
     }
   }
+
+  loaded2 <- .packages()
+
   if (! is.null(extra_packages)) {
-    for (p in extra_packages) {
+    for (p in setdiff(extra_packages, loaded2)) {
       withr::local_package(p, character.only = TRUE)
     }
   }
@@ -98,8 +119,13 @@ expand_codes <- function(text, context, semester, delim = c("<%", "%>"),
       assign(sym, get(sym, envir = .globals), envir = local_env)
       lockBinding(sym, local_env)
     }
-    for (sym in ls(.expand_env)) {
-      assign(sym, get(sym, envir = .expand_env), envir = local_env)
+    ee_globals <- get("globals", envir = .expand_env)
+    for (sym in names(ee_globals)) {
+      assign(sym, ee_globals[[sym]], envir = local_env)
+      lockBinding(sym, local_env)
+    }
+    for (sym in .expand_env$imports) {
+      assign(sym, get(sym, pos = 1), envir = local_env)
       lockBinding(sym, local_env)
     }
     assign("context", context, envir = local_env)
@@ -131,6 +157,10 @@ expand_codes <- function(text, context, semester, delim = c("<%", "%>"),
   )
 
   expand_body <- make_fn_body(expr_lst = expand_expr)
+
+  # message("Local env contains: ",
+  #         stringr::str_c(ls(local_env), collapse = ", ")
+  #         )
 
   retval <- eval(expand_body, envir = local_env)
 
