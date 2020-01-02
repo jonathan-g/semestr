@@ -60,9 +60,8 @@ load_semester_db <- function(db_file, root_crit = NULL) {
                    idx2type = idx2type, col2type = col2type,
                    idx2col  = idx2col,  col2idx  = col2idx,
                    prefixes = prefixes, bases = bases, rev_base = rev_base,
-                   mods = mods, rev_mods = rev_mods,
-                   root_dir = root_dir, slide_dir = slide_dir,
-                   tz = tz)
+                   mods = mods, rev_mods = rev_mods)
+  assign("metadata", metadata, envir = .globals)
 
   for (t in c("calendar", "due_dates", "events",
               "exams", "holidays", "notices",
@@ -134,24 +133,6 @@ load_semester_db <- function(db_file, root_crit = NULL) {
   if (! isTRUE(valid_hw)) {
     warning(valid_hw)
   }
-
-
-  # ## Reconcile homeworks with due dates ...
-  # ## Incomplete, to be finished later...
-  # for (i in seq(nrow(hw_asgt))) {
-  #   row <- hw_asgt[1,]
-  #   hw_key <- add_key_prefix(row$hw_key, metadata, "homework")
-  #   due_key <- add_key_prefix(row$due_kwy, metadata, "due date")
-  #   cal_row <- which(calendar$cal_key == hw_key)
-  #   assertthat::assert_that(length(cal_row) <= 1,
-  #                           msg = stringr::str_c("Each homework assignment should have a unique calendar entry: ",
-  #                                                hw_key))
-  #   due_row <- which(calendar$cal_key == due_key)
-  #   assertthat::assert_that(length(cal_row) <= 1,
-  #                           msg = stringr::str_c("Each due date should have a unique calendar entry: ",
-  #                                                due_key))
-  #   # ...
-  #   }
 
   rd_items <- rd_items %>% dplyr::inner_join(rd_links, by = "rd_key") %>%
     dplyr::left_join(rd_src, by = "src_key") %>%
@@ -283,24 +264,24 @@ load_semester_db <- function(db_file, root_crit = NULL) {
   exams <- exams  %>% dplyr::left_join(bare_dates, by = "cal_id")
   events <- events  %>% dplyr::left_join(bare_dates, by = "cal_id")
 
-  rd_items <- rd_items %>% dplyr::mutate(cal_key = add_key_prefix(rd_key, metadata, "class"))
-  rd_links <- rd_links %>% dplyr::mutate(cal_key = add_key_prefix(rd_key, metadata, "class"))
+  rd_items <- rd_items %>% dplyr::mutate(cal_key = add_key_prefix(rd_key, "class"))
+  rd_links <- rd_links %>% dplyr::mutate(cal_key = add_key_prefix(rd_key, "class"))
 
-  hw_asgt <- hw_asgt %>% dplyr::mutate(cal_key = add_key_prefix(hw_key, metadata, "homework"))
-  hw_items <- hw_items %>% dplyr::mutate(cal_key = add_key_prefix(hw_key, metadata, "homework"))
-  hw_sol <- hw_sol %>% dplyr::mutate(cal_key = add_key_prefix(hw_key, metadata, "homework"),
-                                     pub_cal_key = add_key_prefix(sol_pub_key, metadata, "due date"))
-  hw_links <- hw_links %>% dplyr::mutate(cal_key = add_key_prefix(hw_key, metadata, "homework"))
+  hw_asgt <- hw_asgt %>% dplyr::mutate(cal_key = add_key_prefix(hw_key, "homework"))
+  hw_items <- hw_items %>% dplyr::mutate(cal_key = add_key_prefix(hw_key, "homework"))
+  hw_sol <- hw_sol %>% dplyr::mutate(cal_key = add_key_prefix(hw_key, "homework"),
+                                     pub_cal_key = add_key_prefix(sol_pub_key, "due date"))
+  hw_links <- hw_links %>% dplyr::mutate(cal_key = add_key_prefix(hw_key, "homework"))
 
-  lab_asgt <- lab_asgt %>% dplyr::mutate(cal_key = add_key_prefix(lab_key, metadata, "lab"))
-  lab_items <- lab_items %>% dplyr::mutate(cal_key = add_key_prefix(lab_key, metadata, "lab"))
-  lab_sol <- lab_sol %>% dplyr::mutate(cal_key = add_key_prefix(lab_key, metadata, "lab"),
-                                     pub_cal_key = add_key_prefix(sol_pub_key, metadata, "due date"))
-  lab_links <- lab_links %>% dplyr::mutate(cal_key = add_key_prefix(lab_key, metadata, "lab"))
+  lab_asgt <- lab_asgt %>% dplyr::mutate(cal_key = add_key_prefix(lab_key, "lab"))
+  lab_items <- lab_items %>% dplyr::mutate(cal_key = add_key_prefix(lab_key, "lab"))
+  lab_sol <- lab_sol %>% dplyr::mutate(cal_key = add_key_prefix(lab_key, "lab"),
+                                     pub_cal_key = add_key_prefix(sol_pub_key, "due date"))
+  lab_links <- lab_links %>% dplyr::mutate(cal_key = add_key_prefix(lab_key, "lab"))
 
-  holidays <- holidays %>% dplyr::mutate(cal_key = add_key_prefix(holiday_key, metadata, "holiday"))
-  exams <- exams %>% dplyr::mutate(cal_key = add_key_prefix(exam_key, metadata, "exam"))
-  events <- events %>% dplyr::mutate(cal_key = add_key_prefix(event_key, metadata, "event"))
+  holidays <- holidays %>% dplyr::mutate(cal_key = add_key_prefix(holiday_key, "holiday"))
+  exams <- exams %>% dplyr::mutate(cal_key = add_key_prefix(exam_key, "exam"))
+  events <- events %>% dplyr::mutate(cal_key = add_key_prefix(event_key, "event"))
 
   first_class <- 1
   last_class <- NA
@@ -336,12 +317,16 @@ load_semester_db <- function(db_file, root_crit = NULL) {
     holidays = holidays, holiday_links = holiday_links,
     events = events, event_links = event_links,
     notices = notices, text_codes = text_codes,
-    metadata = metadata, semester_dates = semester_dates
+    metadata = metadata, semester_dates = semester_dates,
+    tz = tz, root_dir = root_dir, slide_dir = slide_dir
   )
 
   assign("metadata", metadata, envir = .globals)
   assign("semester_dates", semester_dates, envir = .globals)
   assign("semester_data", semester, envir = .globals)
+  assign("root_dir", root_dir, envir = .globals)
+  assign("slide_dir", slide_dir, envir = .globals)
+  assign("tz", tz, envir = .globals)
 
   invisible(semester)
 }

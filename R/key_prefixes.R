@@ -6,7 +6,6 @@
 #' function strips those off.
 #'
 #' @param x The list or vector to process.
-#' @param metadata A list containing metadata for the differennt types.
 #' @param type The type of calendar entry to strip (e.g., "`class`", "`lab`",
 #' etc.)
 #'
@@ -15,24 +14,24 @@
 #' @seealso add_key_prefix
 #'
 
-strip_key_prefix <- function(x, metadata, type, ...) {
+strip_key_prefix <- function(x, type, ...) {
   UseMethod("strip_key_prefix", x)
 }
 
-strip_key_prefix.default <- function(x, metadata, type, ...) {
+strip_key_prefix.default <- function(x, type, ...) {
   stop("I don't know how to strip key prefix from an object of class (",
        stringr::str_c(class(x), collapse = ", "), ").")
 }
 
-strip_key_prefix.character <- function(x, metadata, type, ...) {
-  target <- stringr::str_c("^", metadata$prefixes[type], "_")
+strip_key_prefix.character <- function(x, type, ...) {
+  target <- stringr::str_c("^", get_semestr_metadata()$prefixes[type], "_")
   x <- purrr::map_chr(x, stringr::str_replace_all, target, "")
 
   invisible(x)
 }
 
-strip_key_prefix.list <- function(x, metadata, type, ...) {
-  x <- purrr::map(x, ~strip_key_prefix(.x, metadata, type))
+strip_key_prefix.list <- function(x, type, ...) {
+  x <- purrr::map(x, ~strip_key_prefix(.x, type))
   invisible(x)
 }
 
@@ -45,7 +44,6 @@ strip_key_prefix.list <- function(x, metadata, type, ...) {
 #' function strips those off.
 #'
 #' @param df The data frame to process.
-#' @param metadata A list containing metadata for the differennt types.
 #' @param type The type of calendar entry to strip (e.g., "`class`", "`lab`",
 #' etc.)
 #' @param col The column where the keys are located (by default "`cal_key`").
@@ -54,12 +52,12 @@ strip_key_prefix.list <- function(x, metadata, type, ...) {
 #'
 #' @seealso add_key_prefix
 #'
-strip_key_prefix.data.frame <- function(df, metadata, type, col = "cal_key",
+strip_key_prefix.data.frame <- function(df, type, col = "cal_key",
                                         ...) {
   col <- ensym(col)
   col <- enquo(col)
 
-  df <- df %>% dplyr::mutate(!!col := strip_key_prefix(!!col, metadata, type))
+  df <- df %>% dplyr::mutate(!!col := strip_key_prefix(!!col, type))
 
   invisible(df)
 }
@@ -74,7 +72,6 @@ strip_key_prefix.data.frame <- function(df, metadata, type, col = "cal_key",
 #' function adds those prefixes.
 #'
 #' @param df The data frame to process.
-#' @param metadata A list containing metadata for the differennt types.
 #' @param type The type of prefix to add (e.g., "`class`", "`lab`",
 #' etc.)
 #' @param col The column where the keys are located (by default "`cal_key`").
@@ -83,34 +80,34 @@ strip_key_prefix.data.frame <- function(df, metadata, type, col = "cal_key",
 #'
 #' @seealso strip_key_prefix
 #'
-add_key_prefix <- function(x, metadata, type, ...) {
+add_key_prefix <- function(x, type, ...) {
   UseMethod("add_key_prefix", x)
 }
 
-add_key_prefix.default <- function(x, metadata, type, ...) {
+add_key_prefix.default <- function(x, type, ...) {
   stop("I don't know how to add key prefix to an object of class (",
        stringr::str_c(class(x), collapse = ", "), ").")
 }
 
-add_key_prefix.character <- function(x, metadata, type, ...) {
-  prefix <- metadata$prefixes[type]
+add_key_prefix.character <- function(x, type, ...) {
+  prefix <- get_semestr_metadata()$prefixes[type]
   x <- purrr::map_chr(x, ~stringr::str_c(prefix, .x, sep = "_"))
 
   invisible(x)
 }
 
-add_key_prefix.list <- function(x, metadata, type, ...) {
-  x <- purrr::map(x, ~add_key_prefix(.x, metadata, type))
+add_key_prefix.list <- function(x, type, ...) {
+  x <- purrr::map(x, ~add_key_prefix(.x, type))
   invisible(x)
 }
 
 
 
-add_key_prefix.data.frame <- function(df, metadata, type, col = "cal_key") {
+add_key_prefix.data.frame <- function(df, type, col = "cal_key") {
   col <- ensym(col)
   col <- enquo(col)
 
-  df <- df %>% dplyr::mutate(!!col := add_key_prefix(!!col, metadata, type))
+  df <- df %>% dplyr::mutate(!!col := add_key_prefix(!!col, type))
   invisible(df)
 }
 

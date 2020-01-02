@@ -46,14 +46,54 @@ get_md_extensions <- function() {
   exts
 }
 
-get_semestr_tz <- function(metadata = NULL) {
-  if (is.null(metadata)) {
-    tz <- getOption("semestr.tz")
-    if (is.null(tz) || is.na(tz)) {
-      tz <- "America/Chicago"
-    }
+default_semestr_metadata <- function() {
+  list(
+    type2idx = c(class = "class", lab = "lab", homework = "homework",
+                 "due date" = "due_date", exam = "exam", holiday = "holiday",
+                 event = "event"),
+    type2col = c(class = "class", lab = "lab",  homework = "hw",
+                 "due date" = "due", exam = "exam", holiday = "holiday",
+                 event = "evt"),
+    idx2type = c(class = "class", lab = "lab", homework = "homework",
+                 due_date = "due date", exam = "exam", holiday = "holiday",
+                 event = "event" ),
+    col2type = c(class = "class", lab = "lab", hw = "homework",
+                 due = "due date", exam = "exam", holiday = "holiday",
+                 evt = "event" ),
+    idx2col = c(class = "class", lab = "lab", homework = "hw",
+                due_date = "due", exam = "exam", holiday = "holiday",
+                event = "evt" ),
+    col2idx = c(class = "class", lab = "lab", hw = "homework",
+                due = "due_date", exam = "exam", holiday = "holiday",
+                evt = "event" ),
+    prefixes = c(class = "CLS", lab = "LAB", homework = "HW",
+                 "due date" = "DUE", exam = "EXAM", holiday = "VAC",
+                 event = "EVT" ),
+    bases = c(class = 1000, lab = 2000, homework = 3000, "due date" = 4000,
+              exam = 5000, holiday = 6000, event = 7000),
+    rev_base = c("1000" = "class",  "2000" = "lab", "3000" = "homework",
+                 "4000" = "due date", "5000" = "exam",  "6000" = "holiday",
+                 "7000" = "event"),
+    mods = c(cancelled = 100,  make_up = 200),
+    rev_mods = c("100" = "cancelled", "200" = "make_up" )
+  )
+}
+
+get_semestr_metadata <- function() {
+  if (exists("metadata", envir = .globals)) {
+    get("metadata", envir = .globals)
   } else {
-    tz <- metadata$tz
+    default_semestr_metadata()
+  }
+}
+
+get_semestr_tz <- function() {
+  if (exists("tz", envir = .globals)) {
+    tz <- .globals$tz
+  } else
+    tz <- getOption("semestr.tz")
+  if (is.null(tz) || is.na(tz)) {
+    tz <- "America/Chicago"
   }
   tz
 }

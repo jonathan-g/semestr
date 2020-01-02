@@ -90,7 +90,7 @@ format_date_by_key <- function(calendar, key,
 
   if (type == "reading") type <- "class"
   if (type != "raw") {
-    key <- add_key_prefix(key, metadata, type)
+    key <- add_key_prefix(key, type)
   }
 
   d <- calendar %>% dplyr::filter(cal_key == key)  %$% date
@@ -122,7 +122,7 @@ format_day_date_by_key <- function(calendar, key,
 
   if (type == "reading") type <- "class"
   if (type != "raw") {
-    key <- add_key_prefix(key, metadata, type)
+    key <- add_key_prefix(key, type)
   }
 
   d <- calendar %>% dplyr::filter(cal_key == key)  %$% date
@@ -164,7 +164,7 @@ format_date_range_by_key <- function(calendar, keys,
 
   if (type == "reading") type <- "class"
   if (type != "raw") {
-    keys <- add_key_prefix(keys, metadata, type)
+    keys <- add_key_prefix(keys, type)
 
   }
 

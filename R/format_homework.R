@@ -22,8 +22,7 @@ make_hw_slug <- function(hw_asgt) {
   slug
 }
 
-make_hw_solution_page <- function(solution, semester, slug = NA_character_,
-                                  md_extensions = get_md_extensions()) {
+make_hw_solution_page <- function(solution, semester, slug = NA_character_) {
   dbg_checkpoint(g_hw_sol, solution)
 
   if (is.null(slug) || is.na(slug)) {
@@ -44,7 +43,7 @@ make_hw_solution_page <- function(solution, semester, slug = NA_character_,
     purrr::discard(is.na) %>%
     c(
       output = list("blogdown::html_page" =
-                      list(md_extensions = md_extensions,
+                      list(md_extensions = get_md_extensions(),
                            toc = TRUE))
     ) %>%
     yaml::as.yaml() %>% stringr::str_trim("right") %>%
@@ -58,26 +57,23 @@ make_hw_solution_page <- function(solution, semester, slug = NA_character_,
   hw_solution_page
 }
 
-make_hw_solution <- function(solution, assignment, slug = NA_character_,
-                             md_extensions = get_md_extensions()) {
+make_hw_solution <- function(solution, assignment, semester, slug = NA_character_) {
   if (is.na(slug)) {
     slug = sprintf("homework_%02d", assignment$hw_num)
   }
   fname <- stringr::str_c(slug, "_", solution$hw_sol_filename, ".Rmd")
   solution_path <- fname %>%
-    file.path(root_dir, "content", "homework_solutions/", .)
+    file.path(semester$root_dir, "content", "homework_solutions/", .)
   solution_url <- fname %>% stringr::str_replace("\\.Rmd$", "") %>%
     file.path("/homework_solutions", .)
   message("Making solutions file for homework #", assignment$hw_num, ": ",
           solution_path)
-  hw_solution_page <- make_hw_solution_page(solution, assignment, slug,
-                                            md_extensions)
+  hw_solution_page <- make_hw_solution_page(solution, semester, slug)
   cat(hw_solution_page, file = solution_path)
   c(path = solution_path, url = solution_url)
 }
 
-make_hw_asgt_content <- function(key, semester, use_solutions = FALSE,
-                                     md_extensions = get_md_extensions()) {
+make_hw_asgt_content <- function(key, semester, use_solutions = FALSE) {
   assignment <- get_hw_assignment(key, semester)
 
   items <- semester$hw_items %>% dplyr::filter(hw_key == key) %>%
@@ -96,7 +92,7 @@ make_hw_asgt_content <- function(key, semester, use_solutions = FALSE,
       #             date_col = "sol_pub_date") %>%
       dplyr::mutate(sol_pub_date =
                       lubridate::as_datetime(sol_pub_date,
-                                             tz = semester$metadata$tz)) %>%
+                                             tz = get_semestr_tz())) %>%
       dplyr::filter(sol_pub_date <= lubridate::now()) %>%
       dplyr::arrange(lab_sol_id)
   }
@@ -127,7 +123,7 @@ make_hw_asgt_content <- function(key, semester, use_solutions = FALSE,
     output <- output %>% stringr::str_c("## Solutions:\n\n")
     for (i in seq(nrow(solutions))) {
       this_sol <- solutions[i,]
-      sol <- make_hw_solution(this_sol, assignment, slug, md_extensions)
+      sol <- make_hw_solution(this_sol, assignment, semester, slug)
       output <- output %>% stringr::str_c("* [", this_sol$hw_sol_title, "](",
                                           sol['url'], ")\n")
     }
@@ -248,8 +244,7 @@ make_hw_asgt_content <- function(key, semester, use_solutions = FALSE,
   output
 }
 
-make_hw_asgt_page <- function(key, semester, use_solutions = FALSE,
-                         md_extensions = get_md_extensions()) {
+make_hw_asgt_page <- function(key, semester, use_solutions = FALSE) {
   assignment <- get_hw_assignment(key, semester)
 
   hw_date <- assignment$date
@@ -274,24 +269,23 @@ make_hw_asgt_page <- function(key, semester, use_solutions = FALSE,
                    pubdate = as.character(pub_date),
                    date = as.character(hw_date),
                    output = list("blogdown::html_page" =
-                                   list(md_extensions = md_extensions))
+                                   list(md_extensions = get_md_extensions()))
   ) %>% purrr::discard(is.na) %>%
     yaml::as.yaml() %>% stringr::str_trim("right") %>%
     stringr::str_c(delim, ., delim, sep = "\n")
   context <- make_context(assignment, "homework", semester)
   hw_page <- stringr::str_c(
     header,
-    make_hw_asgt_content(key, semester, use_solutions, md_extensions),
+    make_hw_asgt_content(key, semester, use_solutions),
     sep = "\n"
   ) %>% expand_codes(context, semester)
   invisible(hw_page)
 }
 
-generate_hw_assignment <- function(key, semester, use_solutions = FALSE,
-                                   md_extensions = get_md_extensions()) {
+generate_hw_assignment <- function(key, semester, use_solutions = FALSE) {
   assignment <- get_hw_assignment(key, semester)
 
-  hw_page <- make_hw_asgt_page(key, semester, use_solutions, md_extensions)
+  hw_page <- make_hw_asgt_page(key, semester, use_solutions)
 
   hw_slug <- make_hw_slug(assignment)
   hw_fname <- stringr::str_c(hw_slug, ".Rmd")
@@ -300,7 +294,7 @@ generate_hw_assignment <- function(key, semester, use_solutions = FALSE,
                  stringr::str_c("# ", assignment$hw_num)),
           " (index = ", assignment$hw_id,
           ", slug = ", hw_slug, ", filename = ", hw_fname, ")")
-  hw_path <- hw_fname %>% file.path(semester$metadata$root_dir,
+  hw_path <- hw_fname %>% file.path(semester$root_dir,
                                     "content", "assignment", .)
   hw_url <- hw_fname %>% stringr::str_replace("\\.Rmd$", "")
   cat(hw_page, file = hw_path)

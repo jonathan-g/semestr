@@ -151,8 +151,7 @@ make_reading_assignment <- function(reading_entry) {
   output
 }
 
-make_reading_page <- function(cal_id, semester,
-                              md_extensions = get_md_extensions()){
+make_reading_page <- function(cal_id, semester){
   cal_id <- enquo(cal_id)
   reading <- semester$rd_items %>% dplyr::filter(cal_id == !!cal_id) %>%
     # merge_dates(semester) %>%
@@ -189,7 +188,7 @@ make_reading_page <- function(cal_id, semester,
                            pubdate = as.character(semester$semester_dates$pub_date),
                            date = lubridate::as_date(rd_date) %>% as.character(),
                            output = list("blogdown::html_page" =
-                                           list(md_extensions = md_extensions))
+                                           list(md_extensions = get_md_extensions()))
   ) %>%
     yaml::as.yaml() %>% stringr::str_trim("right") %>%
     stringr::str_c(delim, ., delim, sep = "\n")

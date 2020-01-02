@@ -1,24 +1,23 @@
-init_schedule <- function(semester, metadata) {
+init_schedule <- function(semester) {
   schedule <- semester$calendar %>%
     dplyr::filter(cal_type %in% c("class", "exam", "homework", "lab", "holiday")) %>%
     dplyr::select(id = cal_id, date, key = cal_key, cal_type) %>%
     dplyr::mutate(# dates might be datetimes, so convert everything to calendar
       # dates.
-      date = lubridate::as_date(date, tz = metadata$tz),
-      cal_type = type2col(cal_type, metadata))
+      date = lubridate::as_date(date, tz = get_semestr_tz()),
+      cal_type = type2col(cal_type))
   invisible(schedule)
 }
 
-schedule_strip_finals <- function(schedule, semester, metadata) {
+schedule_strip_finals <- function(schedule, semester) {
   final_exams <- schedule %>%
-    dplyr::filter(key %in% add_key_prefix(c("FINAL_EXAM", "ALT_FINAL_EXAM"),
-                                          metadata, "exam"))
+    dplyr::filter(key %in% add_key_prefix(c("FINAL_EXAM", "ALT_FINAL_EXAM"), "exam"))
 
   schedule <- schedule %>% dplyr::filter(! id %in% final_exams$id)
   list(schedule = schedule, final_exams = final_exams)
 }
 
-schedule_add_homework <- function(schedule, semester, metadata) {
+schedule_add_homework <- function(schedule, semester) {
   hw_due <- semester$due_dates %>%
     dplyr::filter(type == "homework", action %in% c("homework", "report")) %>%
     dplyr::filter(cal_id %in% semester$calendar$cal_id)
@@ -33,25 +32,28 @@ schedule_add_homework <- function(schedule, semester, metadata) {
     dplyr::left_join(dplyr::select(semester$calendar, id = cal_id, date),
                      by = c("id")) %>%
     dplyr::mutate(cal_type = "hw",
-                  date = lubridate::as_date(date, tz = metadata$tz))
+                  date = lubridate::as_date(date, get_semestr_tz()))
 
   schedule <- schedule %>% dplyr::bind_rows(missing_hw_entries)
   list(schedule = schedule, hw = hw, hw_due = hw_due, missing_hw = missing_hw)
 }
 
-schedule_widen <- function(schedule, final_exams, semester, metadata,
+schedule_widen <- function(schedule, final_exams, semester,
                            final_is_take_home = TRUE) {
   topics <- semester$class_topics %>%
     dplyr::select(key_class = cal_key, topic)
   exam_topics <- semester$exams %>%
     dplyr::select(key_exam = exam_key, topic_exam = exam) %>%
-    add_key_prefix(metadata, type = "exam", col = "key_exam")
+    add_key_prefix(type = "exam", col = "key_exam")
   class_nums <- semester$calendar %>%
     dplyr::select(id_class = cal_id, class_num)
 
   if (final_is_take_home) {
+    message("processing final_exams: (",
+            stringr::str_c(names(final_exams), collapse = ", "), "), with ",
+            nrow(final_exams), " rows.")
     take_home_exam <- dplyr::top_n(final_exams, 1, wt = date)
-    take_home_exam$key <- add_key_prefix("TAKE_HOME_FINAL_EXAM", metadata, "exam")
+    take_home_exam$key <- add_key_prefix("TAKE_HOME_FINAL_EXAM", "exam")
     take_home_exam_topics <- tibble::tibble(key_exam = take_home_exam$key,
                                             topic_exam = "Take-home final exam due")
     exam_topics <- dplyr::bind_rows(exam_topics, take_home_exam_topics)
@@ -59,7 +61,7 @@ schedule_widen <- function(schedule, final_exams, semester, metadata,
 
   holiday_topics <- semester$holidays %>%
     dplyr::select(topic_holiday = holiday_name, key_holiday = holiday_key) %>%
-    add_key_prefix(metadata, type = "holiday", col = "key_holiday")
+    add_key_prefix(type = "holiday", col = "key_holiday")
 
   # Works with pmap:
   # Select columns beginning with "topic", discards NA values and keeps the
@@ -77,8 +79,13 @@ schedule_widen <- function(schedule, final_exams, semester, metadata,
     res[[1]]
   }
 
+  if (final_is_take_home) {
+    final_entries <- take_home_exam
+  } else {
+    final_entries <- final_exams
+  }
   schedule <- schedule %>%
-    dplyr::bind_rows(ifelse(final_is_take_home, take_home_exam, final_exams)) %>%
+    dplyr::bind_rows(final_entries) %>%
     dplyr::mutate(page = NA_character_) %>%
     tidyr::pivot_wider(names_from = cal_type,
                        values_from = c(id, key, page)) %>%
@@ -93,12 +100,11 @@ schedule_widen <- function(schedule, final_exams, semester, metadata,
     dplyr::select(-dplyr::starts_with("topic_"))
 
 
-  for (col in metadata$type2col) {
+  for (col in get_semestr_metadata()$type2col) {
     key_col <- stringr::str_c("key_", col)
     if (key_col %in% names(schedule)) {
       q_key_col <- enquo(key_col)
-      schedule <- strip_key_prefix(schedule, metadata, col2type(col, metadata),
-                                   !!q_key_col)
+      schedule <- strip_key_prefix(schedule, col2type(col), !!q_key_col)
     }
   }
 
@@ -107,7 +113,7 @@ schedule_widen <- function(schedule, final_exams, semester, metadata,
   list(schedule = schedule)
 }
 
-check_schedule <- function(schedule, semester, metadata) {
+check_schedule <- function(schedule, semester) {
   sched_check <- schedule %>% dplyr::group_by(date, cal_type) %>%
     dplyr::summarize(count = dplyr::n()) %>% dplyr::ungroup() %>%
     dplyr::filter(count > 1) %>% dplyr::group_by(date) %>%
@@ -123,7 +129,7 @@ check_schedule <- function(schedule, semester, metadata) {
                             stringr::str_c(sched_check, collapse = "; ")))
 }
 
-set_schedule_globals <- function(schedule, semester, metadata) {
+set_schedule_globals <- function(schedule, semester) {
   if (exists("calendar", envir = .globals)) {
     if (bindingIsLocked("calendar", .globals)) {
       unlockBinding("calendar", .globals)
@@ -143,9 +149,10 @@ comp_na_f <- function(x, y) {
   tidyr::replace_na(x == y, FALSE)
 }
 
-copy_slides <- function(date, cal_entry, semester, metadata) {
+copy_slides <- function(schedule, date, cal_entry, semester) {
   class_num <- cal_entry$class_num
   date <- lubridate::as_date(date)
+  slide_dir <- semester$slide_dir
 
   if (! is.na(class_num)) {
     slide_class_dir <- sprintf("class_%02d", class_num)
@@ -186,16 +193,17 @@ copy_slides <- function(date, cal_entry, semester, metadata) {
                                  slide_url, page_lecture))
       } else {
         message("No slides found for class ", class_num, " on ",
-                as.character(d))
+                as.character(date))
       }
     }
   }
+  invisible(schedule)
 }
 
-build_reading_assignment <- function(date, cal_entry, class_num, semester,
-                                     metadata,
-                                     md_extensions = get_md_extensions()) {
+build_reading_assignment <- function(schedule, date, cal_entry, semester) {
   date <- lubridate::as_date(date)
+  root_dir <- semester$root_dir
+  class_num <- cal_entry$class_num
   if (! is.na(cal_entry$id_class) &&
       cal_entry$id_class %in% semester$rd_items$cal_id) {
     message("Making reading page for class #", cal_entry$class_num,
@@ -204,47 +212,45 @@ build_reading_assignment <- function(date, cal_entry, class_num, semester,
     rd_path <- rd_fname %>% file.path(root_dir, "content", "reading", .)
     rd_url <- rd_fname %>% stringr::str_replace("\\.Rmd$", "") %>%
       file.path("/reading", .)
-    rd_page <- make_reading_page(cal_entry$id_class, semester,
-                                 md_extensions = md_extensions)
+    rd_page <- make_reading_page(cal_entry$id_class, semester)
     cat(rd_page, file = rd_path)
     schedule <- schedule %>%
       dplyr::mutate(page_reading =
                       ifelse(comp_na_f(class_num, cal_entry$class_num),
                              rd_url, page_reading))
   }
+  invisible(schedule)
 }
 
-build_hw_assignment <- function(date, cal_entry, semester, metadata,
-                                md_extensions = get_md_extensions()) {
+build_hw_assignment <- function(schedule, date, cal_entry, semester) {
   if (! is.na(cal_entry$id_hw)) {
     message("Making homework page for ", cal_entry$key_hw)
-    links <- generate_hw_assignment(cal_entry$key_hw, semester, TRUE,
-                                    md_extensions)
+    links <- generate_hw_assignment(cal_entry$key_hw, semester, TRUE)
     schedule <- schedule %>%
       dplyr::mutate(page_hw = ifelse(comp_na_f(id_hw, cal_entry$id_hw),
                                      links['url'], page_hw))
   }
+  invisible(schedule)
 }
-build_lab_assignment <- function(date, cal_entry, semester, metadata,
-                                 md_extensions = get_md_extensions()) {
+build_lab_assignment <- function(schedule, date, cal_entry, semester) {
 
   if (!is.na(cal_entry$id_lab)) {
     message("Making lab page for lab ", cal_entry$key_lab )
-    links <- generate_lab_assignment(cal_entry$key_lab, semester, TRUE,
-                                     md_extensions)
+    links <- generate_lab_assignment(cal_entry$key_lab, semester, TRUE)
     schedule <- schedule %>%
       dplyr::mutate(page_lab = ifelse(comp_na_f(id_lab, cal_entry$id_lab),
                                       links['url'], page_lab))
   }
+  invisible(schedule)
 }
 
-build_assignments <- function(schedule, semester, metadata) {
+build_assignments <- function(schedule, semester) {
   dates <- schedule$date
 
   has_labs <- "id_lab" %in% names(schedule)
   has_hw <- "id_homework" %in% names(schedule)
-  root_dir <- metadata$root_dir
-  slide_dir <- metadata$slide_dir
+  root_dir <- semester$root_dir
+  slide_dir <- semester$slide_dir
 
 
   for (d in dates) {
@@ -254,7 +260,7 @@ build_assignments <- function(schedule, semester, metadata) {
 
     assertthat::assert_that(nrow(cal_entry) == 1,
                             msg = stringr::str_c("Multiple calendar entries for date ",
-                                                 as.character(lubridate::as_date(d)), "."))
+                                                 as.character(d), "."))
 
     class_num <- cal_entry$class_num
     reading_id <- cal_entry$id_class
@@ -274,48 +280,53 @@ build_assignments <- function(schedule, semester, metadata) {
       lab_key <- NA
     }
 
-    copy_slides(date, cal_entry, semester, metadata)
-    build_reading_assignment(d, cal_entry, semester, metadata, md_extensions)
-    build_hw_assignment(d, cal_entry, semester, metadata, md_extensions)
-    build_lab_assignment(d, cal_entry, semester, metadata, md_extensions)
-
+    schedule <- schedule %>% copy_slides(d, cal_entry, semester)
+    schedule <- schedule %>%
+      build_reading_assignment(d, cal_entry, semester)
+    schedule <- schedule %>% build_hw_assignment(d, cal_entry, semester)
+    schedule <- schedule %>% build_lab_assignment(d, cal_entry, semester)
   }
+  invisible(schedule)
 }
 
-generate_assignments <- function(semester, md_extensions = get_md_extensions()) {
-  metadata <- semester$metadata
-
+generate_assignments <- function(semester) {
   schedule <- init_schedule(semester)
-  tmp <- schedule_strip_finals(schedule, semester, metadata)
+  tmp <- schedule_strip_finals(schedule, semester)
   schedule <- tmp$schedule
-  final_exms <- tmp$final_exams
+  final_exams <- tmp$final_exams
 
-  tmp <- schedule %>% schedule_add_homework(semester, metadata)
-  schedule <- tmp$schedule
-
-  tmp <- schedule %>% schedule_widen(semester, metadata, TRUE)
+  tmp <- schedule %>% schedule_add_homework(semester)
   schedule <- tmp$schedule
 
-  set_schedule_globals(schedule, semester, metadata)
+  tmp <- schedule_widen(schedule, final_exams, semester, TRUE)
+  schedule <- tmp$schedule
 
-  build_assignments(schedule, semester, metadata)
+  set_schedule_globals(schedule, semester)
+
+  schedule <- build_assignments(schedule, semester)
+
+  message("Done building assignments...")
+
+  g_schedule <<- schedule
+
+  context <- list(type = "semester schedule")
 
   lesson_plan <- schedule %>%
     # dplyr::filter(! event_id %in% c("FINAL_EXAM", "ALT_FINAL_EXAM")) %>%
     dplyr::select(date, title = topic, reading = page_reading,
-                  assignment = page_homework, lecture = page_lecture,
+                  assignment = page_hw, lecture = page_lecture,
                   lab = page_lab, topic) %>%
     dplyr::arrange(date) %>% dplyr::mutate(date = as.character(date)) %>%
-    rowwise() %>% do(lessons = as.list(.)) %>%
-    map(~map(.x, ~discard(.x, is.na))) %>%
-    yaml::as.yaml() %>% expand_codes(context, semester)
+    purrr::transpose() %>% purrr::map(~purrr::discard(.x, is.na)) %>%
+    list(lessons = .) %>% yaml::as.yaml() %>%
+    expand_codes(context, semester)
 
-  cat(lesson_plan, file = file.path(root_dir, "date", "lessons.yml")
+  cat(lesson_plan, file = file.path(semester$root_dir, "date", "lessons.yml"))
 
   invisible(list(lesson_plan = lesson_plan, schedule = schedule))
 }
 
 regenerate_assignments <- function() {
-  load_semester_db()
-  generate_assignments()
+  semester <- load_semester_db("planning/ees_3310/dest_semester.sqlite3")
+  generate_assignments(semester)
 }

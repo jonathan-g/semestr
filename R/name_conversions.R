@@ -1,4 +1,5 @@
-type2col <- function(type, metadata) {
+type2col <- function(type) {
+  metadata <- get_semestr_metadata()
   bad_idx <- bad_indices(type, metadata$type2col)
   assertthat::assert_that(
     length(bad_idx) == 0,
@@ -7,7 +8,8 @@ type2col <- function(type, metadata) {
   metadata$type2col[type]
 }
 
-type2idx <- function(type, metadata) {
+type2idx <- function(type) {
+  metadata <- get_semestr_metadata()
   bad_idx <- bad_indices(type, metadata$type2idx)
   assertthat::assert_that(
     length(bad_idx) == 0,
@@ -16,7 +18,8 @@ type2idx <- function(type, metadata) {
   metadata$type2idx[type]
 }
 
-type2prefix <- function(type, metadata) {
+type2prefix <- function(type) {
+  metadata <- get_semestr_metadata()
   bad_idx <- bad_indices(type, metadata$prefixes)
   assertthat::assert_that(
     length(bad_idx) == 0,
@@ -25,7 +28,8 @@ type2prefix <- function(type, metadata) {
   metadata$prefixes[type]
 }
 
-type2base <- function(type, metadata) {
+type2base <- function(type) {
+  metadata <- get_semestr_metadata()
   bad_idx <- bad_indices(type, metadata$bases)
   assertthat::assert_that(
     length(bad_idx) == 0,
@@ -34,7 +38,8 @@ type2base <- function(type, metadata) {
   metadata$bases[type]
 }
 
-idx2col <- function(idx, metadata) {
+idx2col <- function(idx) {
+  metadata <- get_semestr_metadata()
   bad_idx <- bad_indices(idx, metadata$idx2col)
   assertthat::assert_that(
     length(bad_idx) == 0,
@@ -43,7 +48,8 @@ idx2col <- function(idx, metadata) {
   metadata$idx2col[idx]
 }
 
-idx2type <- function(idx, metadata) {
+idx2type <- function(idx) {
+  metadata <- get_semestr_metadata()
   bad_idx <- bad_indices(idx, metadata$idx2type)
   assertthat::assert_that(
     length(bad_idx) == 0,
@@ -52,7 +58,8 @@ idx2type <- function(idx, metadata) {
   metadata$idx2type[idx]
 }
 
-col2idx <- function(col, metadata) {
+col2idx <- function(col) {
+  metadata <- get_semestr_metadata()
   bad_idx <- bad_indices(col, metadata$col2idx)
   assertthat::assert_that(
     length(bad_idx) == 0,
@@ -61,7 +68,8 @@ col2idx <- function(col, metadata) {
   metadata$col2idx[col]
 }
 
-col2type <- function(col, metadata) {
+col2type <- function(col) {
+  metadata <- get_semestr_metadata()
   bad_idx <- bad_indices(col, metadata$col2type)
   assertthat::assert_that(
     length(bad_idx) == 0,
@@ -70,7 +78,8 @@ col2type <- function(col, metadata) {
   metadata$col2type[col]
 }
 
-base2type <- function(base, metadata) {
+base2type <- function(base) {
+  metadata <- get_semestr_metadata()
   bad_idx <- bad_indices(base, metadata$rev_base)
   assertthat::assert_that(
     length(bad_idx) == 0,
@@ -88,7 +97,8 @@ base2type <- function(base, metadata) {
 #'   are "class", "reading", "homework", "lab", "exam", "due date", "holiday",
 #'   and "event".
 #'
-item_type <- function(cal_id, metadata) {
+item_type <- function(cal_id) {
+  metadata <- get_semestr_metadata()
   base <- as.integer(cal_id) %>%
     divide_by_int(1000) %>% multiply_by(1000) %>% as.character()
   metadata$rev_base[base]
@@ -104,7 +114,8 @@ item_type <- function(cal_id, metadata) {
 #' @return A string identifying the type of modification. Current values are
 #'   "cancelled" and "make-up"
 #'
-item_mod <- function(cal_id, metadata) {
+item_mod <- function(cal_id) {
+  metadata <- get_semestr_metadata()
   base_mod <- as.integer(cal_id) %/% mod(1000) %>%
     divide_by_int(100) %>% multiply_by(100) %>% as.character()
   metadata$rev_mod[base_mod]

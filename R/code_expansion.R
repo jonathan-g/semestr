@@ -6,7 +6,8 @@
                           "tidyr")
 
 .expand_env$imports <-
-  c("add_period", "escape_dollar", "format_class_date", "format_class_day_date",
+  c("add_period", "escape_dollar",
+    "format_class_date", "format_class_day_date",
     "format_date_by_cal_id", "format_date_by_class_num", "format_date_by_key",
     "format_date_range", "format_date_range_by_cal_id",
     "format_date_range_by_class_num", "format_date_range_by_event_id",
@@ -14,7 +15,13 @@
     "format_day_date_by_class_num", "format_day_date_by_key",
     "format_day_date_range", "format_handout_reading",
     "format_handout_reading_item", "format_month", "format_page_range",
-    "format_textbook_reading", "format_textbook_reading_item", "format_wday")
+    "format_textbook_reading", "format_textbook_reading_item", "format_wday",
+    "get_semestr_metadata", "get_semestr_tz", "default_semestr_metadata",
+    "type2base", "type2idx", "type2prefix", "type2col",
+    "col2idx", "col2type",
+    "idx2col", "idx2type",
+    "base2type", "item_type", "item_mod"
+    )
 
 make_fn_body <- function(..., expr_lst = NULL) {
   if (is.null(expr_lst)) {
@@ -115,7 +122,7 @@ expand_codes <- function(text, context, semester, delim = c("<%", "%>"),
   if (is.null(local_env)) {
     local_env <- new.env(parent = as.environment(search()[2]))
 
-    for (sym in c("calendar", "semester_dates", "metadata")) {
+    for (sym in c("calendar", "semester_dates", "metadata", "tz")) {
       assign(sym, get(sym, envir = .globals), envir = local_env)
       lockBinding(sym, local_env)
     }
