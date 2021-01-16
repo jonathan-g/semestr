@@ -1,4 +1,3 @@
-library(magrittr)
 library(rlang)
 
 master_db_file <- "planning/ees_3310/alt_semester.sqlite3"

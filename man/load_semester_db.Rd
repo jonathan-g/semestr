@@ -4,7 +4,7 @@
 \alias{load_semester_db}
 \title{Load schedule for semester from database}
 \usage{
-load_semester_db(db_file)
+load_semester_db(db_file, root_crit = NULL, ignore_root = FALSE)
 }
 \arguments{
 \item{db_file}{An SQLite database file.}
@@ -15,10 +15,10 @@ tibbles with details on reading assignments, homework assignments,
 labs, exams, holidays, and other events.
 
 THe list contains the following tibbles:
-\code{calendar}, \code{due_dates}, \code{due_links}, \code{rd_items}, \code{rd_src}, \code{rd_links},
-\code{class_topics}, \code{hw_asgt}, \code{hw_items}, \code{hw_sol}, \code{hw_links}, \code{hw_topics},
-\code{lab_asgt}, \code{lab_items}, \code{lab_sol}, \code{lab_links}, \code{exams}, \code{exam_links},
-\code{holidays}, \code{holiday_links}, \code{events}, \code{event_links}, \code{notices},
+\code{calendar}, \code{due_dates}, \code{rd_items}, \code{rd_src},
+\code{class_topics}, \code{hw_asgt}, \code{hw_items}, \code{hw_sol}, \code{hw_topics},
+\code{lab_asgt}, \code{lab_items}, \code{lab_sol}, \code{exams},
+\code{holidays}, \code{events}, \code{notices},
 \code{text_codes}
 
 and a named list \code{metadata} containing named character vectors of

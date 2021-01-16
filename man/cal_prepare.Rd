@@ -40,7 +40,7 @@ and last two digits indicate the order of the entry.}
 cancelled.}
 \item{make_up}{An integer indicating whether the entry represents a
 re-scheduled make-up session.}
-\item{topic_key}{A column with a text key for that entry. }
+\item{cal_key}{A column with a text key for that entry. }
 \item{cal_type}{A string indicating the type of entry (class, lab, etc.)}
 \item{...}{Other entries, such as a numerical index for events of a
 given type. In general, we expect (but do not require) that there is
