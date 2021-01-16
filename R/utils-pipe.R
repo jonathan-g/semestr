@@ -34,6 +34,7 @@ NULL
 #' @usage lhs \%$\% rhs
 NULL
 
-#' importFrom magrittr multiply_by divide_by divide_by_int mod
-#'                     add subtract is_greater_than is_weakly_greater_than
-#'                     is_less_than is_weakly_less_than equals not is_in
+#' @importFrom magrittr multiply_by divide_by divide_by_int mod
+#'             add subtract is_greater_than is_weakly_greater_than
+#'             is_less_than is_weakly_less_than equals not is_in
+NULL

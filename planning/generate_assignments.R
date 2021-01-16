@@ -102,7 +102,7 @@ load_semester_db <- function() {
     text_codes <- text_codes %>%
       dplyr::mutate(code_value = ifelse(is.na(code_value), "", code_value))
   }
-    text_codes <- text_codes %>% { set_names(.$code_value, .$code_name) }
+    text_codes <- text_codes %>% { purrr::set_names(.$code_value, .$code_name) }
 
   has_lab_assignments <- FALSE
 
