@@ -14,31 +14,43 @@
 #'   labs, exams, holidays, and other events.
 #'
 #'   THe list contains the following tibbles:
-#'   `calendar`, `due_dates`, `due_links`, `rd_items`, `rd_src`, `rd_links`,
-#'   `class_topics`, `hw_asgt`, `hw_items`, `hw_sol`, `hw_links`, `hw_topics`,
-#'   `lab_asgt`, `lab_items`, `lab_sol`, `lab_links`, `exams`, `exam_links`,
-#'   `holidays`, `holiday_links`, `events`, `event_links`, `notices`,
+#'   `calendar`, `due_dates`, `rd_items`, `rd_src`,
+#'   `class_topics`, `hw_asgt`, `hw_items`, `hw_sol`, `hw_topics`,
+#'   `lab_asgt`, `lab_items`, `lab_sol`, `exams`,
+#'   `holidays`, `events`, `notices`,
 #'   `text_codes`
 #'
 #'   and a named list `metadata` containing named character vectors of
 #'   metadata that are used to decode and manipulate calendar entries.
 #'
-load_semester_db <- function(db_file, root_crit = NULL) {
-  if (is.null(root_crit)) {
-    root_crit <- make_root_criteria(".semestr.here",
-                                    rprojroot::has_file_pattern("^.*\\.RProj$"),
-                                    rprojroot::has_dir(".Rproj.user"),
-                                    rprojroot::has_dir("content"))
-
+load_semester_db <- function(db_file, root_crit = NULL, ignore_root = FALSE) {
+  if (ignore_root) {
+    root_dir <- getwd()
   } else {
-    root_crit <- rprojroot::as.root_criterion(root_crit)
-  }
+    if (is.null(root_crit)) {
+      root_crit <- make_root_criteria(".semestr.here",
+                                      rprojroot::has_file_pattern("^.*\\.RProj$"),
+                                      rprojroot::has_dir(".Rproj.user"),
+                                      rprojroot::has_dir("content"))
 
-  root_dir <- rprojroot::find_root(root_crit, dirname(db_file))
+    } else {
+      root_crit <- rprojroot::as.root_criterion(root_crit)
+    }
+
+    root_dir <- rprojroot::find_root(root_crit, dirname(db_file))
+  }
   slide_dir <- file.path(root_dir, "static", "slides")
   tz <- get_semestr_tz()
 
+  #==========================================================================
+  # Read tables from database
+  #==========================================================================
+
   db <- DBI::dbConnect(RSQLite::SQLite(), db_file)
+
+  #==========================================================================
+  # Read metadata tables
+  #==========================================================================
 
   md_1 <- dplyr::tbl(db, "metadata") %>% dplyr::collect()
   md_2 <- dplyr::tbl(db, "base_mods") %>% dplyr::collect()
@@ -63,13 +75,19 @@ load_semester_db <- function(db_file, root_crit = NULL) {
                    mods = mods, rev_mods = rev_mods)
   assign("metadata", metadata, envir = .globals)
 
-  for (t in c("calendar", "due_dates", "events",
-              "exams", "holidays", "notices",
-              "due_links", "event_links", "exam_links", "holiday_links",
-              "hw_links", "lab_links", "rd_links",
-              "hw_asgt", "hw_items", "hw_sol", "hw_topics",
-              "lab_asgt", "lab_items", "lab_sol", # "lab_topics",
-              "rd_items", "rd_src", "class_topics",
+  #==========================================================================
+  # Read syllabus tables
+  #==========================================================================
+
+  for (t in c("calendar", "classes", "due_dates",
+              "events", "exams", "holidays", "notices",
+              "link_cal_class", "link_cal_due", "link_cal_event",
+              "link_cal_exam", "link_cal_holiday", "link_cal_hw",
+              "link_cal_lab", "link_cal_notice", "link_cls_rd",
+              "homework_assignments", "homework_groups", "homework_items",
+              "homework_solutions", "homework_topics",
+              "lab_assignments", "lab_groups", "lab_items", "lab_solutions",
+              "reading_groups", "reading_items", "reading_sources",
               "text_codes")) {
     df <- dplyr::tbl(db, t) %>% dplyr::collect()
     assign(t, df)
@@ -77,8 +95,13 @@ load_semester_db <- function(db_file, root_crit = NULL) {
 
   DBI::dbDisconnect(db)
 
+  #==========================================================================
+  # Start setting up master calendar for the semester
+  #==========================================================================
+
   calendar <- calendar %>%
-    dplyr::mutate(date = lubridate::as_datetime(date, tz = tz))
+    dplyr::mutate(date = lubridate::as_datetime(date, tz = tz),
+                  cal_type = item_type(cal_id))
 
   bare_dates <- calendar %>% dplyr::select(cal_id, date)
 
@@ -88,13 +111,18 @@ load_semester_db <- function(db_file, root_crit = NULL) {
                                                stringr::str_c(duplicates, collapse = ", "),
                                                ")."))
 
-  due_dates <- due_links %>% dplyr::left_join(due_dates, by = "due_key")
+  #==========================================================================
+  # Set up due dates
+  #==========================================================================
+
+  due_dates <- link_cal_due %>% dplyr::left_join(due_dates, by = "due_id")
 
   missing_due_dates <- calendar %>%
-    dplyr::filter(cal_type == "due date") %$% cal_id %>%
+    filter(cal_type == "due date") %>%
+    dplyr::pull(cal_id) %>%
     setdiff(due_dates$cal_id)
   valid_due_dates <-
-    assertthat::assert_that(length(missing_due_dates) == 0,
+    assertthat::validate_that(length(missing_due_dates) == 0,
                             msg = stringr::str_c("Missing due dates: (",
                                                  stringr::str_c(missing_due_dates, collapse = ", "),
                                                  ")."))
@@ -103,30 +131,44 @@ load_semester_db <- function(db_file, root_crit = NULL) {
   }
 
   calendar <- calendar %>%
-    dplyr::left_join( dplyr::select(due_dates, cal_id, due_type = type,
-                                    due_action = action), by = "cal_id")
+    dplyr::left_join( dplyr::select(due_dates, cal_id, due_type, due_action),
+                      by = "cal_id")
 
-  hw_asgt <- hw_asgt %>% dplyr::inner_join(hw_links, by = "hw_key") %>%
-    dplyr::left_join(hw_topics, by = "hw_key") %>%
+  #==========================================================================
+  # Set up homework assignments
+  #==========================================================================
+
+  hw_asgt <- homework_assignments %>%
+    dplyr::inner_join(dplyr::select(homework_groups, hw_grp_id, hw_grp_key),
+                      by = "hw_grp_key") %>%
+    dplyr::inner_join(link_cal_hw, by = "hw_grp_id") %>%
+    dplyr::left_join(homework_topics, by = "hw_grp_key") %>%
     dplyr::left_join(
       dplyr::select(due_dates, due_key, due_cal_id = cal_id),
-      by = "due_key") %>%
-    dplyr::mutate_at(dplyr::vars(is_numbered),
+      by = c(hw_due_key = "due_key")) %>%
+    dplyr::mutate_at(dplyr::vars(hw_is_numbered),
                      ~as.logical(.) %>% tidyr::replace_na(FALSE))
-  hw_items <- hw_items %>% dplyr::inner_join(hw_links, by = "hw_key") %>%
+  hw_items <- homework_items %>%
+    dplyr::inner_join(dplyr::select(homework_groups, hw_grp_id, hw_grp_key),
+                      by = "hw_grp_key") %>%
+    dplyr::inner_join(link_cal_hw, by = "hw_grp_id") %>%
     dplyr::mutate_at(dplyr::vars(undergraduate_only, graduate_only,
-                                 break_before, prologue, epilogue),
+                                 hw_break_before, hw_prologue, hw_epilogue),
                      ~as.logical(.) %>% tidyr::replace_na(FALSE))
-  hw_sol <- hw_sol %>% dplyr::inner_join(hw_links, by = "hw_key") %>%
+  hw_sol <- homework_solutions %>%
+    dplyr::inner_join(dplyr::select(homework_groups, hw_grp_id, hw_grp_key),
+                      by = c(sol_grp_key = "hw_grp_key")) %>%
+    dplyr::inner_join(link_cal_hw, by = "hw_grp_id") %>%
     dplyr::inner_join( dplyr::select(due_dates, sol_pub_key = due_key,
                                      sol_pub_cal_id  = cal_id),
                        by = "sol_pub_key")
 
   missing_hw <- calendar %>%
-    dplyr::filter(cal_type == "homework") %$% cal_id %>%
+    dplyr::filter(cal_type == "homework") %>%
+    pull(cal_id) %>%
     setdiff(hw_asgt$cal_id)
   valid_hw <-
-    assertthat::assert_that(length(missing_hw) == 0,
+    assertthat::validate_that(length(missing_hw) == 0,
                             msg = stringr::str_c("Missing homework assignments: (",
                                                  stringr::str_c(missing_hw, collapse = ", "),
                                                  ")."))
@@ -134,10 +176,22 @@ load_semester_db <- function(db_file, root_crit = NULL) {
     warning(valid_hw)
   }
 
-  rd_items <- rd_items %>% dplyr::inner_join(rd_links, by = "rd_key") %>%
-    dplyr::left_join(rd_src, by = "src_key") %>%
-    dplyr::mutate_at(dplyr::vars(undergraduate_only, graduate_only, optional,
-                                 prologue, epilogue, textbook, handout),
+  #==========================================================================
+  # Set up reading assignments
+  #==========================================================================
+
+  rd_items <- reading_items %>%
+    dplyr::inner_join(dplyr::select(reading_groups, rd_grp_id, rd_grp_key),
+                      by = "rd_grp_key") %>%
+    dplyr::inner_join(link_cls_rd, by = "rd_grp_key") %>%
+    dplyr::inner_join(dplyr::select(classes, class_id, class_key),
+                      by = "class_key") %>%
+    dplyr::inner_join(dplyr::select(link_cal_class, cal_id, class_id),
+                      by = "class_id") %>%
+    dplyr::left_join(reading_sources, by = "src_key") %>%
+    dplyr::mutate_at(dplyr::vars(undergraduate_only, graduate_only,
+                                 optional, textbook, handout,
+                                 rd_prologue, rd_epilogue, rd_break_before),
                      ~as.logical(.) %>% tidyr::replace_na(FALSE))
 
   missing_reading <- calendar %>%
@@ -154,8 +208,15 @@ load_semester_db <- function(db_file, root_crit = NULL) {
   }
 
 
-  lab_asgt <- lab_asgt %>% dplyr::inner_join(lab_links, by = "lab_key") %>%
-    dplyr::left_join( dplyr::select(due_dates, report_due_key = due_key,
+  #==========================================================================
+  # Set up lab assignments
+  #==========================================================================
+
+  lab_asgt <- lab_assignments %>%
+    dplyr::inner_join(dplyr::select(lab_groups, lab_grp_id, lab_grp_key),
+                      by = "lab_grp_key") %>%
+    dplyr::inner_join(link_cal_lab, by = "lab_grp_id") %>%
+    dplyr::left_join(dplyr::select(due_dates, report_due_key = due_key,
                                     report_cal_id = cal_id),
                       by = "report_due_key") %>%
     dplyr::left_join( dplyr::select(due_dates, presentation_key = due_key,
@@ -175,13 +236,24 @@ load_semester_db <- function(db_file, root_crit = NULL) {
     warning(valid_labs)
   }
 
-  lab_items <- lab_items %>% dplyr::inner_join(lab_links, by = "lab_key")
-  lab_sol <- lab_sol %>% dplyr::inner_join(lab_links, by = "lab_key") %>%
-    dplyr::inner_join( dplyr::select(due_dates, sol_pub_key = due_key,
+  lab_items <- lab_items %>%
+    dplyr::inner_join(dplyr::select(lab_groups, lab_grp_id, lab_grp_key),
+                      by = "lab_grp_key") %>%
+    dplyr::inner_join(link_cal_lab, by = "lab_grp_id")
+  lab_sol <- lab_solutions %>%
+    dplyr::inner_join(dplyr::select(lab_groups, lab_grp_id, lab_grp_key),
+                      by = "lab_grp_key") %>%
+    dplyr::inner_join(link_cal_lab, by = "lab_grp_id") %>%
+    dplyr::inner_join( dplyr::select(due_dates, lab_sol_pub_key = due_key,
                                      sol_pub_cal_id  = cal_id),
-                       by = "sol_pub_key")
+                       by = "lab_sol_pub_key")
 
-  events <- events %>% dplyr::inner_join(event_links, by = "event_key")
+  #==========================================================================
+  # Set up events
+  #==========================================================================
+
+  events <- events %>%
+    dplyr::inner_join(link_cal_event, by = "event_id")
 
   missing_events <- calendar %>%
     dplyr::filter(cal_type == "event") %$% cal_id %>%
@@ -196,7 +268,11 @@ load_semester_db <- function(db_file, root_crit = NULL) {
     warning(valid_events)
   }
 
-  exams <- exams %>% dplyr::inner_join(exam_links, by = "exam_key")
+  #==========================================================================
+  # Set up exams
+  #==========================================================================
+
+  exams <- exams %>% dplyr::inner_join(link_cal_exam, by = "exam_id")
 
   missing_exams <- calendar %>%
     dplyr::filter(cal_type == "exam") %$% cal_id %>%
@@ -212,7 +288,11 @@ load_semester_db <- function(db_file, root_crit = NULL) {
   }
 
 
-  holidays <- holidays %>% dplyr::inner_join(holiday_links, by = "holiday_key")
+  #==========================================================================
+  # Set up holidays
+  #==========================================================================
+
+  holidays <- holidays %>% dplyr::inner_join(link_cal_holiday, by = "holiday_id")
 
   missing_holidays <- calendar %>%
     dplyr::filter(cal_type == "holiday") %$% cal_id %>%
@@ -224,9 +304,32 @@ load_semester_db <- function(db_file, root_crit = NULL) {
                                                                 collapse = ", "),
                                                  ")."))
 
-  notices <- notices %>%
-    dplyr::inner_join( dplyr::select(calendar, cal_id, cal_key),
-                       by = "cal_key")
+  if (! isTRUE(valid_holidays)) {
+    warning(valid_holidays)
+  }
+
+  #==========================================================================
+  # Set up notices
+  #==========================================================================
+
+  notices <- notices %>% dplyr::inner_join(link_cal_notice, by = "notice_id")
+
+  missing_notices <- calendar %>%
+    dplyr::filter(cal_type == "notice") %$% cal_id %>%
+    setdiff(notices$cal_id)
+  valid_notices <-
+    assertthat::assert_that(length(missing_notices) == 0,
+                            msg = stringr::str_c("Missing notices: (",
+                                                 stringr::str_c(missing_notices,
+                                                                collapse = ", "),
+                                                 ")."))
+
+  if (! isTRUE(valid_notices)) {
+    warning(valid_notices)
+  }
+  #==========================================================================
+  # Set up text codes
+  #==========================================================================
 
   bad_codes <- text_codes %>% dplyr::filter(is.na(code_value))
   if (nrow(bad_codes) > 0) {
@@ -240,7 +343,10 @@ load_semester_db <- function(db_file, root_crit = NULL) {
     latex = text_codes %>% { set_names(.$latex_value, .$code_name) }
   )
 
-  # Add dates to items
+  #==========================================================================
+  # Match items (homework, reading, labs, etc.) with dates
+  #==========================================================================
+
   rd_items <- rd_items %>% dplyr::left_join(bare_dates, by = "cal_id")
   hw_asgt <- hw_asgt %>% dplyr::left_join(bare_dates, by = "cal_id") %>%
     dplyr::left_join( dplyr::rename(bare_dates, due_cal_id = cal_id,
@@ -264,24 +370,68 @@ load_semester_db <- function(db_file, root_crit = NULL) {
   exams <- exams  %>% dplyr::left_join(bare_dates, by = "cal_id")
   events <- events  %>% dplyr::left_join(bare_dates, by = "cal_id")
 
-  rd_items <- rd_items %>% dplyr::mutate(cal_key = add_key_prefix(rd_key, "class"))
-  rd_links <- rd_links %>% dplyr::mutate(cal_key = add_key_prefix(rd_key, "class"))
+  #==========================================================================
+  # Set up textual calendar keys
+  #==========================================================================
 
-  hw_asgt <- hw_asgt %>% dplyr::mutate(cal_key = add_key_prefix(hw_key, "homework"))
-  hw_items <- hw_items %>% dplyr::mutate(cal_key = add_key_prefix(hw_key, "homework"))
-  hw_sol <- hw_sol %>% dplyr::mutate(cal_key = add_key_prefix(hw_key, "homework"),
-                                     pub_cal_key = add_key_prefix(sol_pub_key, "due date"))
-  hw_links <- hw_links %>% dplyr::mutate(cal_key = add_key_prefix(hw_key, "homework"))
+  rd_items <- rd_items %>%
+    dplyr::mutate(cal_key = add_key_prefix(rd_grp_key, "class"))
 
-  lab_asgt <- lab_asgt %>% dplyr::mutate(cal_key = add_key_prefix(lab_key, "lab"))
-  lab_items <- lab_items %>% dplyr::mutate(cal_key = add_key_prefix(lab_key, "lab"))
-  lab_sol <- lab_sol %>% dplyr::mutate(cal_key = add_key_prefix(lab_key, "lab"),
-                                     pub_cal_key = add_key_prefix(sol_pub_key, "due date"))
-  lab_links <- lab_links %>% dplyr::mutate(cal_key = add_key_prefix(lab_key, "lab"))
+  hw_asgt <- hw_asgt %>%
+    dplyr::mutate(cal_key = add_key_prefix(hw_grp_key, "homework"))
+  hw_items <- hw_items %>%
+    dplyr::mutate(cal_key = add_key_prefix(hw_grp_key, "homework"))
+  hw_sol <- hw_sol %>%
+    dplyr::mutate(cal_key = add_key_prefix(sol_grp_key, "homework"),
+                  pub_cal_key = add_key_prefix(sol_pub_key, "due date"))
 
-  holidays <- holidays %>% dplyr::mutate(cal_key = add_key_prefix(holiday_key, "holiday"))
-  exams <- exams %>% dplyr::mutate(cal_key = add_key_prefix(exam_key, "exam"))
-  events <- events %>% dplyr::mutate(cal_key = add_key_prefix(event_key, "event"))
+  lab_asgt <- lab_asgt %>%
+    dplyr::mutate(cal_key = add_key_prefix(lab_grp_key, "lab"))
+  lab_items <- lab_items %>%
+    dplyr::mutate(cal_key = add_key_prefix(lab_grp_key, "lab"))
+  lab_sol <- lab_sol %>%
+    dplyr::mutate(cal_key = add_key_prefix(lab_grp_key, "lab"),
+                  pub_cal_key = add_key_prefix(lab_sol_pub_key, "due date"))
+
+  holidays <- holidays %>%
+    dplyr::mutate(cal_key = add_key_prefix(holiday_key, "holiday"))
+  exams <- exams %>%
+    dplyr::mutate(cal_key = add_key_prefix(exam_key, "exam"))
+  events <- events %>%
+    dplyr::mutate(cal_key = add_key_prefix(event_key, "event"))
+
+  #==========================================================================
+  # Add cal_key to calendar
+  #==========================================================================
+
+  class_topics <- calendar %>%
+    dplyr::filter(cal_type == "class") %>%
+    dplyr::select(cal_id) %>%
+    dplyr::left_join(dplyr::select(link_cal_class, cal_id, class_id),
+                     by = "cal_id") %>%
+    dplyr::left_join(dplyr::select(classes, class_id, class_key,
+                                   topic = class_title),
+                     by = "class_id")  %>%
+    dplyr::left_join(link_cls_rd, by = "class_key") %>%
+    dplyr::select(-class_id) %>%
+    dplyr::rename(cal_key = class_key) %>%
+    add_key_prefix("class")
+
+  cal_keys <- bind_rows(
+    map(list(class_topics, hw_asgt, hw_items, hw_sol, lab_asgt, lab_items,
+             lab_sol, holidays, exams, events),
+        ~dplyr::select(.x, cal_id, cal_key))
+  ) %>%
+    distinct()
+
+  calendar <- calendar %>% left_join(cal_keys, by = "cal_id") %>%
+    left_join(link_cal_class, by = "cal_id")
+
+
+
+  #==========================================================================
+  # Set up class schedule
+  #==========================================================================
 
   first_class <- 1
   last_class <- NA
@@ -305,21 +455,24 @@ load_semester_db <- function(db_file, root_crit = NULL) {
     year_taught = year_taught, pub_date = pub_date
   )
 
+  #==========================================================================
+  # Assemble all the tables into a big list
+  #==========================================================================
+
   semester <- list(
-    calendar = calendar, due_dates = due_dates, due_links = due_links,
-    rd_items = rd_items, rd_src = rd_src, rd_links = rd_links,
-    class_topics = class_topics,
+    calendar = calendar, class_topics = class_topics, due_dates = due_dates,
+    rd_items = rd_items, rd_src = reading_sources,
     hw_asgt = hw_asgt, hw_items = hw_items, hw_sol = hw_sol,
-    hw_links = hw_links, hw_topics = hw_topics,
     lab_asgt = lab_asgt, lab_items = lab_items, lab_sol = lab_sol,
-    lab_links = lab_links,
-    exams = exams, exam_links = exam_links,
-    holidays = holidays, holiday_links = holiday_links,
-    events = events, event_links = event_links,
-    notices = notices, text_codes = text_codes,
+    exams = exams, holidays = holidays, events = events, notices = notices,
+    text_codes = text_codes,
     metadata = metadata, semester_dates = semester_dates,
     tz = tz, root_dir = root_dir, slide_dir = slide_dir
   )
+
+  #==========================================================================
+  # Save all of our tables to the .globals environment
+  #==========================================================================
 
   assign("metadata", metadata, envir = .globals)
   assign("semester_dates", semester_dates, envir = .globals)
@@ -327,6 +480,10 @@ load_semester_db <- function(db_file, root_crit = NULL) {
   assign("root_dir", root_dir, envir = .globals)
   assign("slide_dir", slide_dir, envir = .globals)
   assign("tz", tz, envir = .globals)
+
+  #==========================================================================
+  # Return the big list
+  #==========================================================================
 
   invisible(semester)
 }
