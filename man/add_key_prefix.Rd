@@ -4,13 +4,13 @@
 \alias{add_key_prefix}
 \title{Add prefixes to keys.}
 \usage{
-add_key_prefix(df, type, key_col = "cal_key")
+add_key_prefix(x, type, ...)
 }
 \arguments{
-\item{df}{The data frame to process.}
-
 \item{type}{The type of prefix to add (e.g., "\code{class}", "\code{lab}",
 etc.)}
+
+\item{df}{The data frame to process.}
 
 \item{col}{The column where the keys are located (by default "\code{cal_key}").}
 }

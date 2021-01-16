@@ -101,8 +101,6 @@ add_key_prefix.list <- function(x, type, ...) {
   invisible(x)
 }
 
-
-
 add_key_prefix.data.frame <- function(df, type, col = "cal_key") {
   col <- ensym(col)
   col <- enquo(col)

@@ -4,13 +4,13 @@
 \alias{strip_key_prefix}
 \title{Strip prefixes off keys.}
 \usage{
-strip_key_prefix(df, type, key_col = "cal_key")
+strip_key_prefix(x, type, ...)
 }
 \arguments{
+\item{x}{The list or vector to process.}
+
 \item{type}{The type of calendar entry to strip (e.g., "\code{class}", "\code{lab}",
 etc.)}
-
-\item{x}{The list or vector to process.}
 }
 \value{
 A list or vector frame with the prefixes stripped from the contents.

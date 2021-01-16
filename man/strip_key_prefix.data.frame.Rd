@@ -4,7 +4,7 @@
 \alias{strip_key_prefix.data.frame}
 \title{Strip prefixes off keys.}
 \usage{
-strip_key_prefix.data.frame(df, type, col = "cal_key", ...)
+\method{strip_key_prefix}{data.frame}(df, type, col = "cal_key", ...)
 }
 \arguments{
 \item{df}{The data frame to process.}

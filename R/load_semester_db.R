@@ -118,7 +118,7 @@ load_semester_db <- function(db_file, root_crit = NULL, ignore_root = FALSE) {
   due_dates <- link_cal_due %>% dplyr::left_join(due_dates, by = "due_id")
 
   missing_due_dates <- calendar %>%
-    filter(cal_type == "due date") %>%
+    dplyr::filter(cal_type == "due date") %>%
     dplyr::pull(cal_id) %>%
     setdiff(due_dates$cal_id)
   valid_due_dates <-
@@ -165,7 +165,7 @@ load_semester_db <- function(db_file, root_crit = NULL, ignore_root = FALSE) {
 
   missing_hw <- calendar %>%
     dplyr::filter(cal_type == "homework") %>%
-    pull(cal_id) %>%
+    dplyr::pull(cal_id) %>%
     setdiff(hw_asgt$cal_id)
   valid_hw <-
     assertthat::validate_that(length(missing_hw) == 0,
@@ -417,15 +417,16 @@ load_semester_db <- function(db_file, root_crit = NULL, ignore_root = FALSE) {
     dplyr::rename(cal_key = class_key) %>%
     add_key_prefix("class")
 
-  cal_keys <- bind_rows(
-    map(list(class_topics, hw_asgt, hw_items, hw_sol, lab_asgt, lab_items,
-             lab_sol, holidays, exams, events),
+  cal_keys <- dplyr::bind_rows(
+    purrr::map(list(class_topics, hw_asgt, hw_items, hw_sol, lab_asgt,
+                    lab_items, lab_sol, holidays, exams, events),
         ~dplyr::select(.x, cal_id, cal_key))
   ) %>%
-    distinct()
+    dplyr::distinct()
 
-  calendar <- calendar %>% left_join(cal_keys, by = "cal_id") %>%
-    left_join(link_cal_class, by = "cal_id")
+  calendar <- calendar %>%
+    dplyr::left_join(cal_keys, by = "cal_id") %>%
+    dplyr::left_join(link_cal_class, by = "cal_id")
 
 
 
