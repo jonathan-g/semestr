@@ -2,19 +2,34 @@
 % Please edit documentation in R/key_prefixes.R
 \name{add_key_prefix}
 \alias{add_key_prefix}
+\alias{add_key_prefix.character}
+\alias{add_key_prefix.list}
+\alias{add_key_prefix.data.frame}
 \title{Add prefixes to keys.}
 \usage{
 add_key_prefix(x, type, ...)
+
+\method{add_key_prefix}{character}(x, type, ...)
+
+\method{add_key_prefix}{list}(x, type, ...)
+
+\method{add_key_prefix}{data.frame}(df, type, col = "cal_key")
 }
 \arguments{
+\item{x}{The object to process.}
+
 \item{type}{The type of prefix to add (e.g., "\code{class}", "\code{lab}",
 etc.)}
 
-\item{df}{The data frame to process.}
+\item{...}{Arguments passed to methods.}
 
-\item{col}{The column where the keys are located (by default "\code{cal_key}").}
+\item{df}{The object to process.}
+
+\item{col}{The column to process}
 }
 \value{
+A data frame with the prefixes stripped from the specified column.
+
 A data frame with the prefixes stripped from the specified column.
 }
 \description{
@@ -23,6 +38,17 @@ the type of calendar entry they represent (e.g., "\code{LAB_}" for labs,
 "\code{CLS_}" for classes/reading assignments, "\code{EXAM_}" for exams, etc.). This
 function adds those prefixes.
 }
+\section{Methods (by class)}{
+\itemize{
+\item \code{character}: Add key prefixes to a character vector.
+
+\item \code{list}: Add key prefixes to a list of character objects.
+
+\item \code{data.frame}: Add key prefix to a column in a data frame.
+}}
+
 \seealso{
+strip_key_prefix
+
 strip_key_prefix
 }

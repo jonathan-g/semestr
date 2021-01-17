@@ -61,23 +61,28 @@ format_handout_reading <- function(reading_list) {
 
 make_reading_assignment <- function(reading_entry) {
   textbook_reading <- reading_entry %>%
-    dplyr::filter(textbook &
-                    ! (optional | undergraduate_only | graduate_only ))
+    dplyr::filter(.data$textbook,
+                  ! (.data$optional | .data$undergraduate_only |
+                       .data$graduate_only ))
   handout_reading <- reading_entry %>%
-    dplyr::filter(handout &
-                    ! (optional | undergraduate_only | graduate_only ))
+    dplyr::filter(.data$handout,
+                  ! (.data$optional | .data$undergraduate_only |
+                       .data$graduate_only ))
   ugrad_textbook_reading <- reading_entry %>%
-    dplyr::filter(textbook & undergraduate_only )
+    dplyr::filter(.data$textbook, .data$undergraduate_only )
   ugrad_handout_reading <- reading_entry %>%
-    dplyr::filter(handout & undergraduate_only )
+    dplyr::filter(.data$handout, .data$undergraduate_only )
   grad_textbook_reading <- reading_entry %>%
-    dplyr::filter(textbook & graduate_only )
+    dplyr::filter(.data$textbook, .data$graduate_only )
   grad_handout_reading <- reading_entry %>%
-    dplyr::filter(handout & graduate_only )
-  optional_textbook_reading <- reading_entry %>% dplyr::filter(textbook & optional)
-  optional_handout_reading <- reading_entry %>% dplyr::filter(handout & optional)
+    dplyr::filter(.data$handout, .data$graduate_only )
+  optional_textbook_reading <- reading_entry %>%
+    dplyr::filter(.data$textbook, .data$optional)
+  optional_handout_reading <- reading_entry %>%
+    dplyr::filter(.data$handout, .data$optional)
 
-  reading_notes <- reading_entry %>% dplyr::filter(!is.na(reading_notes))
+  reading_notes <- reading_entry %>%
+    dplyr::filter(!is.na(.data$reading_notes))
 
   has_req_reading <- (nrow(textbook_reading) + nrow(handout_reading)) > 0
   has_ugrad_reading <- (nrow(ugrad_textbook_reading) +
@@ -94,70 +99,71 @@ make_reading_assignment <- function(reading_entry) {
   output <- "## Reading:"
   if (! has_any_reading) {
     output <- stringr::str_c(stringr::str_trim(output), "",
-                    "No new reading for today.",
-                    "", sep = "\n")
+                             "No new reading for today.",
+                             "", sep = "\n")
   } else {
     if (has_req_reading) {
       readings <- c(format_textbook_reading(textbook_reading),
                     format_handout_reading(handout_reading)) %>%
         itemize()
       output <- stringr::str_c(stringr::str_trim(output),
-                      "",
-                      "### Required Reading (everyone):",
-                      append_newline_if_needed(readings, TRUE, 1),
-                      sep = "\n")
+                               "",
+                               "### Required Reading (everyone):",
+                               append_newline_if_needed(readings, TRUE, 1),
+                               sep = "\n")
     }
     if (has_ugrad_reading) {
       ug_readings <- c(format_textbook_reading(ugrad_textbook_reading),
                        format_handout_reading(ugrad_handout_reading)) %>%
         itemize()
       output <- stringr::str_c(stringr::str_trim(output),
-                      "",
-                      "### Required for Undergrads (optional for grad students):",
-                      append_newline_if_needed(ug_readings, TRUE, 1),
-                      sep = "\n")
+                               "",
+                               "### Required for Undergrads (optional for grad students):",
+                               append_newline_if_needed(ug_readings, TRUE, 1),
+                               sep = "\n")
     }
     if (has_grad_reading) {
       g_readings <- c(format_textbook_reading(grad_textbook_reading),
                       format_handout_reading(grad_handout_reading)) %>%
         itemize()
       output <- stringr::str_c(stringr::str_trim(output),
-                      "",
-                      "### Required for Grad Students (optional for undergrads):",
-                      append_newline_if_needed(g_readings, TRUE, 1),
-                      sep = "\n")
+                               "",
+                               "### Required for Grad Students (optional for undergrads):",
+                               append_newline_if_needed(g_readings, TRUE, 1),
+                               sep = "\n")
     }
     if (has_opt_reading) {
       extra_readings <- c(format_textbook_reading(optional_textbook_reading),
                           format_handout_reading(optional_handout_reading)) %>%
         itemize()
       output <- stringr::str_c(stringr::str_trim(output), "",
-                      "### Optional Extra Reading:",
-                      append_newline_if_needed(extra_readings, TRUE, 1),
-                      sep = "\n")
+                               "### Optional Extra Reading:",
+                               append_newline_if_needed(extra_readings, TRUE, 1),
+                               sep = "\n")
     }
   }
   if (has_notes) {
     reading_note_str <- reading_notes$reading_notes %>% stringr::str_trim() %>%
       stringr::str_c(collapse = "\n\n")
     output <- stringr::str_c(stringr::str_trim(output), "",
-                    ifelse(has_req_reading || has_opt_reading,
-                           "### Reading Notes:",
-                           "### Notes:"),
-                    "", reading_note_str, "",
-                    sep = "\n")
+                             ifelse(has_req_reading || has_opt_reading,
+                                    "### Reading Notes:",
+                                    "### Notes:"),
+                             "", reading_note_str, "",
+                             sep = "\n")
   }
   output
 }
 
 make_reading_page <- function(cal_id, semester){
   cal_id <- enquo(cal_id)
-  reading <- semester$rd_items %>% dplyr::filter(cal_id == !!cal_id) %>%
+  reading <- semester$rd_items %>%
+    dplyr::filter(.data$cal_id == !!cal_id) %>%
     # merge_dates(semester) %>%
-    dplyr::left_join(dplyr::select(semester$calendar, cal_id, class_num, week_num),
+    dplyr::left_join(dplyr::select(semester$calendar, "cal_id", "class_num", "week_num"),
                      by = "cal_id") %>%
-    dplyr::left_join( dplyr::select(semester$class_topics, topic, rd_grp_key),
-               by = "rd_grp_key")
+    dplyr::left_join( dplyr::select(semester$class_topics, "topic", "rd_grp_key"),
+                      by = "rd_grp_key")
   rd_date <- unique(reading$date)
   assertthat::assert_that(length(rd_date) == 1,
                           msg = "A calendar ID should have a unique date (make_reading)")
@@ -171,9 +177,10 @@ make_reading_page <- function(cal_id, semester){
   assertthat::assert_that(length(key) == 1,
                           msg = "A calendar ID should have a unique reading key # (make_reading)")
 
-  homework <- semester$hw_asgt %>% dplyr::filter(cal_id == !!cal_id) %>%
+  homework <- semester$hw_asgt %>%
+    dplyr::filter(.data$cal_id == !!cal_id) %>%
     # merge_dates(semester) %>%
-    dplyr::left_join( dplyr::select(semester$hw_items, -hw_num, -cal_id),
+    dplyr::left_join( dplyr::select(semester$hw_items, -"hw_num", -"cal_id"),
                       by = "hw_grp_key")
   delim <- "---"
   header <- tibble::tibble(title = rd_topic,
@@ -194,9 +201,11 @@ make_reading_page <- function(cal_id, semester){
     sep = "\n"
   )
   asgt <- reading %>%
-    dplyr::select(cal_id, rd_grp_key, cal_key, date, topic, class_num) %>%
+    dplyr::select("cal_id", "rd_grp_key", "cal_key", "date", "topic",
+                  "class_num") %>%
     dplyr::distinct()
-  assertthat::assert_that(nrow(asgt) == 1, msg = "A calendar ID should have a consistent reading assignment (make_reading)")
+  assertthat::assert_that(nrow(asgt) == 1,
+                          msg = "A calendar ID should have a consistent reading assignment (make_reading)")
   context <- make_context(asgt, "reading", semester)
 
   rd_page <- rd_page %>%

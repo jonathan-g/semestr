@@ -1,6 +1,7 @@
 Package: semestr
-Title: What the Package Does (One Line, Title Case)
+Title: Generate assignments for a semester from a SQLlite database
 Version: 0.0.0.9000
+Date: 2021-01-16
 Authors@R: 
     person(given = "Jonathan",
            family = "Gilligan",
@@ -9,13 +10,8 @@ Authors@R:
            comment = c(ORCID = "0000-0003-1375-6686"))
 Description: What the package does (one paragraph).
 License: MIT + file LICENSE
-Suggests: 
-    testthat,
-    roxygen2
-Encoding: UTF-8
-LazyData: true
-Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.1.1
+Depends:
+    R (>= 4.0)
 Imports: 
     assertthat (>= 0.2.1),
     dplyr (>= 0.8.3),
@@ -26,4 +22,18 @@ Imports:
     rlang (>= 0.1.2),
     RSQLite (>= 2.1.5),
     stringr (>= 1.4.0),
-    tidyr (>= 1.0.0)
+    tidyr (>= 1.0.0),
+    DBI,
+    knitr,
+    lubridate,
+    rprojroot,
+    tibble,
+    withr,
+    yaml
+Suggests: 
+    testthat,
+    roxygen2
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.1

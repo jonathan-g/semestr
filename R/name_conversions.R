@@ -91,7 +91,6 @@ base2type <- function(base) {
 #' Determine the type of calendar entry from its calendar id.
 #'
 #' @param cal_id an integer calendar ID number.
-#' @param metadata A list of metadata as returned from [load_semester_db].
 #'
 #' @return A string identifying the type of calendar entry. Current values
 #'   are "class", "reading", "homework", "lab", "exam", "due date", "holiday",
@@ -109,7 +108,6 @@ item_type <- function(cal_id) {
 #' Modifications include cancelled and re-scheduled (make-up) classes.
 #'
 #' @param cal_id an integer calendar ID number.
-#' @param metadata A list of metadata as returned from [load_semester_db].
 #'
 #' @return A string identifying the type of modification. Current values are
 #'   "cancelled" and "make-up"

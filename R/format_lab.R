@@ -6,7 +6,8 @@ make_lab_slug <- function(lab_asgt) {
 }
 
 get_lab_assignment <- function(key, semester) {
-  assignment <- semester$lab_asgt %>% dplyr::filter(lab_grp_key == key)
+  assignment <- semester$lab_asgt %>%
+    dplyr::filter(.data$lab_grp_key == key)
   assertthat::assert_that(nrow(assignment) == 1,
                           msg = stringr::str_c(
                             "There should only be one lab assignment for a given key: ",
@@ -105,7 +106,8 @@ make_lab_doc <- function(lab, semester) {
 make_lab_docs <- function(lab_key, semester) {
   lab_key <- enquo(lab_key)
   labs <- semester$lab_items %>%
-    dplyr::filter(lab_grp_key == !!lab_key, ! is.na(doc_filename)) # %>%
+    dplyr::filter(.data$lab_grp_key == !!lab_key,
+                  ! is.na(.data$doc_filename)) # %>%
     # merge_dates(semester)
 
   # purrr::pmap(list) is a nice way to transpose without screwing up classes
@@ -122,9 +124,10 @@ make_lab_assignment_content <- function(key, semester, use_solutions = FALSE) {
   output <- adj_nl("# Overview:", assignment$description, start_par = TRUE,
                    extra_lines = 1)
 
-  docs <- semester$lab_items %>% dplyr::filter(lab_grp_key == key) %>%
+  docs <- semester$lab_items %>%
+    dplyr::filter(.data$lab_grp_key == key) %>%
     # merge_dates(semester) %>%
-    dplyr::arrange(lab_item_id)
+    dplyr::arrange(.data$lab_item_id)
   output <- cat_nl(output, "## Reading", TRUE)
   if (nrow(docs) > 0) {
     output <- cat_nl(output,
@@ -158,12 +161,13 @@ make_lab_assignment_content <- function(key, semester, use_solutions = FALSE) {
 
   if (use_solutions) {
 
-    solutions <- semester$lab_sol %>% dplyr::filter(lab_grp_key == key) %>%
+    solutions <- semester$lab_sol %>%
+      dplyr::filter(.data$lab_grp_key == key) %>%
       # merge_dates(semester) %>%
       # merge_dates(semester, id_col = "sol_pub_cal_id",
       #             date_col = "sol_pub_date") %>%
-      dplyr::filter(sol_pub_date <= lubridate::now()) %>%
-      dplyr::arrange(sol_pub_date)
+      dplyr::filter(.data$sol_pub_date <= lubridate::now()) %>%
+      dplyr::arrange(.data$sol_pub_date)
 
     if (nrow(solutions) > 0) {
       output <- cat_nl(output, "## Solutions",

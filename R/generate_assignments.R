@@ -1,39 +1,42 @@
 init_schedule <- function(semester) {
   schedule <- semester$calendar %>%
-    dplyr::filter(cal_type %in% c("class", "exam", "homework", "lab", "holiday")) %>%
-    dplyr::select(id = cal_id, date, key = cal_key, cal_type) %>%
+    dplyr::filter(.data$cal_type %in% c("class", "exam", "homework", "lab",
+                                        "holiday")) %>%
+    dplyr::select(id = "cal_id", "date", key = "cal_key", "cal_type") %>%
     dplyr::mutate(# dates might be datetimes, so convert everything to calendar
       # dates.
-      date = lubridate::as_date(date, tz = get_semestr_tz()),
-      cal_type = type2col(cal_type))
+      date = lubridate::as_date(.data$date, tz = get_semestr_tz()),
+      cal_type = type2col(.data$cal_type))
   invisible(schedule)
 }
 
 schedule_strip_finals <- function(schedule, semester) {
   final_exams <- schedule %>%
-    dplyr::filter(key %in% add_key_prefix(c("FINAL_EXAM", "ALT_FINAL_EXAM"), "exam"))
+    dplyr::filter(.data$key %in%
+                    add_key_prefix(c("FINAL_EXAM", "ALT_FINAL_EXAM"), "exam"))
 
-  schedule <- schedule %>% dplyr::filter(! id %in% final_exams$id)
+  schedule <- schedule %>% dplyr::filter(! .data$id %in% final_exams$id)
   list(schedule = schedule, final_exams = final_exams)
 }
 
 schedule_add_homework <- function(schedule, semester) {
   hw_due <- semester$due_dates %>%
-    dplyr::filter(due_type == "homework",
-                  due_action %in% c("homework", "report")) %>%
-    dplyr::filter(cal_id %in% semester$calendar$cal_id)
+    dplyr::filter(.data$due_type == "homework",
+                  .data$due_action %in% c("homework", "report")) %>%
+    dplyr::filter(.data$cal_id %in% semester$calendar$cal_id)
 
-  hw <- semester$hw_asgt %>% dplyr::filter(hw_due_key %in% hw_due$due_key)
+  hw <- semester$hw_asgt %>% dplyr::filter(.data$hw_due_key %in% hw_due$due_key)
 
   missing_hw <- hw %>%
-    dplyr::filter(! (cal_key %in% schedule$key & cal_id %in% schedule$id))
+    dplyr::filter(! (.data$cal_key %in% schedule$key &
+                     .data$cal_id %in% schedule$id ))
 
   missing_hw_entries <- missing_hw %>%
-    dplyr::select( key = hw_grp_key, id = due_cal_id) %>%
-    dplyr::left_join(dplyr::select(semester$calendar, id = cal_id, date),
+    dplyr::select( key = "hw_grp_key", id = "due_cal_id") %>%
+    dplyr::left_join(dplyr::select(semester$calendar, id = "cal_id", "date"),
                      by = c("id")) %>%
     dplyr::mutate(cal_type = "homework",
-                  date = lubridate::as_date(date, get_semestr_tz()))
+                  date = lubridate::as_date(.data$date, get_semestr_tz()))
 
   schedule <- schedule %>% dplyr::bind_rows(missing_hw_entries)
   list(schedule = schedule, hw = hw, hw_due = hw_due, missing_hw = missing_hw)
@@ -49,21 +52,21 @@ schedule_widen <- function(schedule, final_exams, semester,
     final_is_take_home <- FALSE
   }
   topics <- semester$class_topics %>%
-    dplyr::select(key_class = cal_key, topic)
+    dplyr::select(key_class = "cal_key", "topic")
   if (has_exams) {
-  exam_topics <- semester$exams %>%
-    dplyr::select(key_exam = exam_key, topic_exam = exam) %>%
-    add_key_prefix(type = "exam", col = "key_exam")
+    exam_topics <- semester$exams %>%
+      dplyr::select(key_exam = "exam_key", topic_exam = "exam") %>%
+      add_key_prefix(type = "exam", col = "key_exam")
   }
 
   class_nums <- semester$calendar %>%
-    dplyr::select(id_class = cal_id, class_num)
+    dplyr::select(id_class = "cal_id", "class_num")
 
   if (final_is_take_home) {
     message("processing final_exams: (",
             stringr::str_c(names(final_exams), collapse = ", "), "), with ",
             nrow(final_exams), " rows.")
-    take_home_exam <- dplyr::top_n(final_exams, 1, wt = date)
+    take_home_exam <- dplyr::top_n(final_exams, 1, wt = .data$date)
     take_home_exam$key <- add_key_prefix("TAKE_HOME_FINAL_EXAM", "exam")
     take_home_exam_topics <- tibble::tibble(key_exam = take_home_exam$key,
                                             topic_exam = "Take-home final exam due")
@@ -72,7 +75,8 @@ schedule_widen <- function(schedule, final_exams, semester,
 
   if (has_holidays) {
     holiday_topics <- semester$holidays %>%
-      dplyr::select(topic_holiday = holiday_name, key_holiday = holiday_key) %>%
+      dplyr::select(topic_holiday = "holiday_name",
+                    key_holiday = "holiday_key") %>%
       add_key_prefix(type = "holiday", col = "key_holiday")
   }
 
@@ -103,8 +107,8 @@ schedule_widen <- function(schedule, final_exams, semester,
   }
   schedule <- schedule %>%
     dplyr::mutate(page = NA_character_) %>%
-    tidyr::pivot_wider(names_from = cal_type,
-                       values_from = c(id, key, page)) %>%
+    tidyr::pivot_wider(names_from = "cal_type",
+                       values_from = c("id", "key", "page")) %>%
     dplyr::select(-dplyr::any_of(c("page_exam", "page_holiday"))) %>%
     dplyr::mutate(page_lecture = NA_character_) %>%
     dplyr::left_join( topics, by = "key_class") %>%
@@ -128,7 +132,6 @@ schedule_widen <- function(schedule, final_exams, semester,
     dplyr::mutate(topic = purrr::pmap_chr(., t_topic)) %>%
     dplyr::select(-dplyr::starts_with("topic_"))
 
-
   for (col in get_semestr_metadata()$type2col) {
     key_col <- stringr::str_c("key_", col)
     if (key_col %in% names(schedule)) {
@@ -137,19 +140,22 @@ schedule_widen <- function(schedule, final_exams, semester,
     }
   }
 
-  schedule <- schedule %>% dplyr::rename(page_reading = page_class)
-  schedule <- schedule %>% dplyr::distinct()
+  schedule <- schedule %>%
+    dplyr::rename(page_reading = "page_class") %>%
+    dplyr::distinct()
   list(schedule = schedule)
 }
 
 check_schedule <- function(schedule, semester) {
-  sched_check <- schedule %>% dplyr::group_by(date, cal_type) %>%
-    dplyr::summarize(count = dplyr::n()) %>% dplyr::ungroup() %>%
-    dplyr::filter(count > 1) %>% dplyr::group_by(date) %>%
-    dplyr::summarize(bad_indices = stringr::str_c(cal_type,
-                                                  collapse = ", ")) %>%
-    dplyr::ungroup() %>%
-    dplyr::mutate(bad_indices = stringr::str_c(date, bad_indices,
+  sched_check <- schedule %>%
+    dplyr::group_by(.data$date, .data$cal_type) %>%
+    dplyr::summarize(count = dplyr::n(), .groups = "drop") %>%
+    dplyr::filter(.data$count > 1) %>%
+    dplyr::group_by(.data$date) %>%
+    dplyr::summarize(bad_indices = stringr::str_c(.data$cal_type,
+                                                  collapse = ", "),
+                     .groups = "drop") %>%
+    dplyr::mutate(bad_indices = stringr::str_c(.data$date, .data$bad_indices,
                                                sep = ": "))
 
   assertthat::assert_that(nrow(sched_check) == 0,
@@ -193,8 +199,8 @@ copy_slides <- function(schedule, date, cal_entry, semester) {
               as.character(date), " is ", slide_url)
       schedule <- schedule %>%
         dplyr::mutate(page_lecture =
-                        ifelse(comp_na_f(class_num, cal_entry$class_num),
-                               slide_url, page_lecture))
+                        ifelse(comp_na_f(.data$class_num, cal_entry$class_num),
+                               .data$slide_url, .data$page_lecture))
     } else {
       slides <- list.files(file.path(slide_dir, slide_class_dir),
                            pattern = "*.ppt*")
@@ -206,8 +212,8 @@ copy_slides <- function(schedule, date, cal_entry, semester) {
         } else {
           slide_df <- tibble::tibble(slide = slides) %>%
             dplyr::mutate(date = file.mtime(
-              file.path(slide_dir, slide_class_dir, slide))) %>%
-            dplyr::arrange(desc(date))
+              file.path(slide_dir, slide_class_dir, .data$slide))) %>%
+            dplyr::arrange(dplyr::desc(.data$date))
           these_slides <- slide_df$slide[1]
           message(length(slides), " ppt slides found for class ", class_num,
                   " on ", as.character(date),
@@ -218,8 +224,8 @@ copy_slides <- function(schedule, date, cal_entry, semester) {
         message("slide_url = ", slide_url)
         schedule <- schedule %>%
           dplyr::mutate(page_lecture =
-                          ifelse(comp_na_f(class_num, cal_entry$class_num),
-                                 slide_url, page_lecture))
+                          ifelse(comp_na_f(.data$class_num, cal_entry$class_num),
+                                 .data$slide_url, .data$page_lecture))
       } else {
         message("No slides found for class ", class_num, " on ",
                 as.character(date))
@@ -245,8 +251,8 @@ build_reading_assignment <- function(schedule, date, cal_entry, semester) {
     cat(rd_page, file = rd_path)
     schedule <- schedule %>%
       dplyr::mutate(page_reading =
-                      ifelse(comp_na_f(class_num, cal_entry$class_num),
-                             rd_url, page_reading))
+                      ifelse(comp_na_f(.data$class_num, cal_entry$class_num),
+                             .data$rd_url, .data$page_reading))
   }
   invisible(schedule)
 }
@@ -256,18 +262,19 @@ build_hw_assignment <- function(schedule, date, cal_entry, semester) {
     message("Making homework page for ", cal_entry$key_hw)
     links <- generate_hw_assignment(cal_entry$key_hw, semester, TRUE)
     schedule <- schedule %>%
-      dplyr::mutate(page_hw = ifelse(comp_na_f(id_hw, cal_entry$id_hw),
-                                     links['url'], page_hw))
+      dplyr::mutate(page_hw = ifelse(comp_na_f(.data$id_hw, cal_entry$id_hw),
+                                     links['url'], .data$page_hw))
   }
   invisible(schedule)
 }
+
 build_lab_assignment <- function(schedule, date, cal_entry, semester) {
   if (!is.na(cal_entry$id_lab)) {
     message("Making lab page for lab ", cal_entry$key_lab )
     links <- generate_lab_assignment(cal_entry$key_lab, semester, TRUE)
     schedule <- schedule %>%
-      dplyr::mutate(page_lab = ifelse(comp_na_f(id_lab, cal_entry$id_lab),
-                                      links['url'], page_lab))
+      dplyr::mutate(page_lab = ifelse(comp_na_f(.data$id_lab, cal_entry$id_lab),
+                                      links['url'], .data$page_lab))
   }
   invisible(schedule)
 }
@@ -283,7 +290,7 @@ build_assignments <- function(schedule, semester) {
 
   for (d in purrr::discard(dates, is.na)) {
     d = lubridate::as_date(d)
-    cal_entry <- schedule %>% dplyr::filter(date == d)
+    cal_entry <- schedule %>% dplyr::filter(.data$date == d)
     assertthat::assert_that(nrow(cal_entry) == 1,
                             msg = stringr::str_c("Multiple calendar entries for date ",
                                                  as.character(d), "."))
@@ -337,12 +344,15 @@ generate_assignments <- function(semester) {
 
   lesson_plan <- schedule %>%
     # dplyr::filter(! event_id %in% c("FINAL_EXAM", "ALT_FINAL_EXAM")) %>%
-    dplyr::select(date, title = topic, reading = page_reading,
-                  assignment = page_hw, lecture = page_lecture,
-                  lab = page_lab, topic) %>%
-    dplyr::arrange(date) %>% dplyr::mutate(date = as.character(date)) %>%
-    purrr::transpose() %>% purrr::map(~purrr::discard(.x, is.na)) %>%
-    list(lessons = .) %>% yaml::as.yaml() %>%
+    dplyr::select(date, title = "topic", reading = "page_reading",
+                  assignment = "page_hw", lecture = "page_lecture",
+                  lab = "page_lab", "topic") %>%
+    dplyr::arrange(.data$date) %>%
+    dplyr::mutate(date = as.character(.data$date)) %>%
+    purrr::pmap(list) %>%
+    purrr::map(~purrr::discard(.x, is.na)) %>%
+    list(lessons = .) %>%
+    yaml::as.yaml() %>%
     expand_codes(context, semester)
 
   cat(lesson_plan, file = file.path(semester$root_dir, "data", "lessons.yml"))

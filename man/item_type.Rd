@@ -8,8 +8,6 @@ item_type(cal_id)
 }
 \arguments{
 \item{cal_id}{an integer calendar ID number.}
-
-\item{metadata}{A list of metadata as returned from \link{load_semester_db}.}
 }
 \value{
 A string identifying the type of calendar entry. Current values

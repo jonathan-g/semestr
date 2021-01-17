@@ -1,6 +1,7 @@
 ^semestr\.Rproj$
 ^\.Rproj\.user$
-^LICENSE\.md$
+^LICENSE\.R?md$
+^LICENCE$
 ^README\.Rmd$
 ^cran-comments\.md$
 ^\.github$
@@ -10,5 +11,6 @@
 ^planning/.*$
 ^data/.*$
 ^content/.*$
-^/scratch/.*$
-^/static/.*$
+^scratch/.*$
+^static/.*$
+^\.gitlab-ci\.yml$

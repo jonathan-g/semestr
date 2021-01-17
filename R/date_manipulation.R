@@ -6,8 +6,8 @@ merge_dates <- function(df, semester, id_col = "cal_id", date_col = "date", ...)
   dots <- enquos(...)
 
   df <- df %>% dplyr::left_join( dplyr::select(semester$calendar,
-                                               !!qid_col := cal_id,
-                                               !!date_col := date,
+                                               !!qid_col := "cal_id",
+                                               !!date_col := "date",
                                                !!!dots),
                                  by = id_col)
 }

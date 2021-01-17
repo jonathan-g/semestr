@@ -28,10 +28,11 @@ set_md_extensions <- function(ext_str, append = FALSE) {
     stringr::str_extract_all("[[:space:]+\\-]+[a-zA-Z0-9_]+") %>%
     purrr::simplify() %>%
     stringr::str_trim()
-  ext_df <- tibble::tibble(str = exts,
-                           bare = stringr::str_replace_all(str, "^[+\\-]", ""),
-                           num = seq_along(str))
-  ext_df <- ext_df %>% dplyr::group_by(bare) %>% dplyr::top_n(1, wt = num) %>%
+  ext_df <- tibble::tibble(str = exts) %>%
+    dplyr::mutate(bare = stringr::str_replace_all(.data$str, "^[+\\-]", ""),
+                  num = seq(dplyr::n()))
+  ext_df <- ext_df %>% dplyr::group_by(.data$bare) %>%
+    dplyr::top_n(1, wt = .data$num) %>%
     dplyr::ungroup()
   ext_str <- unique(ext_df$str) %>%
     stringr::str_c(sep = "", collapse = "")

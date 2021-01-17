@@ -1,5 +1,5 @@
 get_hw_assignment <- function(key, semester) {
-  assignment <- semester$hw_asgt %>% dplyr::filter(hw_grp_key == key)
+  assignment <- semester$hw_asgt %>% dplyr::filter(.data$hw_grp_key == key)
   assertthat::assert_that(nrow(assignment) == 1,
                           msg = stringr::str_c(
                             "There should only be one homework assignment for a given key: ",
@@ -27,7 +27,7 @@ make_hw_solution_page <- function(solution, semester, slug = NA_character_) {
     slug = sprintf("homework_%02d", solution$hw_num)
   }
 
-  message("Generating markdown for solutions to homework #", assignment$hw_num,
+  message("Generating markdown for solutions to homework #", solution$hw_num,
           ", slug = ", slug)
 
   delim <- "---"
@@ -74,41 +74,43 @@ make_hw_solution <- function(solution, assignment, semester, slug = NA_character
 make_hw_asgt_content <- function(key, semester, use_solutions = FALSE) {
   assignment <- get_hw_assignment(key, semester)
 
-  items <- semester$hw_items %>% dplyr::filter(hw_grp_key == key) %>%
+  items <- semester$hw_items %>% dplyr::filter(.data$hw_grp_key == key) %>%
     # merge_dates(semester) %>%
-    dplyr::arrange(hw_item_id)
+    dplyr::arrange(.data$hw_item_id)
   if (use_solutions) {
-    solutions <- semester$hw_sol %>% dplyr::filter(sol_grp_key == key)
+    solutions <- semester$hw_sol %>% dplyr::filter(.data$sol_grp_key == key)
     solutions <- solutions %>%
       dplyr::mutate( due_cal_id = assignment$due_cal_id,
                      due_date = assignment$due_date) %>%
       # merge_dates(semester, id_col = "sol_pub_cal_id",
       #             date_col = "sol_pub_date") %>%
       dplyr::mutate(sol_pub_date =
-                      lubridate::as_datetime(sol_pub_date,
+                      lubridate::as_datetime(.data$sol_pub_date,
                                              tz = get_semestr_tz())) %>%
-      dplyr::filter(sol_pub_date <= lubridate::now()) %>%
-      dplyr::arrange(sol_id)
+      dplyr::filter(.data$sol_pub_date <= lubridate::now()) %>%
+      dplyr::arrange(.data$sol_id)
   }
 
   hw <- items %>%
-    dplyr::filter(! is.na(homework) & stringr::str_length(homework) > 0)
-  hw_a <- hw %>% dplyr::filter(!hw_prologue, !hw_epilogue)
-  grad_hw <- hw_a %>% dplyr::filter(graduate_only)
-  ugrad_hw <- hw_a %>% dplyr::filter(undergraduate_only)
-  everyone_hw <- hw_a %>% dplyr::filter(!graduate_only & ! undergraduate_only)
+    dplyr::filter(! is.na(.data$homework),
+                  stringr::str_length(.data$homework) > 0)
+  hw_a <- hw %>% dplyr::filter(! .data$hw_prologue, !.data$hw_epilogue)
+  grad_hw <- hw_a %>% dplyr::filter(.data$graduate_only)
+  ugrad_hw <- hw_a %>% dplyr::filter(.data$undergraduate_only)
+  everyone_hw <- hw_a %>% dplyr::filter(! .data$graduate_only,
+                                        ! .data$undergraduate_only)
 
-  prologue <- hw %>% dplyr::filter(hw_prologue)
-  epilogue <- hw %>% dplyr::filter(hw_epilogue)
+  prologue <- hw %>% dplyr::filter(.data$hw_prologue)
+  epilogue <- hw %>% dplyr::filter(.data$hw_epilogue)
 
-  notes <- hw %>% dplyr::filter(! is.na(homework_notes))
-  main_notes <- notes %>% dplyr::filter(! (hw_prologue | hw_epilogue))
-  grad_notes <- main_notes %>% dplyr::filter(graduate_only)
-  ugrad_notes <- main_notes %>% dplyr::filter(undergraduate_only)
+  notes <- hw %>% dplyr::filter(! is.na(.data$homework_notes))
+  main_notes <- notes %>% dplyr::filter(! (.data$hw_prologue | .data$hw_epilogue))
+  grad_notes <- main_notes %>% dplyr::filter(.data$graduate_only)
+  ugrad_notes <- main_notes %>% dplyr::filter(.data$undergraduate_only)
   everyone_notes <- main_notes %>%
-    dplyr::filter(!graduate_only & ! undergraduate_only)
-  prologue_notes <- notes %>% dplyr::filter(hw_prologue)
-  epilogue_notes <- notes %>% dplyr::filter(hw_epilogue)
+    dplyr::filter(!.data$graduate_only & !.data$undergraduate_only)
+  prologue_notes <- notes %>% dplyr::filter(.data$hw_prologue)
+  epilogue_notes <- notes %>% dplyr::filter(.data$hw_epilogue)
 
   output <- ""
 
@@ -117,7 +119,7 @@ make_hw_asgt_content <- function(key, semester, use_solutions = FALSE) {
     output <- output %>% stringr::str_c("## Solutions:\n\n")
     for (i in seq(nrow(solutions))) {
       this_sol <- solutions[i,]
-      sol <- make_hw_solution(this_sol, assignment, semester, slug)
+      sol <- make_hw_solution(this_sol, assignment, semester)
       output <- output %>% stringr::str_c("* [", this_sol$hw_sol_title, "](",
                                           sol['url'], ")\n")
     }
@@ -130,7 +132,7 @@ make_hw_asgt_content <- function(key, semester, use_solutions = FALSE) {
       stringr::str_c(purrr::discard(prologue$homework,
                                     ~is_missing(.x) || .x == "") %>%
                        unique(),
-            collapse = "\n\n")
+                     collapse = "\n\n")
   } else {
     prologue_str <- NULL
   }
@@ -140,7 +142,7 @@ make_hw_asgt_content <- function(key, semester, use_solutions = FALSE) {
       stringr::str_c(purrr::discard(epilogue$homework,
                                     ~is_missing(.x) || .x == "") %>%
                        unique(),
-            collapse = "\n\n")
+                     collapse = "\n\n")
   } else {
     epilogue_str <-  NULL
   }
@@ -177,20 +179,21 @@ make_hw_asgt_content <- function(key, semester, use_solutions = FALSE) {
   }
   if (all(is.null(grad_hw_items), is.null(ugrad_hw_items))) {
     output <- stringr::str_c(stringr::str_trim(output), "",
-                    everyone_hw_items,
-                    "", sep = "\n")
+                             everyone_hw_items,
+                             "", sep = "\n")
   } else {
     output <- stringr::str_c(stringr::str_trim(output), "",
-                    itemize(c(everyone_hw_items, ugrad_hw_items, grad_hw_items)),
-                    "", sep = "\n")
+                             itemize(c(everyone_hw_items, ugrad_hw_items, grad_hw_items)),
+                             "", sep = "\n")
   }
 
   output <- stringr::str_c(stringr::str_trim(output), "",
-                  epilogue_str, "",
-                  sep = "\n"
+                           epilogue_str, "",
+                           sep = "\n"
   )
 
-  everyone_notes <- dplyr::bind_rows(prologue_notes, everyone_notes, epilogue_notes) %>%
+  everyone_notes <- dplyr::bind_rows(prologue_notes, everyone_notes,
+                                     epilogue_notes) %>%
     dplyr::distinct()
 
   if (nrow(everyone_notes) > 0) {
@@ -255,15 +258,15 @@ make_hw_asgt_page <- function(key, semester, use_solutions = FALSE) {
 
   delim <- "---"
   header <- tibble::tibble(title = hw_topic,
-                   due_date = lubridate::as_date(hw_date) %>% as.character(),
-                   assignment_type = hw_type,
-                   short_assignment_type = short_hw_type,
-                   assignment_number = hw_num, weight = hw_idx,
-                   slug = hw_slug,
-                   pubdate = as.character(pub_date),
-                   date = as.character(hw_date),
-                   output = list("blogdown::html_page" =
-                                   list(md_extensions = get_md_extensions()))
+                           due_date = lubridate::as_date(hw_date) %>% as.character(),
+                           assignment_type = hw_type,
+                           short_assignment_type = short_hw_type,
+                           assignment_number = hw_num, weight = hw_idx,
+                           slug = hw_slug,
+                           pubdate = as.character(pub_date),
+                           date = as.character(hw_date),
+                           output = list("blogdown::html_page" =
+                                           list(md_extensions = get_md_extensions()))
   ) %>% purrr::discard(is_missing) %>%
     yaml::as.yaml() %>% stringr::str_trim("right") %>%
     stringr::str_c(delim, ., delim, sep = "\n")
@@ -296,29 +299,31 @@ generate_hw_assignment <- function(key, semester, use_solutions = FALSE) {
 }
 
 make_short_hw_assignment <- function(key, semester) {
-  get_hw_assignment(key, semester)
+  assignment <- get_hw_assignment(key, semester)
 
-  items <- semester$hw_items %>% dplyr::filter(hw_grp_key == key) %>%
+  items <- semester$hw_items %>%
+    dplyr::filter(.data$hw_grp_key == key) %>%
     # merge_dates(semester) %>%
-    dplyr::arrange(hw_item_id)
+    dplyr::arrange(.data$hw_item_id)
 
   d <- assignment$date %>% unique()
   hw <- items %>%
-    dplyr::mutate(short_homework = ifelse(is.na(short_homework),
-                                          homework, short_homework)) %>%
-    dplyr::filter(!prologue, !epilogue, ! is.na(short_homework)) %>%
-    dplyr::arrange(undergraduate_only, graduate_only, hw_item_id)
-  hw_topics <- hw %>% dplyr::mutate(topic = stringr::str_trim(short_homework))
+    dplyr::mutate(short_homework = ifelse(is.na(.data$short_homework),
+                                          .data$homework, .data$short_homework)) %>%
+    dplyr::filter(!.data$prologue, !.data$epilogue,
+                  ! is.na(.data$short_homework)) %>%
+    dplyr::arrange(.data$undergraduate_only, .data$graduate_only, .data$hw_item_id)
+  hw_topics <- hw %>% dplyr::mutate(topic = stringr::str_trim(.data$short_homework))
 
   if (any(hw_topics$undergraduate_only | hw_topics$graduate_only)) {
     hw_topics <- hw_topics %>%
-      dplyr::mutate(topic = stringr::str_c(topic, " (",
-                                  ifelse(undergraduate_only, "undergrads",
-                                         ifelse(graduate_only, "grad. students",
-                                                "everyone")),
-                                  ")"))
+      dplyr::mutate(topic = stringr::str_c(.data$topic, " (",
+                                           ifelse(.data$undergraduate_only, "undergrads",
+                                                  ifelse(.data$graduate_only, "grad. students",
+                                                         "everyone")),
+                                           ")"))
   }
-  hw_topics <- hw_topics %$% topic
+  hw_topics <- hw_topics$topic
   if (length(hw_topics) > 1) {
     if (length(hw_topics) > 2) {
       hw_topics <- hw_topics %>%

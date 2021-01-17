@@ -8,6 +8,12 @@ load_semester_db(db_file, root_crit = NULL, ignore_root = FALSE)
 }
 \arguments{
 \item{db_file}{An SQLite database file.}
+
+\item{root_crit}{Criteria for \code{rprojroot} to use in finding the project
+root directiry.}
+
+\item{ignore_root}{Ignore the root criteria and work from the current
+directory.}
 }
 \value{
 A list containing a tibbles with the calendar for the semester and
