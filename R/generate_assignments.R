@@ -251,8 +251,8 @@ build_reading_assignment <- function(schedule, date, cal_entry, semester) {
     cat(rd_page, file = rd_path)
     schedule <- schedule %>%
       dplyr::mutate(page_reading =
-                      ifelse(comp_na_f(.data$class_num, cal_entry$class_num),
-                             .data$rd_url, .data$page_reading))
+                      ifelse(comp_na_f(class_num, cal_entry$class_num),
+                             rd_url, .data$page_reading))
   }
   invisible(schedule)
 }

@@ -177,7 +177,7 @@ load_semester_db <- function(db_file, root_crit = NULL, ignore_root = FALSE) {
   }
 
   calendar <- calendar %>%
-    dplyr::left_join( dplyr::select("due_dates", "cal_id", "due_type", "due_action"),
+    dplyr::left_join( dplyr::select(due_dates, "cal_id", "due_type", "due_action"),
                       by = "cal_id")
 
   #==========================================================================
