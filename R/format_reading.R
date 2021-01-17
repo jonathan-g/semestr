@@ -1,10 +1,10 @@
 format_textbook_reading_item <- function(reading_item) {
   reading_item <- as.list(reading_item)
   output <- reading_item$markdown_title
-  if (! is.na(reading_item$chapter)) {
+  if (! is_missing(reading_item$chapter)) {
     output <- stringr::str_c(output, ", ", reading_item$chapter)
   }
-  if (! is.na(reading_item$pages)) {
+  if (! is_missing(reading_item$pages)) {
     output <- stringr::str_c(output, ", ", reading_item$pages)
   }
   output <- output %>% stringr::str_trim() %>% add_period()
@@ -12,7 +12,6 @@ format_textbook_reading_item <- function(reading_item) {
 }
 
 format_textbook_reading <- function(reading_list) {
-  dbg_checkpoint(g_reading_list, reading_list)
   # Nice trick for row-wise function calls thanks to
   # Jenny Bryan.
   # See https://speakerdeck.com/jennybc/row-oriented-workflows-in-r-with-the-tidyverse?slide=40
@@ -28,7 +27,7 @@ format_textbook_reading <- function(reading_list) {
 
 format_handout_reading_item <- function(reading_item, online_location = getOption("semestr.online_reading_loc")) {
   reading_item <- as.list(reading_item)
-  if(is.null(reading_item$url) || is.na(reading_item$url)) {
+  if(is_missing(reading_item$url) || is.null(reading_item$url)) {
     pre = ""
     post = ""
     loc = stringr::str_c(" (", online_location, ")")
@@ -38,10 +37,10 @@ format_handout_reading_item <- function(reading_item, online_location = getOptio
     loc = ""
   }
   output <- stringr::str_c("Handout: ", pre, reading_item$citation, post)
-  if (! is.na(reading_item$chapter)) {
+  if (! is_missing(reading_item$chapter)) {
     output <- stringr::str_c(output, ", ", reading_item$chapter)
   }
-  if (! is.na(reading_item$pages)) {
+  if (! is_missing(reading_item$pages)) {
     output <- stringr::str_c(output, ", ", reading_item$pages)
   }
   output <- output %>% stringr::str_trim() %>%
@@ -155,8 +154,10 @@ make_reading_page <- function(cal_id, semester){
   cal_id <- enquo(cal_id)
   reading <- semester$rd_items %>% dplyr::filter(cal_id == !!cal_id) %>%
     # merge_dates(semester) %>%
-    dplyr::left_join( dplyr::select(semester$class_topics, topic, rd_key),
-               by = "rd_key")
+    dplyr::left_join(dplyr::select(semester$calendar, cal_id, class_num, week_num),
+                     by = "cal_id") %>%
+    dplyr::left_join( dplyr::select(semester$class_topics, topic, rd_grp_key),
+               by = "rd_grp_key")
   rd_date <- unique(reading$date)
   assertthat::assert_that(length(rd_date) == 1,
                           msg = "A calendar ID should have a unique date (make_reading)")
@@ -164,22 +165,16 @@ make_reading_page <- function(cal_id, semester){
   assertthat::assert_that(length(rd_date) == 1,
                           msg = "A calendar ID should have a unique topic (make_reading)")
   class_num <- unique(reading$class_num)
-  assertthat::assert_that(length(rd_date) == 1,
+  assertthat::assert_that(length(class_num) == 1,
                           msg = "A calendar ID should have a unique class # (make_reading)")
-  key <- unique(reading$rd_key)
+  key <- unique(reading$rd_grp_key)
   assertthat::assert_that(length(key) == 1,
                           msg = "A calendar ID should have a unique reading key # (make_reading)")
 
   homework <- semester$hw_asgt %>% dplyr::filter(cal_id == !!cal_id) %>%
     # merge_dates(semester) %>%
     dplyr::left_join( dplyr::select(semester$hw_items, -hw_num, -cal_id),
-                      by = "hw_key")
-
-  # For debugging...
-  dbg_checkpoint(this_class_num, class_num)
-  dbg_checkpoint(this_class_date, rd_date)
-  dbg_checkpoint(g_reading, reading)
-
+                      by = "hw_grp_key")
   delim <- "---"
   header <- tibble::tibble(title = rd_topic,
                            class_date = lubridate::as_date(rd_date) %>% as.character(),
@@ -198,14 +193,15 @@ make_reading_page <- function(cal_id, semester){
     make_reading_assignment(reading) %>% escape_dollar(),
     sep = "\n"
   )
-  dbg_checkpoint(g_rd_page, rd_page)
   asgt <- reading %>%
-    dplyr::select(cal_id, rd_key, cal_key, date, topic, class_num) %>%
+    dplyr::select(cal_id, rd_grp_key, cal_key, date, topic, class_num) %>%
     dplyr::distinct()
   assertthat::assert_that(nrow(asgt) == 1, msg = "A calendar ID should have a consistent reading assignment (make_reading)")
   context <- make_context(asgt, "reading", semester)
-  rd_page <- rd_page %>% expand_codes(context, semester)
 
+  rd_page <- rd_page %>%
+    expand_codes(context, semester, params = list(this_class_num = class_num,
+                                                  this_class_date = rd_date))
   rd_page
 }
 

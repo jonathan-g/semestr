@@ -1,7 +1,7 @@
 make_reading_context <- function(asgt, semester) {
   context <- list(
     type = "class",
-    key = asgt$rd_key,
+    key = asgt$rd_grp_key,
     cal_key = asgt$cal_key,
     cal_id = asgt$cal_id,
     date = asgt$date,
@@ -14,30 +14,30 @@ make_reading_context <- function(asgt, semester) {
 make_hw_context <- function(asgt, semester) {
   context <- list(
     type = "homework",
-    key = asgt$hw_key,
+    key = asgt$hw_grp_key,
     cal_key = asgt$cal_key,
     cal_id = asgt$cal_id,
     due_cal_id = asgt$due_cal_id,
     date = asgt$date,
     due_date = asgt$due_date,
-    title = asgt$title
+    title = asgt$hw_title
   )
   context
 }
 
 make_hw_sol_context <- function(asgt, semester) {
   sol <- asgt
-  asgt <- get_hw_assignment(sol$hw_key, semester)
+  asgt <- get_hw_assignment(sol$hw_grp_key, semester)
   context <- list(
     type = "homework",
-    key = asgt$hw_key,
+    key = asgt$hw_grp_key,
     cal_key = asgt$cal_key,
     cal_id = asgt$cal_id,
     due_cal_id = asgt$due_cal_id,
     date = asgt$date,
     due_date = asgt$due_date,
     sol_title = sol$sol_title,
-    title = asgt$title,
+    title = asgt$hw_title,
     sol_pub_cal_id = sol$sol_pub_cal_id,
     sol_pub_date = sol$sol_pub_date
   )
@@ -48,12 +48,12 @@ make_hw_sol_context <- function(asgt, semester) {
 make_lab_context <- function(asgt, semester) {
   context <- list(
     type = "lab",
-    key = asgt$lab_key,
+    key = asgt$lab_grp_key,
     cal_id = asgt$cal_id,
     cal_key = asgt$cal_key,
     date = asgt$date,
     lab_num = asgt$lab_num,
-    title = asgt$title,
+    title = asgt$lab_title,
     report_date = asgt$report_date,
     report_cal_id = asgt$report_cal_id,
     presentation_date = asgt$pres_date,
@@ -63,16 +63,19 @@ make_lab_context <- function(asgt, semester) {
 }
 
 make_lab_sol_context <- function(asgt, semester) {
+  sol <- asgt
+  asgt <- get_lab_assignment(sol$lab_grp_key, semester)
   context <- list(
     type = "lab",
-    key = asgt$lab_key,
+    key = asgt$lab_grp_key,
     cal_id = asgt$cal_id,
     cal_key = asgt$cal_key,
     date = asgt$date,
     lab_num = asgt$lab_num,
-    title = asgt$sol_title,
-    sol_pub_date = asgt$sol_pub_date,
-    sol_pub_cal_id = asgt$sol_pub_cal_id
+    title = sol$lab_sol_title,
+    sol_title = sol$lab_sol_title,
+    sol_pub_date = sol$sol_pub_date,
+    sol_pub_cal_id = sol$sol_pub_cal_id
   )
   context
 }
@@ -80,13 +83,13 @@ make_lab_sol_context <- function(asgt, semester) {
 make_lab_doc_context <- function(asgt, semester) {
   context <- list(
     type = "lab",
-    key = asgt$lab_key,
+    key = asgt$lab_grp_key,
     cal_id = asgt$cal_id,
     cal_key = asgt$cal_key,
     date = asgt$date,
     lab_num = asgt$lab_num,
     lab_item_id = asgt$lab_item_id,
-    title = asgt$document_title
+    title = asgt$lab_document_title
   )
   context
 }
@@ -106,8 +109,6 @@ make_exam_context <- function(asgt, semester) {
 
 
 make_context <- function(asgt, type, semester) {
-  dbg_checkpoint("g_context_asgt", asgt)
-  dbg_checkpoint("g_context_type", type)
   if (type %in% c("class", "reading")) {
     return(make_reading_context(asgt, semester))
   } else if (type == "lab") {
@@ -125,5 +126,4 @@ make_context <- function(asgt, type, semester) {
   } else {
     stop("Unknown context type ", type)
   }
-
 }

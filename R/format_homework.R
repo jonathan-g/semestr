@@ -1,5 +1,5 @@
 get_hw_assignment <- function(key, semester) {
-  assignment <- semester$hw_asgt %>% dplyr::filter(hw_key == key)
+  assignment <- semester$hw_asgt %>% dplyr::filter(hw_grp_key == key)
   assertthat::assert_that(nrow(assignment) == 1,
                           msg = stringr::str_c(
                             "There should only be one homework assignment for a given key: ",
@@ -11,10 +11,10 @@ get_hw_assignment <- function(key, semester) {
 }
 
 make_hw_slug <- function(hw_asgt) {
-  message("Making HW slug for ", hw_asgt$hw_key,
-          ", is_numbered = ", hw_asgt$is_numbered,
+  message("Making HW slug for ", hw_asgt$hw_grp_key,
+          ", is_numbered = ", hw_asgt$hw_is_numbered,
           ", hw_num = ", hw_asgt$hw_num)
-  if (hw_asgt$is_numbered) {
+  if (hw_asgt$hw_is_numbered) {
     slug <- sprintf("homework_%02d", hw_asgt$hw_num)
   } else {
     slug <- hw_asgt$slug
@@ -23,9 +23,7 @@ make_hw_slug <- function(hw_asgt) {
 }
 
 make_hw_solution_page <- function(solution, semester, slug = NA_character_) {
-  dbg_checkpoint(g_hw_sol, solution)
-
-  if (is.null(slug) || is.na(slug)) {
+  if (is_missing(slug) || is.null(slug)) {
     slug = sprintf("homework_%02d", solution$hw_num)
   }
 
@@ -40,7 +38,7 @@ make_hw_solution_page <- function(solution, semester, slug = NA_character_) {
     date = as.character(solution$hw_due_date),
     pdf_url = solution$hw_sol_pdf_url,
     slug = stringr::str_c(slug, "_", solution$hw_sol_filename)) %>%
-    purrr::discard(is.na) %>%
+    purrr::discard(is_missing) %>%
     c(
       output = list("blogdown::html_page" =
                       list(md_extensions = get_md_extensions(),
@@ -58,7 +56,7 @@ make_hw_solution_page <- function(solution, semester, slug = NA_character_) {
 }
 
 make_hw_solution <- function(solution, assignment, semester, slug = NA_character_) {
-  if (is.na(slug)) {
+  if (is_missing(slug)) {
     slug = sprintf("homework_%02d", assignment$hw_num)
   }
   fname <- stringr::str_c(slug, "_", solution$hw_sol_filename, ".Rmd")
@@ -76,15 +74,11 @@ make_hw_solution <- function(solution, assignment, semester, slug = NA_character
 make_hw_asgt_content <- function(key, semester, use_solutions = FALSE) {
   assignment <- get_hw_assignment(key, semester)
 
-  items <- semester$hw_items %>% dplyr::filter(hw_key == key) %>%
+  items <- semester$hw_items %>% dplyr::filter(hw_grp_key == key) %>%
     # merge_dates(semester) %>%
     dplyr::arrange(hw_item_id)
   if (use_solutions) {
-    solutions <- semester$hw_sol %>% dplyr::filter(hw_key == key)
-
-    dbg_checkpoint(g_hw_asgt, assignment)
-    dbg_checkpoint(g_sol, solutions)
-
+    solutions <- semester$hw_sol %>% dplyr::filter(sol_grp_key == key)
     solutions <- solutions %>%
       dplyr::mutate( due_cal_id = assignment$due_cal_id,
                      due_date = assignment$due_date) %>%
@@ -94,27 +88,27 @@ make_hw_asgt_content <- function(key, semester, use_solutions = FALSE) {
                       lubridate::as_datetime(sol_pub_date,
                                              tz = get_semestr_tz())) %>%
       dplyr::filter(sol_pub_date <= lubridate::now()) %>%
-      dplyr::arrange(lab_sol_id)
+      dplyr::arrange(sol_id)
   }
 
   hw <- items %>%
     dplyr::filter(! is.na(homework) & stringr::str_length(homework) > 0)
-  hw_a <- hw %>% dplyr::filter(!prologue, !epilogue)
+  hw_a <- hw %>% dplyr::filter(!hw_prologue, !hw_epilogue)
   grad_hw <- hw_a %>% dplyr::filter(graduate_only)
   ugrad_hw <- hw_a %>% dplyr::filter(undergraduate_only)
   everyone_hw <- hw_a %>% dplyr::filter(!graduate_only & ! undergraduate_only)
 
-  prologue <- hw %>% dplyr::filter(prologue)
-  epilogue <- hw %>% dplyr::filter(epilogue)
+  prologue <- hw %>% dplyr::filter(hw_prologue)
+  epilogue <- hw %>% dplyr::filter(hw_epilogue)
 
   notes <- hw %>% dplyr::filter(! is.na(homework_notes))
-  main_notes <- notes %>% dplyr::filter(! (prologue | epilogue))
+  main_notes <- notes %>% dplyr::filter(! (hw_prologue | hw_epilogue))
   grad_notes <- main_notes %>% dplyr::filter(graduate_only)
   ugrad_notes <- main_notes %>% dplyr::filter(undergraduate_only)
   everyone_notes <- main_notes %>%
     dplyr::filter(!graduate_only & ! undergraduate_only)
-  prologue_notes <- notes %>% dplyr::filter(prologue)
-  epilogue_notes <- notes %>% dplyr::filter(epilogue)
+  prologue_notes <- notes %>% dplyr::filter(hw_prologue)
+  epilogue_notes <- notes %>% dplyr::filter(hw_epilogue)
 
   output <- ""
 
@@ -134,7 +128,7 @@ make_hw_asgt_content <- function(key, semester, use_solutions = FALSE) {
   if (nrow(prologue) > 0) {
     prologue_str <-
       stringr::str_c(purrr::discard(prologue$homework,
-                                    ~is.na(.x) | .x == "") %>%
+                                    ~is_missing(.x) || .x == "") %>%
                        unique(),
             collapse = "\n\n")
   } else {
@@ -144,7 +138,7 @@ make_hw_asgt_content <- function(key, semester, use_solutions = FALSE) {
   if (nrow(epilogue) > 0) {
     epilogue_str <-
       stringr::str_c(purrr::discard(epilogue$homework,
-                                    ~is.na(.x) | .x == "") %>%
+                                    ~is_missing(.x) || .x == "") %>%
                        unique(),
             collapse = "\n\n")
   } else {
@@ -270,7 +264,7 @@ make_hw_asgt_page <- function(key, semester, use_solutions = FALSE) {
                    date = as.character(hw_date),
                    output = list("blogdown::html_page" =
                                    list(md_extensions = get_md_extensions()))
-  ) %>% purrr::discard(is.na) %>%
+  ) %>% purrr::discard(is_missing) %>%
     yaml::as.yaml() %>% stringr::str_trim("right") %>%
     stringr::str_c(delim, ., delim, sep = "\n")
   context <- make_context(assignment, "homework", semester)
@@ -290,7 +284,7 @@ generate_hw_assignment <- function(key, semester, use_solutions = FALSE) {
   hw_slug <- make_hw_slug(assignment)
   hw_fname <- stringr::str_c(hw_slug, ".Rmd")
   message("Making homework page for assignment ",
-          ifelse(is.na(assignment$hw_num), assignment$hw_key,
+          ifelse(is.na(assignment$hw_num), assignment$hw_grp_key,
                  stringr::str_c("# ", assignment$hw_num)),
           " (index = ", assignment$hw_id,
           ", slug = ", hw_slug, ", filename = ", hw_fname, ")")
@@ -304,7 +298,7 @@ generate_hw_assignment <- function(key, semester, use_solutions = FALSE) {
 make_short_hw_assignment <- function(key, semester) {
   get_hw_assignment(key, semester)
 
-  items <- semester$hw_items %>% dplyr::filter(hw_key == key) %>%
+  items <- semester$hw_items %>% dplyr::filter(hw_grp_key == key) %>%
     # merge_dates(semester) %>%
     dplyr::arrange(hw_item_id)
 

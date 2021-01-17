@@ -107,12 +107,6 @@ make_root_criteria <- function(crit, ... ) {
   crit
 }
 
-dbg_checkpoint <- function(tag, value) {
-  qtag <- ensym(tag)
-  qtag <- enquo(qtag)
-  if (exists("semestr.debug") && semestr.debug ) {
-    assign(as_label(qtag), value, envir = global_env())
-  }
+is_missing <- function(x) {
+  length(x) == 0 || any(is.na(x))
 }
-
-

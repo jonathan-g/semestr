@@ -6,7 +6,7 @@ make_lab_slug <- function(lab_asgt) {
 }
 
 get_lab_assignment <- function(key, semester) {
-  assignment <- semester$lab_asgt %>% dplyr::filter(lab_key == key)
+  assignment <- semester$lab_asgt %>% dplyr::filter(lab_grp_key == key)
   assertthat::assert_that(nrow(assignment) == 1,
                           msg = stringr::str_c(
                             "There should only be one lab assignment for a given key: ",
@@ -23,7 +23,6 @@ make_lab_solution_content <- function(sol, semester) {
 }
 
 make_lab_solution_page <- function(sol, semester) {
-  dbg_checkpoint(g_sol, sol)
   sol <- as.list(sol)
   delim <- "---"
   header <- list(
@@ -37,7 +36,7 @@ make_lab_solution_page <- function(sol, semester) {
     pdf_url = sol$sol_pdf_url,
     slug = sprintf("lab_%02d_%s", sol$lab_num,
                    sol$sol_filename)) %>%
-    purrr::discard(is.na) %>%
+    purrr::discard(is_missing) %>%
     c(
       output = list("blogdown::html_page" =
                       list(md_extensions = get_md_extensions(), toc = TRUE))
@@ -52,8 +51,6 @@ make_lab_solution_page <- function(sol, semester) {
 }
 
 make_lab_solution <- function(sol, semester) {
-  dbg_checkpoint(g_sol, sol)
-
   fname <- sprintf("lab_%02d_%s.Rmd", sol$lab_num, sol$sol_filename)
   solution_path <- fname %>%
     file.path(semester$root_dir, "content", "lab_solutions/", .)
@@ -61,7 +58,7 @@ make_lab_solution <- function(sol, semester) {
     file.path("/lab_solutions", .)
   lab_solution_page <- make_lab_solution_page(sol, semester)
   cat(lab_solution_page, file = solution_path)
-  c(title = sol$sol_title, key = sol$lab_key, path = solution_path,
+  c(title = sol$sol_title, key = sol$lab_grp_key, path = solution_path,
     url = solution_url)
 }
 
@@ -71,20 +68,18 @@ make_lab_doc_content <- function(doc, semester) {
 
 make_lab_doc_page <- function(doc, semester) {
   doc <- as.list(doc)
-  dbg_checkpoint(g_doc, doc)
-
   delim <- "---"
   header <- list(
-    title = doc$document_title,
+    title = doc$lab_document_title,
     author = doc$doc_author,
     lab_number = doc$lab_num,
-    lab_date = lubridate::as_date(doc$date) %>% as.character(),
+    lab_date = as.character(doc$date),
     pubdate = as.character(semester$semester_dates$pub_date),
     date = as.character(doc$date),
     bibliography = doc$bibliography,
-    pdf_url = doc$document_pdf_url,
+    pdf_url = doc$lab_document_pdf_url,
     slug = sprintf("lab_%02d_%s", doc$lab_num, doc$doc_filename)) %>%
-    purrr::discard(is.na) %>%
+    purrr::discard(is_missing) %>%
     c(
       output = list("blogdown::html_page" =
                       list(md_extensions = get_md_extensions(), toc = TRUE))
@@ -104,17 +99,20 @@ make_lab_doc <- function(lab, semester) {
     file.path("/lab_docs", .)
   lab_doc_page <- make_lab_doc_page(lab, semester)
   cat(lab_doc_page, file = doc_path)
-  c(title = lab$document_title, key = lab$lab_key, path = doc_path, url = doc_url)
+  c(title = lab$document_title, key = lab$lab_grp_key, path = doc_path, url = doc_url)
 }
 
 make_lab_docs <- function(lab_key, semester) {
   lab_key <- enquo(lab_key)
   labs <- semester$lab_items %>%
-    dplyr::filter(lab_key == !!lab_key, ! is.na(doc_filename)) # %>%
+    dplyr::filter(lab_grp_key == !!lab_key, ! is.na(doc_filename)) # %>%
     # merge_dates(semester)
 
-  lab_docs <- purrr::map( purrr::transpose(labs), ~make_lab_doc(.x, semester))
-  dbg_checkpoint(g_lab_docs_out, lab_docs)
+  # purrr::pmap(list) is a nice way to transpose without screwing up classes
+  # of date columns the way purrr::transpose() does.
+  lab_docs <- labs %>%
+    purrr::pmap(list) %>%
+    purrr::map(~make_lab_doc(.x, semester))
   invisible(lab_docs)
 }
 
@@ -124,13 +122,9 @@ make_lab_assignment_content <- function(key, semester, use_solutions = FALSE) {
   output <- adj_nl("# Overview:", assignment$description, start_par = TRUE,
                    extra_lines = 1)
 
-  docs <- semester$lab_items %>% dplyr::filter(lab_key == key) %>%
+  docs <- semester$lab_items %>% dplyr::filter(lab_grp_key == key) %>%
     # merge_dates(semester) %>%
     dplyr::arrange(lab_item_id)
-
-  dbg_checkpoint(g_lab_key, key)
-  dbg_checkpoint(g_docs, docs)
-
   output <- cat_nl(output, "## Reading", TRUE)
   if (nrow(docs) > 0) {
     output <- cat_nl(output,
@@ -138,7 +132,6 @@ make_lab_assignment_content <- function(key, semester, use_solutions = FALSE) {
                                     ifelse(nrow(docs) > 1, "s", ""), ":"),
                      extra_lines = 1)
     doc_links <- make_lab_docs(key, semester)
-    dbg_checkpoint(g_doc_links, doc_links)
     if (is.list(doc_links)) {
       doc_links <- purrr::transpose(doc_links)
     } else {
@@ -153,7 +146,7 @@ make_lab_assignment_content <- function(key, semester, use_solutions = FALSE) {
   }
   url <- assignment$assignment_url
   output <- cat_nl(output, "## Assignment", start_par = TRUE, extra_lines = 1)
-  if (! is.na(url)) {
+  if (! is_missing(url)) {
     output <- cat_nl(output,
                      stringr::str_c("Accept the assignment at GitHub Classroom at <",
                                     url, ">."))
@@ -165,7 +158,7 @@ make_lab_assignment_content <- function(key, semester, use_solutions = FALSE) {
 
   if (use_solutions) {
 
-    solutions <- semester$lab_sol %>% dplyr::filter(lab_key == key) %>%
+    solutions <- semester$lab_sol %>% dplyr::filter(lab_grp_key == key) %>%
       # merge_dates(semester) %>%
       # merge_dates(semester, id_col = "sol_pub_cal_id",
       #             date_col = "sol_pub_date") %>%
@@ -219,7 +212,7 @@ make_lab_assignment_page <- function(key, semester, use_solutions = FALSE) {
     slug = sprintf("lab_%02d_assignment", assignment$lab_num),
     output = list("blogdown::html_page" =
                     list(md_extensions = get_md_extensions()))
-  ) %>% purrr::discard(is.na) %>%
+  ) %>% purrr::discard(is_missing) %>%
     yaml::as.yaml() %>% stringr::str_trim("right") %>%
     stringr::str_c(delim, ., delim, sep = "\n")
 

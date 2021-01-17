@@ -97,10 +97,8 @@ merge_fn_bodies <- function(..., body_lst = NULL) {
 #
 
 expand_codes <- function(text, context, semester, delim = c("<%", "%>"),
-                         envir = NULL, extra_packages = NULL) {
-  dbg_checkpoint(g_expansion_text, text)
-  dbg_checkpoint(g_expansion_context, context)
-
+                         envir = NULL, extra_packages = NULL,
+                         params = NULL) {
   loaded <- .packages()
 
   if (exists("packages", envir = .expand_env)) {
@@ -122,14 +120,22 @@ expand_codes <- function(text, context, semester, delim = c("<%", "%>"),
   if (is.null(local_env)) {
     local_env <- new.env(parent = as.environment(search()[2]))
 
-    for (sym in c("calendar", "semester_dates", "metadata", "tz")) {
+    for (sym in c("semester_dates", "metadata", "tz")) {
       assign(sym, get(sym, envir = .globals), envir = local_env)
       lockBinding(sym, local_env)
+    }
+    for (sem_sym in c("calendar")) {
+      assign(sem_sym, semester[[sem_sym]], envir = local_env)
     }
     ee_globals <- get("globals", envir = .expand_env)
     for (sym in names(ee_globals)) {
       assign(sym, ee_globals[[sym]], envir = local_env)
       lockBinding(sym, local_env)
+    }
+    if (! is.null(params)) {
+      for (param in names(params)) {
+        assign(param, params[[param]], envir = local_env)
+      }
     }
     for (sym in .expand_env$imports) {
       assign(sym, get(sym, pos = 1), envir = local_env)
@@ -143,19 +149,21 @@ expand_codes <- function(text, context, semester, delim = c("<%", "%>"),
         unlock_list <- c(unlock_list, sym)
         lockBinding(sym, local_env)
       }
-      if (exists("context", envir = local_env)) {
-        unlockBinding("context", local_env)
+    }
+    if (exists("context", envir = local_env)) {
+      unlockBinding("context", local_env)
+    }
+    assign("context", context, envir = local_env)
+    lockBinding("context", local_env)
+    if (! is.null(params)) {
+      for (param in names(params)) {
+        assign(param, params[[param]], envir = local_env)
+
       }
-      assign("context", context, envir = local_env)
-      lockBinding("context", local_env)
     }
   }
 
   text_codes <- semester$text_codes$md
-
-  dbg_checkpoint(g_expnaion_env, local_env)
-  dbg_checkpoint(g_text_codes, text_codes)
-  dbg_checkpoint(g_expansion_delims, delim)
 
   expand_expr <- c(
     expr(

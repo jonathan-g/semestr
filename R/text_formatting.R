@@ -69,12 +69,12 @@ format_day_date_range<- function(dates, abbr_month = TRUE, abbr_wday = TRUE) {
 
 format_date_by_cal_id <- function(calendar, id, abbr = TRUE) {
   d <- calendar %>% dplyr::filter(cal_type == "class", cal_id == id)
-  format_class_date(d, abbr)
+  format_class_date(d$date, abbr)
 }
 
-format_date_by_class_num <- function(calendar, num, abbTRUE) {
+format_date_by_class_num <- function(calendar, num, abbr = TRUE) {
   d <- calendar %>% dplyr::filter(cal_type == "class", class_num == num)
-  format_class_date(d, abbr)
+  format_class_date(d$date, abbr)
 }
 
 format_date_by_key <- function(calendar, key,
@@ -83,30 +83,25 @@ format_date_by_key <- function(calendar, key,
                                         "raw"),
                                abbr = TRUE) {
   type <- match.arg(type)
-
-  dbg_checkpoint(g_calendar, calendar)
-  dbg_checkpoint(g_key, key)
-  dbg_checkpoint(g_type, type)
-
   if (type == "reading") type <- "class"
   if (type != "raw") {
     key <- add_key_prefix(key, type)
   }
 
-  d <- calendar %>% dplyr::filter(cal_key == key)  %$% date
-  format_class_date(d, abbr)
+  d <- calendar %>% dplyr::filter(cal_key == key)
+  format_class_date(d$date, abbr)
 }
 
 format_day_date_by_cal_id <- function(calendar, id, abbr_month = TRUE,
                                       abbr_wday = TRUE) {
   d <- calendar %>% dplyr::filter(cal_type == "class", cal_id == id)
-  format_class_day_date(d, abbr_month, abbr_wday)
+  format_class_day_date(d$date, abbr_month, abbr_wday)
 }
 
 format_day_date_by_class_num <- function(calendar, num, abbr_month = TRUE,
                                          abbr_wday = TRUE) {
   d <- calendar %>% dplyr::filter(cal_type == "class", class_num == num)
-  format_class_day_date(d, abbr_month, abbr_wday)
+  format_class_day_date(d$date, abbr_month, abbr_wday)
 }
 
 format_day_date_by_key <- function(calendar, key,
@@ -115,18 +110,13 @@ format_day_date_by_key <- function(calendar, key,
                                             "event", "due date", "raw"),
                                    abbr_month = TRUE, abbr_wday = TRUE) {
   type <- match.arg(type)
-
-  dbg_checkpoint(g_calendar, calendar)
-  dbg_checkpoint(g_key, key)
-  dbg_checkpoint(g_type, type)
-
   if (type == "reading") type <- "class"
   if (type != "raw") {
     key <- add_key_prefix(key, type)
   }
 
-  d <- calendar %>% dplyr::filter(cal_key == key)  %$% date
-  format_class_day_date(d, abbr_month, abbr_wday)
+  d <- calendar %>% dplyr::filter(cal_key == key)
+  format_class_day_date(d$date, abbr_month, abbr_wday)
 }
 
 
@@ -136,32 +126,42 @@ sanitize_date_range <- function(dates) {
   list(start = start, stop = stop)
 }
 
-format_date_range_by_cal_id <- function(calendar, cal_ids, abbr = TRUE) {
+format_date_range_by_cal_id <- function(calendar, cal_ids, abbr = TRUE,
+                                        days = FALSE, abbr_wday = NULL) {
   dates <- calendar %>% dplyr::filter(cal_id %in% na.omit(cal_ids)) %$% date %>%
     sanitize_date_range()
 
-  format_date_range(dates, abbr)
+  if (days) {
+    if (is.null(abbr_wday))
+      abbr_wday = abbr
+    format_day_date_range(dates, abbr_month = abbr, abbr_wday = abbr_wday)
+  } else {
+    format_date_range(dates, abbr)
+  }
 }
 
-format_date_range_by_class_num <- function(calendar, nums,
-                                           abbr = TRUE) {
+format_date_range_by_class_num <- function(calendar, nums, abbr = TRUE,
+                                           days = FALSE, abbr_wday = NULL) {
   col <- c()
-  dates <- calendar %>% dplyr::filter(class_num %in% na.omit(nums)) %$% date %>%
+  dates <- calendar %>% dplyr::filter(class_num %in% na.omit(nums)) %>%
+    dplyr::pull(date) %>%
     sanitize_date_range()
-  format_date_range(dates, abbr)
+  if (days) {
+    if (is.null(abbr_wday))
+      abbr_wday = abbr
+    format_day_date_range(dates, abbr_month = abbr, abbr_wday = abbr_wday)
+  } else {
+    format_date_range(dates, abbr)
+  }
 }
 
 format_date_range_by_key <- function(calendar, keys,
                                      type = c("class", "reading", "lab",
                                               "homework", "exam", "holiday",
                                               "event", "due date", "raw"),
-                                     abbr = TRUE) {
+                                     abbr = TRUE,
+                                     days = FALSE, abbr_wday = NULL) {
   type <- match.arg(type)
-
-  dbg_checkpoint(g_calendar, calendar)
-  dbg_checkpoint(g_keys, keys)
-  dbg_checkpoint(g_type, type)
-
   if (type == "reading") type <- "class"
   if (type != "raw") {
     keys <- add_key_prefix(keys, type)
@@ -170,13 +170,26 @@ format_date_range_by_key <- function(calendar, keys,
 
   dates <- calendar %>% dplyr::filter(cal_key %in% keys)  %$% date %>%
     sanitize_date_range()
-  format_date_range(dates, abbr)
+  if (days) {
+    if (is.null(abbr_wday))
+      abbr_wday = abbr
+    format_day_date_range(dates, abbr_month = abbr, abbr_wday = abbr_wday)
+  } else {
+    format_date_range(dates, abbr)
+  }
 }
 
-format_date_range_by_event_id <- function(calendar, event_ids, abbr = TRUE) {
+format_date_range_by_event_id <- function(calendar, event_ids, abbr = TRUE,
+                                          days = FALSE, abbr_wday = NULL) {
   dates <- calendar %>% dplyr::filter(event_id %in% event_ids)  %$% date %>%
     sanitize_date_range()
-  format_date_range(dates, abbr)
+  if (days) {
+    if (is.null(abbr_wday))
+      abbr_wday = abbr
+    format_day_date_range(dates, abbr_month = abbr, abbr_wday = abbr_wday)
+  } else {
+    format_date_range(dates, abbr)
+  }
 }
 
 format_page_range <- function(pages) {
