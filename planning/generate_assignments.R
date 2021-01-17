@@ -64,251 +64,6 @@ check_for_notices <- function(notice_df) {
     dplyr::ungroup()
 }
 
-load_semester_db <- function() {
-  semester_db <- dbConnect(SQLite(), file.path(planning_dir, database))
-
-  reading_items <- semester_db %>% dplyr::tbl("rd_items") %>%
-    dplyr::collect()
-  reading_sources <- semester_db %>% dplyr::tbl("rd_src") %>% dplyr::collect()
-  reading_groups <- semester_db %>% dplyr::tbl("rd_links") %>% dplyr::collect()
-  class_topics <- semester_db %>% dplyr::tbl("class_topics")
-  reading_assignments <- reading_groups %>%
-    dplyr::left_join(reading_items, by = c("topic_key")) %>%
-    dplyr::left_join(reading_sources, by = c("src_key")) %>%
-    dplyr::select(cal_id, rd_key = topic_key, rd_item_id, title, short_title,
-           markdown_title, short_markdown_title,
-           textbook, handout, chapter, pages, reading_notes,
-           rd_undergraduate_only = undergraduate_only,
-           rd_graduate_only = graduate_only,
-           rd_optional = optional,
-           rd_prologue, rd_epilogue, rd_break_before, citation, url) %>%
-    dplyr::mutate_at(vars(textbook, handout, rd_undergraduate_only,
-                          rd_graduate_only, rd_optional, rd_prologue,
-                          rd_epilogue, rd_break_before),
-              ~vctrs::vec_cast(., logical()) %>% replace_na(FALSE)) %>%
-    dplyr::arrange(cal_id, rd_key, desc(rd_prologue), rd_epilogue, rd_optional,
-            rd_undergraduate_only, rd_graduate_only, rd_item_id)
-
-  notices <- semester_db %>% dplyr::tbl("notices") %>%
-    dplyr::select(topic_id, notice) %>% dplyr::collect()
-
-  events <- semester_db %>% dplyr::tbl("events") %>% dplyr::collect()
-
-  text_codes <- semester_db %>% dplyr::tbl("text_codes") %>% dplyr::collect()
-  bad_codes <- text_codes %>% dplyr::filter(is.na(code_value))
-  if (nrow(bad_codes) > 0) {
-    warning("Text codes with missing values: [",
-            str_c(bad_codes$code_name, collapse = ", "), "]")
-    text_codes <- text_codes %>%
-      dplyr::mutate(code_value = ifelse(is.na(code_value), "", code_value))
-  }
-    text_codes <- text_codes %>% { purrr::set_names(.$code_value, .$code_name) }
-
-  has_lab_assignments <- FALSE
-
-  if (dbExistsTable(semester_db, "lab_asgt")) {
-    has_lab_assignments <- TRUE
-    lab_asg <- semester_db %>% dplyr::tbl("lab_asgt") %>%
-      dplyr::collect() %>% rename(lab_key = topic_key)
-    lab_groups <- semester_db %>% dplyr::tbl("lab_links") %>%
-      dplyr::collect() %>% rename(lab_key = topic_key)
-    lab_docs <- semester_db %>% dplyr::tbl("lab_items") %>%
-      dplyr::collect() %>% rename(lab_key = topic_key)
-    lab_solutions <- semester_db %>% dplyr::tbl("lab_sol") %>%
-      dplyr::collect() %>% rename(lab_key = topic_key)
-
-    lab_assignments <- lab_asg %>%
-      dplyr::left_join(lab_groups, by = "lab_key") %>%
-      dplyr::select(lab_key,
-                    lab_title, lab_description, lab_assignment_url,
-                    lab_due_date = report_due_date,
-                    lab_present_date = presentation_date
-      )
-  } else {
-    lab_assignments <- tibble(
-      lab_key = character(0),lab_title = character(0),
-      lab_description = character(0), lab_due_date = character(0),
-      lab_present_date = character(0)
-    )
-    lab_docs <- tibble(
-      lab_item_id = integer(0), lab_key = character(0),
-      lab_document_title = character(0), doc_author = character(0),
-      doc_filename = character(0), lab_document_pdf_url = character(0),
-      bibliography = character(0), lab_document_markdown = character(0)
-    )
-    lab_solutions <- tibble(
-      lab_sol_id = integer(0), lab_key = character(0),
-      lab_sol_pub_date = character(0), lab_sol_title = character(0),
-      lab_sol_author = character(0), lab_sol_filename = character(0),
-      lab_sol_pdf_url = character(0), lab_sol_markdown = character(0)
-    )
-  }
-
-  has_lab_assignments <- nrow(lab_assignments) > 0
-
-  has_hw_assignments <- FALSE
-
-  if (dbExistsTable(semester_db$con, "hw_asgt")) {
-    has_hw_assignments <- TRUE
-    hw_assignments <- semester_db %>% dplyr::tbl("hw_asgt") %>%
-      dplyr::collect() %>% dplyr::rename(hw_key = topic_key)
-    hw_groups <- semester_db %>% dplyr::tbl("hw_links") %>%
-      dplyr::collect() %>% dplyr::rename(hw_key = topic_key)
-    hw_topics <- semester_db %>% dplyr::tbl("hw_topics") %>%
-      dplyr::collect() %>% dplyr::rename(hw_key = topic_key)
-    hw_items <- semester_db %>% dplyr::tbl("hw_items")  %>%
-      dplyr::collect() %>% dplyr::rename(hw_key = topic_key)
-    homework_solutions <- semester_db %>% dplyr::tbl("hw_sol") %>%
-      dplyr::collect()
-  }
-
-  calendar <- semester_db %>% dplyr::tbl("calendar") %>%
-    dplyr::select(-week) %>%
-    dplyr::collect() %>%
-    dplyr::mutate(date = date(date)) %>%
-    dplyr::arrange(date, cal_id, cal_type) %>%
-    dplyr::mutate(seq = seq(n()))
-
-  if (has_hw_assignments) {
-    homework_assignments <- hw_assignments %>%
-      dplyr::left_join(hw_groups, by = "hw_key") %>%
-      dplyr::left_join(hw_topics, by = "hw_key") %>%
-      dplyr::left_join(hw_items, by = "hw_key") %>%
-      dplyr::select(cal_id, hw_id, hw_key, hw_due_date,
-                    hw_type, short_hw_type,
-                    hw_topic = topic, hw_title, hw_slug,
-                    short_homework, homework, homework_notes,
-                    hw_graduate_only = graduate_only,
-                    hw_undergraduate_only = undergraduate_only,
-                    hw_prologue, hw_epilogue, hw_break_before,
-                    hw_is_numbered, hw_order = hw_item_id) %>%
-      dplyr::mutate_at(c("hw_undergraduate_only", "hw_graduate_only",
-                  "hw_prologue", "hw_epilogue", "hw_break_before",
-                  "hw_is_numbered"),
-                  ~as.logical(.) %>% tidyr::replace_na(FALSE)) %>%
-      dplyr::inner_join(dplyr::select(calendar, cal_id, date),
-                        by = "cal_id") %>%
-      dplyr::filter(! is.na(cal_id)) %>%
-      dplyr::mutate(hw_due_date = ifelse(is.na(hw_due_date),
-                                         date, hw_due_date) %>% date()) %>%
-      dplyr::arrange(date, cal_id) %>%
-      dplyr::select(-date)
-
-    hw_assignment_numbering <- homework_assignments %>%
-      dplyr::filter(hw_is_numbered) %>% dplyr::select(hw_id) %>%
-      dplyr::distinct() %>% dplyr::mutate(hw_num = seq_along(hw_id))
-
-  homework_assignments <- homework_assignments %>%
-    dplyr::left_join(hw_assignment_numbering, by = "hw_id")
-  } else {
-    homework_assignments <- tibble(
-      homework_id = character(0), hw_group = character(0),
-      hw_due_date = date(character(0)), hw_topic = character(0),
-      short_homework = character(0), homework = character(0),
-      homework_notes = character(0),
-      hw_graduate_only = logical(0), hw_undergraduate_only = logical(0),
-      hw_prologue = logical(0), hw_epilogue = logical(0),
-      hw_break_before = logical(0), hw_is_numbered = logical(0),
-      hw_order = integer(0), hw_num = integer(0)
-    )
-  }
-
-  has_hw_assignments <- nrow(homework_assignments) > 0
-
-  if (has_lab_assignments) {
-    lab_assignments <- lab_assignments %>%
-      dplyr::inner_join(calendar %>%
-                          dplyr::select(lab_id, lab_date = date, seq),
-                        by = "lab_id") %>%
-      dplyr::arrange(seq) %>%
-      dplyr::mutate(lab_num = seq_along(lab_id)) %>% dplyr::select(-seq)
-  } else {
-    lab_assignments <- lab_assignments %>%
-      dplyr::mutate(lab_id = character(0), lab_date = character(0),
-                    lab_num = integer(0))
-  }
-
-  calendar <- calendar %>%
-    dplyr::left_join(events, by = "event_key") %>%
-    dplyr::left_join(check_for_reading_asgt(reading_assignments),
-                     by = "reading_id") %>%
-    dplyr::mutate(has_reading = map_lgl(has_reading, isTRUE))
-
-  if (has_lab_assignments) {
-    calendar <- calendar %>%
-      dplyr::left_join(check_for_lab_asgt(lab_assignments), by = "lab_id") %>%
-      dplyr::mutate(has_lab = map_lgl(has_lab, isTRUE))
-  } else {
-    calendar <- calendar %>%
-      dplyr::mutate(has_lab = FALSE, lab_num = NA)
-  }
-
-  if (TRUE || has_hw_assignments) {
-    calendar <- calendar %>%
-      dplyr::left_join(check_for_hw_asgt(homework_assignments), by = "homework_id") %>%
-      dplyr::mutate(has_hw = map_lgl(has_hw, isTRUE),
-             has_numbered_hw = map_lgl(has_numbered_hw, isTRUE))
-  } else {
-    calendar <- calendar %>%
-      dplyr::mutate(has_hw = FALSE, has_numbered_hw = FALSE)
-  }
-
-  calendar <- calendar %>%
-    dplyr::left_join(check_for_notices(notices), by = "topic_id") %>%
-    dplyr::mutate(hw_index = ifelse(has_hw, cumsum(has_hw), NA_integer_),
-           hw_num = ifelse(has_numbered_hw, cumsum(has_numbered_hw), NA_integer_))
-
-  spring_break <- calendar %>% dplyr::filter(event_id == "SPRING_BREAK") %>%
-    dplyr::select(date, topic_id, event_id)
-
-  fall_break <- calendar %>% dplyr::filter(event_id == "FALL_BREAK") %>%
-    dplyr::select(date, topic_id, event_id)
-
-  thanksgiving_break <- calendar %>% dplyr::filter(event_id == "THANKSGIVING_BREAK") %>%
-    dplyr::select(date, topic_id, event_id)
-
-  select_class <- function(calendar, class_no) {
-    class <- calendar %>% dplyr::filter(class == class_no) %>%
-      dplyr::select(class, date, topic) %>%
-      dplyr::mutate(weekday = wday(date, label = TRUE),
-             long.weekday = wday(date, label = TRUE, abbr = FALSE),
-             month = month(date, label = TRUE),
-             long.month = month(date, label = TRUE, abbr = FALSE),
-             day = day(date))
-    as.list(class)
-  }
-
-  rm(semester_db)
-  gc() # Need to garbage dplyr::collect to force closing the database.
-
-  first_class <- 1
-  last_class <- NA
-
-  if(is.na(first_class)) first_class <- min(calendar$class, na.rm = T)
-  if (is.na(last_class)) last_class <- max(calendar$class, na.rm = T)
-
-  first_date <- calendar %>%
-    dplyr::filter(class == first_class) %$% date
-  last_date <- calendar %>%
-    dplyr::filter(class == last_class) %$% date
-
-  year_taught <- year(first_date)
-
-  # Pub date should be last day of previous month.
-  pub_date <- first_date %>% as_date() %>% rollback() %>% as.character()
-  if (today() < pub_date) pub_date <- today()
-
-  globals <- c("calendar", "reading_assignments",
-               "homework_assignments", "homework_solutions",
-               "lab_assignments","lab_docs", "lab_solutions",
-               "text_codes",
-               "first_class", "last_class", "first_date", "last_date",
-               "year_taught", "pub_date",
-               "has_hw_assignments", "has_lab_assignments")
-  for (g in globals) {
-    assign(g, get(g), envir = globalenv())
-  }
-}
 
 select_event <- function(calendar, seq_index) {
   event <- calendar %>% dplyr::filter(seq == seq_index) %>% dplyr::select(seq, date, topic) %>%
@@ -471,7 +226,6 @@ format_textbook_reading_item <- function(reading_item) {
 }
 
 format_textbook_reading <- function(reading_list) {
-  # g_reading_list <<- reading_list
   # Nice trick for row-wise function calls thanks to
   # Jenny Bryan.
   # See https://speakerdeck.com/jennybc/row-oriented-workflows-in-r-with-the-tidyverse?slide=40
@@ -627,9 +381,6 @@ make_hw_slug <- function(cal_entry) {
 }
 
 make_hw_solution_page <- function(solution, assignment, slug = NA_character_) {
-  g_doc <<- solution
-  g_asg <<- assignment
-
   if (is.na(slug)) {
     slug = sprintf("homework_%02d", assignment$hw_num)
   }
@@ -895,139 +646,15 @@ make_short_hw_assignment <- function(cal_entry) {
   output
 }
 
-# make_lab_doc_page <- function(doc, assignment) {
-#   g_doc <<- doc
-#   g_asg <<- assignment
-#
-#   delim <- "---"
-#   header <- list(
-#     title = doc$lab_document_title,
-#     author = doc$doc_author,
-#     lab_number = assignment$lab_num,
-#     lab_date = assignment$lab_date,
-#     pubdate = pub_date,
-#     date = assignment$lab_date,
-#     bibliography = doc$bibliography,
-#     pdf_url = doc$lab_document_pdf_url,
-#     slug = sprintf("lab_%02d_%s", assignment$lab_num, doc$doc_filename)) %>%
-#     discard(is.na) %>%
-#     c(
-#       output = list("blogdown::html_page" =
-#                       list(md_extensions = md_extensions,
-#                            toc = TRUE))
-#     ) %>%
-#     as.yaml() %>% str_trim("right") %>%
-#     str_c(delim, ., delim, sep = "\n")
-#   lab_doc_page <- str_c(
-#     header,
-#     doc$lab_document_markdown,
-#     sep = "\n"
-#   ) %>% expand_codes()
-#   lab_doc_page
-# }
-#
-# make_lab_doc <- function(doc, assignment) {
-#   fname <- sprintf("lab_%02d_%s.Rmd", assignment$lab_num, doc$doc_filename)
-#   doc_path <- fname %>% file.path(root_dir, "content", "lab_docs", .)
-#   doc_url <- fname %>% str_replace("\\.Rmd$", "") %>%
-#     file.path("/lab_docs", .)
-#   lab_doc_page <- make_lab_doc_page(doc, assignment)
-#   cat(lab_doc_page, file = doc_path)
-#   c(path = doc_path, url = doc_url)
-# }
-#
-# make_lab_assignment_page <- function(this_assignment, lab_docs,
-#                                      lab_solutions) {
-#   delim <- "---"
-#   these_docs <- lab_docs %>% dplyr::filter(lab_group == this_assignment$lab_group) %>%
-#     dplyr::arrange(lab_item_id)
-#   these_solutions <- lab_solutions %>%
-#     dplyr::mutate(lab_sol_pub_date = as_datetime(lab_sol_pub_date)) %>%
-#     dplyr::filter(lab_group == this_assignment$lab_group, lab_sol_pub_date <= now()) %>%
-#     dplyr::arrange(lab_sol_id)
-#
-#   header <- list(
-#     title = this_assignment$lab_title,
-#     lab_date = this_assignment$lab_date,
-#     presentation_date = this_assignment$lab_present_date,
-#     report_due_date = this_assignment$lab_due_date,
-#     lab_number = this_assignment$lab_num,
-#     github_classroom_assignment_url = this_assignment$lab_assignment_url,
-#     pubdate = pub_date,
-#     date = this_assignment$lab_date,
-#     slug = sprintf("lab_%02d_assignment", this_assignment$lab_num),
-#     output = list("blogdown::html_page" =
-#                     list(md_extensions = md_extensions))
-#   ) %>% discard(is.na) %>%
-#     as.yaml() %>% str_trim("right") %>%
-#     str_c(delim, ., delim, sep = "\n")
-#   output <- this_assignment$lab_description
-#   if (nrow(these_docs) > 0) {
-#     output <- output %>% str_c(
-#       "", "## Reading", "",
-#       str_c("**Before you come to lab**, please read the following document",
-#             ifelse(nrow(these_docs) > 1, "s", ""),
-#             ":"), "",
-#       sep = "\n")
-#     for (i in seq(nrow(these_docs))) {
-#       this_doc <- these_docs[i,]
-#       doc <- make_lab_doc(this_doc, this_assignment)
-#       output <- output %>% str_c("\n* [", this_doc$lab_document_title, "](", doc['url'], ")")
-#     }
-#   } else {
-#     output <- output %>% str_c(
-#       "", "## Reading", "",
-#       "No reading has been posted yet for this lab.",
-#       "", sep = "\n")
-#   }
-#   url <- this_assignment$lab_assignment_url
-#   if (! is.na(url)) {
-#     output <- output %>% str_c("", "## Assignment", "",
-#                                str_c("Accept the assignment at GitHub Classroom at <", url, ">."),
-#                                "", sep = "\n")
-#   } else {
-#     output <- output %>% str_c("", "## Assignment", "",
-#                                "The GitHub Classroom has not been posted yet.",
-#                                "", sep = "\n")
-#   }
-#   if (nrow(these_solutions) > 0) {
-#     output <- output %>% str_c(
-#       "", "## Solutions", "",
-#       "**Solutions for Lab Exercises**:", "",
-#       sep = "\n")
-#     for (i in seq(nrow(these_solutions))) {
-#       this_sol <- these_solutions[i,]
-#       sol <- make_lab_solution(this_sol, this_assignment)
-#       output <- output %>% str_c("\n* [", this_sol$lab_sol_title, "](", sol['url'], ")")
-#     }
-#
-#
-#   }
-#   output <- str_c(header, output, sep = "\n") %>% expand_codes()
-#   output
-# }
-#
-# make_lab_assignment <- function(group, lab_assignments, lab_docs,
-#                                 lab_solutions) {
-#   this_assignment <- lab_assignments %>% dplyr::filter(lab_group == group)
-#   fname <- sprintf("lab_%02d_assignment.Rmd", this_assignment$lab_num)
-#   lab_path <- fname %>% file.path(root_dir, "content", "labs", .)
-#   lab_url <- fname %>% str_replace("\\.Rmd$", "")
-#   lab_assignment_page <- make_lab_assignment_page(this_assignment, lab_docs,
-#                                                   lab_solutions)
-#   cat(lab_assignment_page, file = lab_path)
-#   c(path = lab_path, url = lab_url)
-# }
-#
-#
-
 make_reading_page <- function(cal_entry) {
   rd_date <- cal_entry$date
   reading <- reading_assignments %>% dplyr::filter(reading_id == cal_entry$reading_id)
   rd_topic <- cal_entry$topic
   class_num <- cal_entry$class
-  this_class_num <<- class_num
-  this_class_date <<- rd_date
+  this_class_num <- class_num
+  this_class_date <- rd_date
+  assign("this_class_num", this_class_num, envir = .globals)
+  assign("this_class_date", this_class_date, envir = .globals)
 
   delim <- "---"
   header <- tibble(title = rd_topic,
@@ -1052,9 +679,6 @@ make_reading_page <- function(cal_entry) {
 }
 
 make_lab_solution_page <- function(solution, assignment) {
-  # g_doc <<- solution
-  # g_asg <<- assignment
-
   delim <- "---"
   header <- list(
     title = solution$lab_sol_title,
@@ -1092,9 +716,6 @@ make_lab_solution <- function(solution, assignment) {
 }
 
 make_lab_doc_page <- function(doc, assignment) {
-  # g_doc <<- doc
-  # g_asg <<- assignment
-
   delim <- "---"
   header <- list(
     title = doc$lab_document_title,
@@ -1238,7 +859,6 @@ generate_assignments <- function() {
            lecture_page = NA_character_, lab_page = NA_character_)
   for (s in na.omit(calendar$seq)) {
     cal_entry <- calendar %>% dplyr::filter(seq == s)
-    g_cal_entry <<- cal_entry
     if (nrow(cal_entry) != 1) {
       stop("cal_entry for seq = ", s, " has ", nrow(cal_entry), " rows.")
     }
@@ -1314,8 +934,6 @@ generate_assignments <- function() {
                                  lab_url, lab_page))
     }
   }
-
-  g_semester <<- semester
 
   semester %>%
     # dplyr::filter(! event_id %in% c("FINAL_EXAM", "ALT_FINAL_EXAM")) %>%
