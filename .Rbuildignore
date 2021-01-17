@@ -10,3 +10,5 @@
 ^planning/.*$
 ^data/.*$
 ^content/.*$
+^/scratch/.*$
+^/static/.*$
