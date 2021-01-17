@@ -5,3 +5,6 @@
 cache/
 /content/**/*.Rmd
 /static/slides/**/*
+/scratch/
+/data/lessons.yml
+/planning/ees_3310/*_semester.png
