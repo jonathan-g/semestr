@@ -345,7 +345,7 @@ generate_assignments <- function(semester) {
     list(lessons = .) %>% yaml::as.yaml() %>%
     expand_codes(context, semester)
 
-  cat(lesson_plan, file = file.path(semester$root_dir, "date", "lessons.yml"))
+  cat(lesson_plan, file = file.path(semester$root_dir, "data", "lessons.yml"))
 
   invisible(list(lesson_plan = lesson_plan, schedule = schedule))
 }
