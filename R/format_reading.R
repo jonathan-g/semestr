@@ -1,10 +1,10 @@
 format_textbook_reading_item <- function(reading_item) {
   reading_item <- as.list(reading_item)
   output <- reading_item$markdown_title
-  if (! is_missing(reading_item$chapter)) {
+  if (! is_mt_or_na(reading_item$chapter)) {
     output <- stringr::str_c(output, ", ", reading_item$chapter)
   }
-  if (! is_missing(reading_item$pages)) {
+  if (! is_mt_or_na(reading_item$pages)) {
     output <- stringr::str_c(output, ", ", reading_item$pages)
   }
   output <- output %>% stringr::str_trim() %>% add_period()
@@ -27,7 +27,7 @@ format_textbook_reading <- function(reading_list) {
 
 format_handout_reading_item <- function(reading_item, online_location = getOption("semestr.online_reading_loc")) {
   reading_item <- as.list(reading_item)
-  if(is_missing(reading_item$url) || is.null(reading_item$url)) {
+  if(is_mt_or_na(reading_item$url) || is.null(reading_item$url)) {
     pre = ""
     post = ""
     loc = stringr::str_c(" (", online_location, ")")
@@ -37,10 +37,10 @@ format_handout_reading_item <- function(reading_item, online_location = getOptio
     loc = ""
   }
   output <- stringr::str_c("Handout: ", pre, reading_item$citation, post)
-  if (! is_missing(reading_item$chapter)) {
+  if (! is_mt_or_na(reading_item$chapter)) {
     output <- stringr::str_c(output, ", ", reading_item$chapter)
   }
-  if (! is_missing(reading_item$pages)) {
+  if (! is_mt_or_na(reading_item$pages)) {
     output <- stringr::str_c(output, ", ", reading_item$pages)
   }
   output <- output %>% stringr::str_trim() %>%

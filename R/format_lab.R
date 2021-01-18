@@ -37,7 +37,7 @@ make_lab_solution_page <- function(sol, semester) {
     pdf_url = sol$sol_pdf_url,
     slug = sprintf("lab_%02d_%s", sol$lab_num,
                    sol$sol_filename)) %>%
-    purrr::discard(is_missing) %>%
+    purrr::discard(is_mt_or_na) %>%
     c(
       output = list("blogdown::html_page" =
                       list(md_extensions = get_md_extensions(), toc = TRUE))
@@ -80,7 +80,7 @@ make_lab_doc_page <- function(doc, semester) {
     bibliography = doc$bibliography,
     pdf_url = doc$lab_document_pdf_url,
     slug = sprintf("lab_%02d_%s", doc$lab_num, doc$doc_filename)) %>%
-    purrr::discard(is_missing) %>%
+    purrr::discard(is_mt_or_na) %>%
     c(
       output = list("blogdown::html_page" =
                       list(md_extensions = get_md_extensions(), toc = TRUE))
@@ -149,7 +149,7 @@ make_lab_assignment_content <- function(key, semester, use_solutions = FALSE) {
   }
   url <- assignment$assignment_url
   output <- cat_nl(output, "## Assignment", start_par = TRUE, extra_lines = 1)
-  if (! is_missing(url)) {
+  if (! is_mt_or_na(url)) {
     output <- cat_nl(output,
                      stringr::str_c("Accept the assignment at GitHub Classroom at <",
                                     url, ">."))
@@ -216,7 +216,7 @@ make_lab_assignment_page <- function(key, semester, use_solutions = FALSE) {
     slug = sprintf("lab_%02d_assignment", assignment$lab_num),
     output = list("blogdown::html_page" =
                     list(md_extensions = get_md_extensions()))
-  ) %>% purrr::discard(is_missing) %>%
+  ) %>% purrr::discard(is_mt_or_na) %>%
     yaml::as.yaml() %>% stringr::str_trim("right") %>%
     stringr::str_c(delim, ., delim, sep = "\n")
 

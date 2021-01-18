@@ -1,3 +1,14 @@
+
+#' FUNCTION_TITLE
+#'
+#' FUNCTION_DESCRIPTION
+#'
+#' @param type DESCRIPTION.
+#'
+#' @return RETURN_DESCRIPTION
+#' @examples
+#' # ADD_EXAMPLES_HERE
+#' @export
 type2col <- function(type) {
   metadata <- get_semestr_metadata()
   bad_idx <- bad_indices(type, metadata$type2col)
@@ -8,6 +19,17 @@ type2col <- function(type) {
   metadata$type2col[type]
 }
 
+
+#' FUNCTION_TITLE
+#'
+#' FUNCTION_DESCRIPTION
+#'
+#' @param type DESCRIPTION.
+#'
+#' @return RETURN_DESCRIPTION
+#' @examples
+#' # ADD_EXAMPLES_HERE
+#' @export
 type2idx <- function(type) {
   metadata <- get_semestr_metadata()
   bad_idx <- bad_indices(type, metadata$type2idx)
@@ -18,6 +40,17 @@ type2idx <- function(type) {
   metadata$type2idx[type]
 }
 
+
+#' FUNCTION_TITLE
+#'
+#' FUNCTION_DESCRIPTION
+#'
+#' @param type DESCRIPTION.
+#'
+#' @return RETURN_DESCRIPTION
+#' @examples
+#' # ADD_EXAMPLES_HERE
+#' @export
 type2prefix <- function(type) {
   metadata <- get_semestr_metadata()
   bad_idx <- bad_indices(type, metadata$prefixes)
@@ -28,6 +61,17 @@ type2prefix <- function(type) {
   metadata$prefixes[type]
 }
 
+
+#' FUNCTION_TITLE
+#'
+#' FUNCTION_DESCRIPTION
+#'
+#' @param type DESCRIPTION.
+#'
+#' @return RETURN_DESCRIPTION
+#' @examples
+#' # ADD_EXAMPLES_HERE
+#' @export
 type2base <- function(type) {
   metadata <- get_semestr_metadata()
   bad_idx <- bad_indices(type, metadata$bases)
@@ -38,6 +82,17 @@ type2base <- function(type) {
   metadata$bases[type]
 }
 
+
+#' FUNCTION_TITLE
+#'
+#' FUNCTION_DESCRIPTION
+#'
+#' @param idx DESCRIPTION.
+#'
+#' @return RETURN_DESCRIPTION
+#' @examples
+#' # ADD_EXAMPLES_HERE
+#' @export
 idx2col <- function(idx) {
   metadata <- get_semestr_metadata()
   bad_idx <- bad_indices(idx, metadata$idx2col)
@@ -48,6 +103,17 @@ idx2col <- function(idx) {
   metadata$idx2col[idx]
 }
 
+
+#' FUNCTION_TITLE
+#'
+#' FUNCTION_DESCRIPTION
+#'
+#' @param idx DESCRIPTION.
+#'
+#' @return RETURN_DESCRIPTION
+#' @examples
+#' # ADD_EXAMPLES_HERE
+#' @export
 idx2type <- function(idx) {
   metadata <- get_semestr_metadata()
   bad_idx <- bad_indices(idx, metadata$idx2type)
@@ -58,6 +124,17 @@ idx2type <- function(idx) {
   metadata$idx2type[idx]
 }
 
+
+#' FUNCTION_TITLE
+#'
+#' FUNCTION_DESCRIPTION
+#'
+#' @param col DESCRIPTION.
+#'
+#' @return RETURN_DESCRIPTION
+#' @examples
+#' # ADD_EXAMPLES_HERE
+#' @export
 col2idx <- function(col) {
   metadata <- get_semestr_metadata()
   bad_idx <- bad_indices(col, metadata$col2idx)
@@ -68,6 +145,17 @@ col2idx <- function(col) {
   metadata$col2idx[col]
 }
 
+
+#' FUNCTION_TITLE
+#'
+#' FUNCTION_DESCRIPTION
+#'
+#' @param col DESCRIPTION.
+#'
+#' @return RETURN_DESCRIPTION
+#' @examples
+#' # ADD_EXAMPLES_HERE
+#' @export
 col2type <- function(col) {
   metadata <- get_semestr_metadata()
   bad_idx <- bad_indices(col, metadata$col2type)
@@ -78,6 +166,17 @@ col2type <- function(col) {
   metadata$col2type[col]
 }
 
+
+#' FUNCTION_TITLE
+#'
+#' FUNCTION_DESCRIPTION
+#'
+#' @param base DESCRIPTION.
+#'
+#' @return RETURN_DESCRIPTION
+#' @examples
+#' # ADD_EXAMPLES_HERE
+#' @export
 base2type <- function(base) {
   metadata <- get_semestr_metadata()
   bad_idx <- bad_indices(base, metadata$rev_base)
@@ -96,6 +195,7 @@ base2type <- function(base) {
 #'   are "class", "reading", "homework", "lab", "exam", "due date", "holiday",
 #'   and "event".
 #'
+#' @export
 item_type <- function(cal_id) {
   metadata <- get_semestr_metadata()
   base <- as.integer(cal_id) %>%
@@ -112,6 +212,7 @@ item_type <- function(cal_id) {
 #' @return A string identifying the type of modification. Current values are
 #'   "cancelled" and "make-up"
 #'
+#' @export
 item_mod <- function(cal_id) {
   metadata <- get_semestr_metadata()
   base_mod <- as.integer(cal_id) %/% mod(1000) %>%

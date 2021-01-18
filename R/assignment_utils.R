@@ -6,6 +6,7 @@
 #'
 #' @param env The environment to attach locally.
 #'
+#' @export
 pull_env <- function(env) {
   for (n in ls(env)) {
     assign(n, get(n, envir = env), envir = parent.frame())
@@ -47,6 +48,16 @@ get_md_extensions <- function() {
   exts
 }
 
+
+#' FUNCTION_TITLE
+#'
+#' FUNCTION_DESCRIPTION
+#'
+#' @param  DESCRIPTION.
+#'
+#' @return RETURN_DESCRIPTION
+#' @examples
+#' # ADD_EXAMPLES_HERE
 default_semestr_metadata <- function() {
   list(
     type2idx = c(class = "class", lab = "lab", homework = "homework",
@@ -80,6 +91,17 @@ default_semestr_metadata <- function() {
   )
 }
 
+
+#' Get the metadata for the currently loaded semester
+#'
+#' Pulls the metadata for the currently loaded semester from the package's
+#' `.globals`  environment
+#'
+#' @return A named list with the metadata
+#' @examples
+#' get_semestr_metadata()
+#'
+#' @export
 get_semestr_metadata <- function() {
   if (exists("metadata", envir = .globals)) {
     get("metadata", envir = .globals)
@@ -88,6 +110,18 @@ get_semestr_metadata <- function() {
   }
 }
 
+
+#' Get the time zone for where the course will be taught.
+#'
+#' The semester planning database should contain information about the
+#' time zone where the course will be taught. This function retrieves the
+#' time zone corresponding to the currently loaded semester schedule.
+#'
+#' @return A character string with the time zone.
+#' @examples
+#' get_semestr_tz()
+#'
+#' @export
 get_semestr_tz <- function() {
   if (exists("tz", envir = .globals)) {
     tz <- .globals$tz
@@ -108,6 +142,22 @@ make_root_criteria <- function(crit, ... ) {
   crit
 }
 
-is_missing <- function(x) {
+
+#' Extends is.na to report TRUE if the object has length zero.
+#'
+#' If I want to check whether an element in a list is missing, sometimes it's
+#' `NA`, but sometimes it is simply a vector of length 0. This checks for both
+#' possibilities.
+#'
+#' @param x A vector of any type, of length 0 or 1
+#'
+#' @return TRUE if the vector has length 0 or is NA
+#' @examples
+#' is_mt_or_na(character(0))
+#' is_mt_or_na(NA_character_)
+#' is_mt_or_na("foo")
+#'
+#' @export
+is_mt_or_na <- function(x) {
   length(x) == 0 || any(is.na(x))
 }

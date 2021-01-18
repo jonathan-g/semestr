@@ -30,6 +30,7 @@
 #'   and a named list `metadata` containing named character vectors of
 #'   metadata that are used to decode and manipulate calendar entries.
 #'
+#' @export
 load_semester_db <- function(db_file, root_crit = NULL, ignore_root = FALSE) {
   if (ignore_root) {
     root_dir <- getwd()

@@ -23,7 +23,7 @@ make_hw_slug <- function(hw_asgt) {
 }
 
 make_hw_solution_page <- function(solution, semester, slug = NA_character_) {
-  if (is_missing(slug) || is.null(slug)) {
+  if (is_mt_or_na(slug) || is.null(slug)) {
     slug = sprintf("homework_%02d", solution$hw_num)
   }
 
@@ -38,7 +38,7 @@ make_hw_solution_page <- function(solution, semester, slug = NA_character_) {
     date = as.character(solution$hw_due_date),
     pdf_url = solution$hw_sol_pdf_url,
     slug = stringr::str_c(slug, "_", solution$hw_sol_filename)) %>%
-    purrr::discard(is_missing) %>%
+    purrr::discard(is_mt_or_na) %>%
     c(
       output = list("blogdown::html_page" =
                       list(md_extensions = get_md_extensions(),
@@ -56,7 +56,7 @@ make_hw_solution_page <- function(solution, semester, slug = NA_character_) {
 }
 
 make_hw_solution <- function(solution, assignment, semester, slug = NA_character_) {
-  if (is_missing(slug)) {
+  if (is_mt_or_na(slug)) {
     slug = sprintf("homework_%02d", assignment$hw_num)
   }
   fname <- stringr::str_c(slug, "_", solution$hw_sol_filename, ".Rmd")
@@ -130,7 +130,7 @@ make_hw_asgt_content <- function(key, semester, use_solutions = FALSE) {
   if (nrow(prologue) > 0) {
     prologue_str <-
       stringr::str_c(purrr::discard(prologue$homework,
-                                    ~is_missing(.x) || .x == "") %>%
+                                    ~is_mt_or_na(.x) || .x == "") %>%
                        unique(),
                      collapse = "\n\n")
   } else {
@@ -140,7 +140,7 @@ make_hw_asgt_content <- function(key, semester, use_solutions = FALSE) {
   if (nrow(epilogue) > 0) {
     epilogue_str <-
       stringr::str_c(purrr::discard(epilogue$homework,
-                                    ~is_missing(.x) || .x == "") %>%
+                                    ~is_mt_or_na(.x) || .x == "") %>%
                        unique(),
                      collapse = "\n\n")
   } else {
@@ -267,7 +267,7 @@ make_hw_asgt_page <- function(key, semester, use_solutions = FALSE) {
                            date = as.character(hw_date),
                            output = list("blogdown::html_page" =
                                            list(md_extensions = get_md_extensions()))
-  ) %>% purrr::discard(is_missing) %>%
+  ) %>% purrr::discard(is_mt_or_na) %>%
     yaml::as.yaml() %>% stringr::str_trim("right") %>%
     stringr::str_c(delim, ., delim, sep = "\n")
   context <- make_context(assignment, "homework", semester)
