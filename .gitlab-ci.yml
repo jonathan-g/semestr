@@ -18,16 +18,10 @@ pages:
   dependencies:
     - test
   script:
-    - Rscript -e 'pkgdown::build_site(preview = FALSE, new_process = TRUE, devel = FALSE, install = TRUE)'
+    - Rscript -e 'pkgdown::build_site(preview = FALSE, new_process = TRUE, devel = FALSE, install = TRUE, override = list(destination = "public")'
   artifacts:
     paths:
       - public
-    expire_in: 30 days
-  only:
-    - master
-  artifacts:
-    paths:
-      - docs
     expire_in: 30 days
   only:
     - main
