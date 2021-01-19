@@ -49,7 +49,7 @@ make_hw_solution_page <- function(solution, semester, slug = NA_character_) {
   context <- make_context(solution, "homework solution", semester)
   hw_solution_page <- stringr::str_c(
     header,
-    solution$hw_sol_markdown,
+    solution$sol_markdown,
     sep = "\n"
   ) %>% expand_codes(context, semester)
   hw_solution_page
@@ -89,6 +89,8 @@ make_hw_asgt_content <- function(key, semester, use_solutions = FALSE) {
                                              tz = get_semestr_tz())) %>%
       dplyr::filter(.data$sol_pub_date <= lubridate::now()) %>%
       dplyr::arrange(.data$sol_id)
+  } else {
+    solutions <- NULL
   }
 
   hw <- items %>%
@@ -245,7 +247,7 @@ make_hw_asgt_page <- function(key, semester, use_solutions = FALSE) {
   assignment <- get_hw_assignment(key, semester)
 
   hw_date <- assignment$date
-  hw_topic <- assignment$topic
+  hw_topic <- assignment$hw_topic
   hw_idx <- assignment$hw_id
   hw_num <- assignment$hw_num
   hw_slug <- make_hw_slug(assignment)

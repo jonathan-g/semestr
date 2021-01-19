@@ -20,7 +20,7 @@ get_lab_assignment <- function(key, semester) {
 }
 
 make_lab_solution_content <- function(sol, semester) {
-  adj_nl(sol$sol_markdown)
+  adj_nl(sol$lab_sol_markdown)
 }
 
 make_lab_solution_page <- function(sol, semester) {
@@ -64,7 +64,7 @@ make_lab_solution <- function(sol, semester) {
 }
 
 make_lab_doc_content <- function(doc, semester) {
-  doc$markdown
+  doc$lab_document_markdown
 }
 
 make_lab_doc_page <- function(doc, semester) {
