@@ -27,7 +27,7 @@ pages:
     - master
   artifacts:
     paths:
-      - doc
+      - docs
     expire_in: 30 days
   only:
     - main
