@@ -12,7 +12,6 @@ template:
       src: man/figures/semestr.png
     twitter:
       creator: "@jg_environ"
-      site: https://jonathan-g.github.io/semestr/
       card: summary
 development:
   mode: auto
