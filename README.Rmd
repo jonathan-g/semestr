@@ -22,6 +22,7 @@ knitr::opts_chunk$set(
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://www.tidyverse.org/lifecycle/#experimental)
 [![CRAN status](https://www.r-pkg.org/badges/version/semestr)](https://CRAN.R-project.org/package=semestr)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![R-CMD-check](https://github.com/jonathan-g/semestr/workflows/R-CMD-check/badge.svg)](https://github.com/jonathan-g/semestr/actions)
 <!-- badges: end -->
 
 The goal of semestr is to ...
