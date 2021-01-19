@@ -2,7 +2,7 @@
 #'
 #' Search data frames and return lines where any column matches a pattern.
 #'
-#' @param df_list A named list of data frames
+#' @param df_lst A named list of data frames
 #' @param pattern The pattern to search for (regular expression)
 #'
 #' @return A named list of filtered data frames
@@ -47,6 +47,7 @@ col_search <- function(df, pattern) {
 #'
 #' @param df A data frame
 #' @param pattern The pattern to search for (regular expression)
+#' @param na.rm Ignore missing values.
 #'
 #' @return A data frame where each column is the number of times that column
 #'   matched the target pattern.
@@ -82,7 +83,7 @@ col_replace <- function(df, pattern, replacement) {
 #'
 #' Search data frames and return lines where any column matches a pattern.
 #'
-#' @param df_list A named list of data frames
+#' @param df_lst A named list of data frames
 #' @param pattern The pattern to search for (regular expression)
 #'
 #' @return A named list of data frames where character columns are replaced
@@ -99,7 +100,7 @@ global_col_search <- function(df_lst, pattern) {
 #' Search a list of data frames for a pattern and count the number of matches
 #' in each column.
 #'
-#' @param df_list A named list of data frames
+#' @param df_lst A named list of data frames
 #' @param pattern The pattern to search for (regular expression)
 #'
 #' @return A named list of data frames where each column has the number of
@@ -116,7 +117,7 @@ global_col_search_sum <- function(df_lst, pattern) {
 #'
 #' Search and replace in every column of a list of data frames.
 #'
-#' @param df_list A named list of data frames
+#' @param df_lst A named list of data frames
 #' @param pattern The pattern to search for (regular expression)
 #' @param replacement The replacement.
 #'

@@ -34,10 +34,10 @@ Format a range of dates, using a similar format to
 }}
 
 \examples{
-format_date_range(list(start = lubridate::ymd("2020-02-14"),
-                       stop  = lubridate::ymd("2020-03-15")))
+format_date_range(list(start = as.Date("2020-02-14"),
+                       stop  = as.Date("2020-03-15")))
 
-format_day_date_range(list(start = lubridate::ymd("2020-02-14"),
-                           stop  = lubridate::ymd("2020-03-15")))
+format_day_date_range(list(start = as.Date("2020-02-14"),
+                           stop  = as.Date("2020-03-15")))
 
 }

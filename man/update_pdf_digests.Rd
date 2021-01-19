@@ -14,7 +14,17 @@ update_pdf_digests(
 }
 \arguments{
 \item{dir}{A string with the name of the directory to search
-(by default the "content" directory at the top-level directory of the site)}
+(by default the "content" directory at the top-level directory of the site)
+If the \code{root_dir} is \code{NULL}, the function tries to find the root directory
+using a few common heuristics.}
+
+\item{root_dir}{The root directory for the project (Should be the root for
+a HUGO project).}
+
+\item{static_path}{Where to look for static files (in the HUGO sense of
+static).}
+
+\item{content_path}{Where to look for content (e.g., \code{.Rmd} and \code{.md} files).}
 
 \item{partial}{Logical. If \code{TRUE}, keep digests for source
 files that aren't in the specified directory and its children and

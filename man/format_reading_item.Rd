@@ -16,6 +16,8 @@ format_handout_reading_item(
 \arguments{
 \item{reading_item}{The reading item (a row from the semester  \code{rd_items}
 data frame)}
+
+\item{online_location}{An URL for where to find the handout.}
 }
 \value{
 A character string with the formatted output.

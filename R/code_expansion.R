@@ -122,7 +122,7 @@ expand_codes <- function(text, context, semester, delim = c("<%", "%>"),
 
     for (sym in c("semester_dates", "metadata", "tz")) {
       assign(sym, get(sym, envir = .globals), envir = local_env)
-      lockBinding(sym, local_env)
+      # lockBinding(sym, local_env)
     }
     for (sem_sym in c("calendar")) {
       assign(sem_sym, semester[[sem_sym]], envir = local_env)
@@ -130,7 +130,7 @@ expand_codes <- function(text, context, semester, delim = c("<%", "%>"),
     ee_globals <- get("globals", envir = .expand_env)
     for (sym in names(ee_globals)) {
       assign(sym, ee_globals[[sym]], envir = local_env)
-      lockBinding(sym, local_env)
+      # lockBinding(sym, local_env)
     }
     if (! is.null(params)) {
       for (param in names(params)) {
@@ -139,22 +139,23 @@ expand_codes <- function(text, context, semester, delim = c("<%", "%>"),
     }
     for (sym in .expand_env$imports) {
       assign(sym, get(sym, pos = 1), envir = local_env)
-      lockBinding(sym, local_env)
+      # lockBinding(sym, local_env)
     }
     assign("context", context, envir = local_env)
-    lockBinding("context", local_env)
+    # lockBinding("context", local_env)
   } else {
     for (sym in ls(envir = local_env)) {
       if (! bindingIsLocked(sym, local_env)) {
+        warning("Unexpected local environment has locked binding for ", sym)
         unlock_list <- c(unlock_list, sym)
-        lockBinding(sym, local_env)
+        # lockBinding(sym, local_env)
       }
     }
     if (exists("context", envir = local_env)) {
-      unlockBinding("context", local_env)
+      # unlockBinding("context", local_env)
     }
     assign("context", context, envir = local_env)
-    lockBinding("context", local_env)
+    # lockBinding("context", local_env)
     if (! is.null(params)) {
       for (param in names(params)) {
         assign(param, params[[param]], envir = local_env)
@@ -180,7 +181,8 @@ expand_codes <- function(text, context, semester, delim = c("<%", "%>"),
   retval <- eval(expand_body, envir = local_env)
 
   for (sym in unlock_list) {
-    unlockBinding(sym, local_env)
+    message("Unlock list: unlocking ", sym)
+    # unlockBinding(sym, local_env)
   }
   retval
 }

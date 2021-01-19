@@ -7,8 +7,10 @@
 make_reading_page(cal_id, semester)
 }
 \arguments{
+\item{cal_id}{The calendar ID for this assignment.}
+
 \item{semester}{A semester object (a list returned by
-\verb{\link{load_semester_db}})}
+\verb{\link{load_semester_db}}).}
 }
 \value{
 A character string with the Markdown content for the reading

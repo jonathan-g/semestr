@@ -26,7 +26,7 @@
 #' append_newline_if_needed("foo")
 #' append_newline_if_needed("foo", start_par = TRUE)
 #' append_newline_if_needed("foo", extra_lines = 3)
-#' append_newline_if_needed(month.abb, start_par = c(TRUE, rep(FALSE, 6)),
+#' append_newline_if_needed(month.abb, start_par = c(TRUE, rep(FALSE, 11)),
 #'   collapse = TRUE)
 #' append_newline_if_needed(month.abb, collapse = "...")
 #' append_newline_if_needed(c("Months:", month.abb, extra_lines = 0,
@@ -148,8 +148,8 @@ NULL
 #' @describeIn date_parts Format the month
 #'
 #' @examples
-#' format_month(ymd("2001-02-25"), FALSE)
-#' format_month(lubridate::now(), TRUE)
+#' format_month(as.Date("2001-02-25"), FALSE)
+#' format_month(Sys.Date(), TRUE)
 #'
 #' @export
 format_month <- function(d, abbr = TRUE) {
@@ -162,7 +162,7 @@ format_month <- function(d, abbr = TRUE) {
 #' @describeIn date_parts Format the day of the week
 #'
 #' @examples
-#' format_wday(ymd("2001-02-25"), FALSE)
+#' format_wday(as.Date("2001-02-25"), FALSE)
 #' format_wday(Sys.Date(), TRUE)
 #'
 #' @export
@@ -214,8 +214,8 @@ format_class_day_date <- function(d, abbr_month = TRUE, abbr_wday = TRUE) {
 #'
 #' @return A formatted date
 #' @examples
-#' format_date_range(list(start = lubridate::ymd("2020-02-14"),
-#'                        stop  = lubridate::ymd("2020-03-15")))
+#' format_date_range(list(start = as.Date("2020-02-14"),
+#'                        stop  = as.Date("2020-03-15")))
 #'
 #' @export
 format_date_range <- function(dates, abbr = TRUE) {
@@ -242,8 +242,8 @@ format_date_range <- function(dates, abbr = TRUE) {
 #' @param abbr_wday Abbreviate the days of the week.
 #'
 #' @examples
-#' format_day_date_range(list(start = lubridate::ymd("2020-02-14"),
-#'                            stop  = lubridate::ymd("2020-03-15")))
+#' format_day_date_range(list(start = as.Date("2020-02-14"),
+#'                            stop  = as.Date("2020-03-15")))
 #'
 #' @export
 format_day_date_range<- function(dates, abbr_month = TRUE, abbr_wday = TRUE) {
@@ -387,7 +387,8 @@ format_day_date_by_key <- function(calendar, key,
 #'
 #' @return A named list with `start` and `stop` elements.
 #' @examples
-#' sanitize_date_range(ymd("2021-02-20"), ymd("2021-03-15"))
+#' sanitize_date_range(c(as.Date("2021-02-20"), as.Date("2021-03-15"),
+#'                       as.Date("2019-12-15"), as.Date("2020-07-14")))
 #'
 #' @export
 sanitize_date_range <- function(dates) {
@@ -497,7 +498,7 @@ format_date_range_by_key <- function(calendar, keys,
 
 #' @describeIn lookup_and_format_date_range Look up dates by event id.
 #'
-#' @param nums A list or vector of event ids.
+#' @param event_ids A list or vector of event ids.
 #'
 #' @export
 format_date_range_by_event_id <- function(calendar, event_ids, abbr = TRUE,

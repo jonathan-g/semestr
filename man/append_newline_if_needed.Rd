@@ -43,7 +43,7 @@ addition to the new lines.
 append_newline_if_needed("foo")
 append_newline_if_needed("foo", start_par = TRUE)
 append_newline_if_needed("foo", extra_lines = 3)
-append_newline_if_needed(month.abb, start_par = c(TRUE, rep(FALSE, 6)),
+append_newline_if_needed(month.abb, start_par = c(TRUE, rep(FALSE, 11)),
   collapse = TRUE)
 append_newline_if_needed(month.abb, collapse = "...")
 append_newline_if_needed(c("Months:", month.abb, extra_lines = 0,

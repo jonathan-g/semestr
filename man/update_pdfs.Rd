@@ -17,14 +17,18 @@ update_pdfs(
 \item{dir}{A string containing the root directory for checking.
 By default, the "content" directory of the project.}
 
+\item{root_dir}{The root directory of the HUGO project.}
+
+\item{static_path}{Where to look for static files (in the HUGO sense of
+static).}
+
+\item{content_path}{Where to look for content (e.g., \code{.Rmd} and \code{.md} files).}
+
 \item{quiet}{Suppress output. By default this is \code{FALSE} and the
 function emits an informational message about how many files will
 be rebuilt.}
 
 \item{force}{Force rebuilding source files that are not out of date.}
-
-\item{method}{Different methods to build a website (each with pros and cons).
-See \code{\link[blogdown]{build_site}()} for details.}
 }
 \value{
 This function does not return anything
@@ -49,6 +53,7 @@ After rendering any out-of-date files, regenerate the digest list
 and saves it to a file.
 }
 \seealso{
-\code{\link[blogdown]{build_site}()}, \code{\link[blogdown]{build_dir}()},
+\code{\link[blogdown]{build_site}()},
+\code{\link[blogdown]{build_dir}()},
 \code{\link{digests}}.
 }

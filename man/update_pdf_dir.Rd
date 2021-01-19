@@ -9,6 +9,7 @@ update_pdf_dir(
   root_dir = NULL,
   static_path = "static",
   content_path = "content",
+  quiet = TRUE,
   force = FALSE,
   ignore = NA
 )
@@ -25,12 +26,16 @@ static).}
 
 \item{content_path}{Where to look for content (e.g., \code{.Rmd} and \code{.md} files).}
 
+\item{quiet}{Suppress output. By default this is \code{FALSE} and the
+function emits an informational message about how many files will
+be rebuilt.}
+
 \item{force}{Force rebuilding source files that are not out of date.}
 
 \item{ignore}{A regular expression pattern for files to ignore.}
 }
 \value{
-
+A list of out-of-date files to rebuild.
 }
 \description{
 \code{update_dir} updates changed files in a subdirectory of "content"

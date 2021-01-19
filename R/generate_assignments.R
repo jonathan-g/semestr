@@ -167,13 +167,15 @@ check_schedule <- function(schedule, semester) {
 set_schedule_globals <- function(schedule, semester) {
   if (exists("calendar", envir = .globals)) {
     if (bindingIsLocked("calendar", .globals)) {
-      unlockBinding("calendar", .globals)
+      warning("Unexpected: calendar binding is locked.")
+      # unlockBinding("calendar", .globals)
     }
   }
   assign("schedule", semester$calendar, envir = .globals)
   if (exists("schedule", envir = .globals)) {
     if (bindingIsLocked("schedule", .globals)) {
-      unlockBinding("schedule", .globals)
+      warning("Unexpected: schedule binding is locked.")
+      # unlockBinding("schedule", .globals)
     }
   }
   assign("schedule", schedule, envir = .globals)

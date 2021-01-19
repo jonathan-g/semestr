@@ -53,12 +53,14 @@ format_date_range_by_event_id(
 
 \item{abbr_wday}{Abbreviate weekdays (if this is \code{NULL}, use \code{abbr}).}
 
-\item{nums}{A list or vector of event ids.}
+\item{nums}{A list or vector of class numbers.}
 
 \item{keys}{A list or vector of key indices to look up.}
 
 \item{type}{Which type of key is this ("class", "reading", "lab",
 "homework", "exam", "holiday", "event", "due date", or "raw")}
+
+\item{event_ids}{A list or vector of event ids.}
 }
 \value{
 A formatted date range

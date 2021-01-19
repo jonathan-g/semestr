@@ -10,6 +10,8 @@ col_search_sum(df, pattern, na.rm = TRUE)
 \item{df}{A data frame}
 
 \item{pattern}{The pattern to search for (regular expression)}
+
+\item{na.rm}{Ignore missing values.}
 }
 \value{
 A data frame where each column is the number of times that column

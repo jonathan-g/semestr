@@ -7,9 +7,9 @@
 global_col_search(df_lst, pattern)
 }
 \arguments{
-\item{pattern}{The pattern to search for (regular expression)}
+\item{df_lst}{A named list of data frames}
 
-\item{df_list}{A named list of data frames}
+\item{pattern}{The pattern to search for (regular expression)}
 }
 \value{
 A named list of data frames where character columns are replaced

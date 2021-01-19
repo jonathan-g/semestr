@@ -7,11 +7,11 @@
 global_replace(df_lst, pattern, replacement)
 }
 \arguments{
+\item{df_lst}{A named list of data frames}
+
 \item{pattern}{The pattern to search for (regular expression)}
 
 \item{replacement}{The replacement.}
-
-\item{df_list}{A named list of data frames}
 }
 \value{
 A named list of data frames.

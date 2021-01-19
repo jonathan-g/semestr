@@ -29,10 +29,10 @@ Format the month or day of week for a date.
 }}
 
 \examples{
-format_month(ymd("2001-02-25"), FALSE)
-format_month(lubridate::now(), TRUE)
+format_month(as.Date("2001-02-25"), FALSE)
+format_month(Sys.Date(), TRUE)
 
-format_wday(ymd("2001-02-25"), FALSE)
+format_wday(as.Date("2001-02-25"), FALSE)
 format_wday(Sys.Date(), TRUE)
 
 }

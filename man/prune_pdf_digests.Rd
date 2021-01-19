@@ -8,6 +8,8 @@ prune_pdf_digests(files, root_dir = NULL)
 }
 \arguments{
 \item{files}{A character vector of paths to the source files to be removed.}
+
+\item{root_dir}{The root directory of the HUGO project.}
 }
 \value{
 The path to the digest file.

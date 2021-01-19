@@ -19,7 +19,6 @@
 #' @param type A type (character)
 #' @param idx An index (character)
 #' @param col A column prefix/suffix (character)
-#' @param prefix A calendar key prefix (character)
 #' @param base An integer base.#'
 #'
 #' @return A character or integer value corresponding to the request.

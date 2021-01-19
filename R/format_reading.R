@@ -59,6 +59,8 @@ format_textbook_reading <- function(reading_list) {
 
 #' @describeIn format_reading_item Format a handout reading item.
 #'
+#' @param online_location An URL for where to find the handout.
+#'
 #' @export
 format_handout_reading_item <- function(reading_item, online_location = getOption("semestr.online_reading_loc")) {
   reading_item <- as.list(reading_item)
@@ -210,8 +212,9 @@ make_reading_assignment <- function(reading_entry) {
 #' Make a page for the reading assignment for one class, from the semester
 #'   database.
 #'
+#' @param cal_id The calendar ID for this assignment.
 #' @param semester A semester object (a list returned by
-#'   `\link{load_semester_db}`)
+#'   `\link{load_semester_db}`).
 #'
 #' @return A character string with the Markdown content for the reading
 #'   assignment page.

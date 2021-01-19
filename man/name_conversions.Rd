@@ -39,8 +39,6 @@ base2type(base)
 \item{col}{A column prefix/suffix (character)}
 
 \item{base}{An integer base.#'}
-
-\item{prefix}{A calendar key prefix (character)}
 }
 \value{
 A character or integer value corresponding to the request.

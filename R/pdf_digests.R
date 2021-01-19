@@ -105,17 +105,17 @@ update_pdf_file_digests <- function (files, root_dir, static_path = "static",
   dest_urls <- files %>% get_pdf_url()
   digests <- tibble::tibble( file = files,
                              dest = dest_urls) %>%
-    dplyr::filter(! is.na(dest)) %>%
+    dplyr::filter(! is.na(.data$dest)) %>%
     dplyr::mutate(
-      dest = purrr::map_chr(dest, ~pdf_filename(.x, root_dir = root_dir,
+      dest = purrr::map_chr(.data$dest, ~pdf_filename(.x, root_dir = root_dir,
                                                 static_path = static_path)),
-      dgst = purrr::map(file, pdf_digest_if_exists),
-      alg = purrr::map_chr(dgst, ~.x["alg"]),
-      digest = purrr::map_chr(dgst, ~.x["digest"]),
-      dest_digest = purrr::map2_chr(dest, alg,
+      dgst = purrr::map(.data$file, pdf_digest_if_exists),
+      alg = purrr::map_chr(.data$dgst, ~.x["alg"]),
+      digest = purrr::map_chr(.data$dgst, ~.x["digest"]),
+      dest_digest = purrr::map2_chr(.data$dest, .data$alg,
                                     ~pdf_digest_if_exists(.x, .y)["digest"]),
-      file = stringr::str_replace(file, stringr::fixed(root_dir), "~"),
-      dest = stringr::str_replace(dest, stringr::fixed(root_dir), "~")
+      file = stringr::str_replace(.data$file, stringr::fixed(root_dir), "~"),
+      dest = stringr::str_replace(.data$dest, stringr::fixed(root_dir), "~")
       )
 
   digest_file <- file.path(root_dir, "pdf_digests.Rds")
@@ -190,7 +190,7 @@ pdfs_to_rebuild <- function(files, root_dir, static_path = "static",
 
   df$rebuild = pdf_needs_rebuild(df$cur_digest, df$cur_dest_digest,
                              df$digest, df$dest_digest)
-  df %>% dplyr::filter(rebuild) %$% file
+  df %>% dplyr::filter(.data$rebuild) %>% dplyr::pull(file)
 }
 
 
@@ -215,19 +215,20 @@ pdfs_to_rebuild <- function(files, root_dir, static_path = "static",
 #'
 #' @param dir A string containing the root directory for checking.
 #' By default, the "content" directory of the project.
+#' @param root_dir The root directory of the HUGO project.
+#' @param static_path Where to look for static files (in the HUGO sense of
+#'   static).
+#' @param content_path Where to look for content (e.g., `.Rmd` and `.md` files).
 #' @param quiet Suppress output. By default this is \code{FALSE} and the
 #' function emits an informational message about how many files will
 #' be rebuilt.
 #' @param force Force rebuilding source files that are not out of date.
-#' @param method Different methods to build a website (each with pros and cons).
-#'     See \code{\link[blogdown]{build_site}()} for details.
-#'
-#' @inheritParams blogdown::build_site
 #'
 #' @return This function does not return anything
 #'
-#' @seealso \code{\link[blogdown]{build_site}()}, \code{\link[blogdown]{build_dir}()},
-#' \code{\link{digests}}.
+#' @seealso \code{\link[blogdown]{build_site}()},
+#'   \code{\link[blogdown]{build_dir}()},
+#'   \code{\link{digests}}.
 #'
 #' @export
 update_pdfs <-  function(dir = NULL, root_dir = NULL,
@@ -289,14 +290,18 @@ update_pdfs <-  function(dir = NULL, root_dir = NULL,
 #' @param static_path Where to look for static files (in the HUGO sense of
 #'   static).
 #' @param content_path Where to look for content (e.g., `.Rmd` and `.md` files).
+#' @param quiet Suppress output. By default this is \code{FALSE} and the
+#' function emits an informational message about how many files will
+#' be rebuilt.
 #' @param force Force rebuilding source files that are not out of date.
 #' @param ignore A regular expression pattern for files to ignore.
 #'
-#' @return
+#' @return A list of out-of-date files to rebuild.
 #'
 #' @export
 update_pdf_dir <- function(dir = '.', root_dir = NULL, static_path = "static",
-                       content_path = "content", force = FALSE, ignore = NA) {
+                       content_path = "content", quiet = TRUE, force = FALSE,
+                       ignore = NA) {
   if (is.null(root_dir)) {
     start <- "."
     if (dir.exists(dir)) {
@@ -312,8 +317,9 @@ update_pdf_dir <- function(dir = '.', root_dir = NULL, static_path = "static",
         stop("Directory does not exist: ", dir)
       }
     }
+    dir <- new_dir
   }
-  dir <- new_dir
+  cd <-  paste0(normalizePath(getwd(), winslash = "/"), "/")
 
   if (! is.na(ignore))
     files <- files %>% purrr::discard(~stringr::str_detect(.x, ignore))
@@ -341,7 +347,7 @@ update_pdf_dir <- function(dir = '.', root_dir = NULL, static_path = "static",
   }
 
   # message("On exit stack: ", deparse(sys.on.exit()))
-  update_pdf_file_digests(files, root_dir, staatic_path, content_path)
+  update_pdf_file_digests(files, root_dir, static_path, content_path)
   invisible(to_build)
 }
 
@@ -384,10 +390,10 @@ get_current_pdf_digests <- function(files, root_dir = NULL, static_path = "stati
 
   dest_urls <- files %>% get_pdf_url()
   df <- tibble::tibble( file = files,
-                             dest = dest_urls) %>%
-    dplyr::filter(! is.na(dest)) %>%
+                        dest = dest_urls) %>%
+    dplyr::filter(! is.na(.data$dest)) %>%
     dplyr::mutate(
-      dest = purrr::map_chr(dest, ~pdf_filename(.x, root_dir = root_dir,
+      dest = purrr::map_chr(.data$dest, ~pdf_filename(.x, root_dir = root_dir,
                                                 static_path = static_path))
       )
 
@@ -399,7 +405,7 @@ get_current_pdf_digests <- function(files, root_dir = NULL, static_path = "stati
       # Don't store the name of the output file because we're going to
       # merge digest with df by source file path, and df already has a dest
       # column.
-      dplyr::select(-dest)
+      dplyr::select(-"dest")
 
     # left join: we only want to check digests for the specified files.
     df <- dplyr::left_join(df, digests, by = "file")
@@ -414,17 +420,18 @@ get_current_pdf_digests <- function(files, root_dir = NULL, static_path = "stati
 
   df <- df %>%
     dplyr::mutate(
-      cur_dgst_lst = purrr::map2(file, alg, ~pdf_digest_if_exists(.x, .y)),
-      alg = purrr::map_chr(cur_dgst_lst, ~.x['alg']),
-      cur_digest = purrr::map_chr(cur_dgst_lst, ~.x['digest']),
-      cur_dest_digest = purrr::map2_chr(dest, alg,
+      cur_dgst_lst = purrr::map2(.data$file, .data$alg,
+                                 ~pdf_digest_if_exists(.x, .y)),
+      alg = purrr::map_chr(.data$cur_dgst_lst, ~.x['alg']),
+      cur_digest = purrr::map_chr(.data$cur_dgst_lst, ~.x['digest']),
+      cur_dest_digest = purrr::map2_chr(.data$dest, .data$alg,
                                         ~pdf_digest_if_exists(.x, .y)['digest'])
       ) %>%
-    dplyr::select(-cur_dgst_lst)
+    dplyr::select(-"cur_dgst_lst")
 
   # Organize columns in an aesthetically pleasing order.
-  df <- df %>% dplyr::select(file, dest, alg, digest, dest_digest,
-                            cur_digest, cur_dest_digest)
+  df <- df %>% dplyr::select("file", "dest", "alg", "digest", "dest_digest",
+                            "cur_digest", "cur_dest_digest")
   invisible(df)
 }
 
@@ -438,15 +445,25 @@ get_current_pdf_digests <- function(files, root_dir = NULL, static_path = "stati
 #' site.
 #'
 #' @param dir A string with the name of the directory to search
-#' (by default the "content" directory at the top-level directory of the site)
+#'   (by default the "content" directory at the top-level directory of the site)
+#'   If the `root_dir` is `NULL`, the function tries to find the root directory
+#'   using a few common heuristics.
+#' @param root_dir The root directory for the project (Should be the root for
+#'   a HUGO project).
+#' @param static_path Where to look for static files (in the HUGO sense of
+#'   static).
+#' @param content_path Where to look for content (e.g., `.Rmd` and `.md` files).
 #' @param partial Logical. If \code{TRUE}, keep digests for source
-#' files that aren't in the specified directory and its children and
-#' descendants.
-#' Otherwise, get rid of the old digest file and only keep digests for
-#' source files in the source directory and its descendants.
+#'   files that aren't in the specified directory and its children and
+#'   descendants.
+#'   Otherwise, get rid of the old digest file and only keep digests for
+#'   source files in the source directory and its descendants.
+#'
 #' @return The path to the digest file.
+#'
 #' @seealso \code{\link{prune_pdf_digests}()}, \code{\link{update_site}()},
 #' \code{\link{digests}}.
+#'
 #' @export
 #'
 update_pdf_digests <- function(dir = NULL, root_dir = NULL,
@@ -467,8 +484,12 @@ update_pdf_digests <- function(dir = NULL, root_dir = NULL,
 #' source files.
 #'
 #' @param files A character vector of paths to the source files to be removed.
+#' @param root_dir The root directory of the HUGO project.
+#'
 #' @return The path to the digest file.
+#'
 #' @seealso \code{\link{update_site_digests}()}, \code{\link{digests}}.
+#'
 #' @export
 #'
 prune_pdf_digests <- function(files, root_dir = NULL) {

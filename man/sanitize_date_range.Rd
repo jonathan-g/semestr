@@ -20,6 +20,7 @@ Take an arbitrary list of dates and create a date range from the first to the
 last.
 }
 \examples{
-sanitize_date_range(ymd("2021-02-20"), ymd("2021-03-15"))
+sanitize_date_range(c(as.Date("2021-02-20"), as.Date("2021-03-15"),
+                      as.Date("2019-12-15"), as.Date("2020-07-14")))
 
 }
