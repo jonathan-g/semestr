@@ -1,4 +1,4 @@
-image: jonathan-g/jg-verse
+image: jgilligan/jg-verse
 
 test:
   script:
