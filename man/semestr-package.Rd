@@ -4,12 +4,21 @@
 \name{semestr-package}
 \alias{semestr}
 \alias{semestr-package}
-\title{semestr: Generate assignments for a semester from a SQLlite database}
+\title{semestr: Generate Assignments for a Semester from a SQLlite Database}
 \description{
 \if{html}{\figure{logo.png}{options: align='right' alt='logo' width='120'}}
 
 Manage a syllabus, reading, homework, and lab assignments, and a course
     web site from a SQL database.
+}
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://jonathan-g.github.io/semestr/}
+  \item \url{https://github.com/jonathan-g/semestr}
+  \item Report bugs at \url{https://github.com/jonathan-g/semestr/issues}
+}
+
 }
 \author{
 \strong{Maintainer}: Jonathan Gilligan \email{jonathan.gilligan@vanderbilt.edu} (\href{https://orcid.org/0000-0003-1375-6686}{ORCID})
