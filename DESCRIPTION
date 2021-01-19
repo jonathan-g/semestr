@@ -12,6 +12,8 @@ Description:
     Manage a syllabus, reading, homework, and lab assignments, and a course
     web site from a SQL database.
 License: MIT + file LICENSE
+URL: https://github.com/jonathan-g/semestr
+BugReports: https://github.com/jonathan-g/semestr/issues
 Depends:
     R (>= 4.0)
 Imports: 
