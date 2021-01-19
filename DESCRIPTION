@@ -1,6 +1,6 @@
 Package: semestr
 Title: Generate Assignments for a Semester from a SQLlite Database
-Version: 0.1.0.9000
+Version: 0.1.0
 Date: 2021-01-16
 Authors@R: 
     person(given = "Jonathan",
@@ -12,7 +12,8 @@ Description:
     Manage a syllabus, reading, homework, and lab assignments, and a course
     web site from a SQL database.
 License: MIT + file LICENSE
-URL: https://github.com/jonathan-g/semestr
+URL: https://jonathan-g.github.io/semestr/,
+     https://github.com/jonathan-g/semestr
 BugReports: https://github.com/jonathan-g/semestr/issues
 Depends:
     R (>= 4.0)
