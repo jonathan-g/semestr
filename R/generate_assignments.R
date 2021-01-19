@@ -3,8 +3,8 @@ init_schedule <- function(semester) {
     dplyr::filter(.data$cal_type %in% c("class", "exam", "homework", "lab",
                                         "holiday")) %>%
     dplyr::select(id = "cal_id", "date", key = "cal_key", "cal_type") %>%
-    dplyr::mutate(# dates might be datetimes, so convert everything to calendar
-      # dates.
+    dplyr::mutate(
+      # dates might be datetimes, so convert everything to calendar dates.
       date = lubridate::as_date(.data$date, tz = get_semestr_tz()),
       cal_type = type2col(.data$cal_type))
   invisible(schedule)
@@ -200,7 +200,7 @@ copy_slides <- function(schedule, date, cal_entry, semester) {
       schedule <- schedule %>%
         dplyr::mutate(page_lecture =
                         ifelse(comp_na_f(.data$class_num, cal_entry$class_num),
-                               .data$slide_url, .data$page_lecture))
+                               slide_url, .data$page_lecture))
     } else {
       slides <- list.files(file.path(slide_dir, slide_class_dir),
                            pattern = "*.ppt*")

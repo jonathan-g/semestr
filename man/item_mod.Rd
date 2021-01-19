@@ -11,8 +11,8 @@ item_mod(cal_id)
 }
 \value{
 A string identifying the type of modification. Current values are
-"cancelled" and "make-up"
+"canceled" and "make-up"
 }
 \description{
-Modifications include cancelled and re-scheduled (make-up) classes.
+Modifications include canceled and re-scheduled (make-up) classes.
 }

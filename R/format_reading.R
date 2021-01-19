@@ -1,3 +1,30 @@
+#' Format a Reading Item
+#'
+#' Takes a reading item and formats it.
+#'
+#' @param reading_item The reading item (a row from the semester  `rd_items`
+#'   data frame)
+#'
+#' @return A character string with the formatted output.
+#'
+#' @name format_reading_item
+NULL
+
+#' Format a Collection of Reading Items
+#'
+#' Takes a collection of reading items and formats them.
+#'
+#' @param reading_list A data frame with rows corresponding to reading items
+#'   (a subset from the semester `rd_items` data frame)
+#'
+#' @return A character vector with the formatted output for each item.
+#'
+#' @name format_reading_items
+NULL
+
+#' @describeIn format_reading_item Format reading from a textbook.
+#'
+#' @export
 format_textbook_reading_item <- function(reading_item) {
   reading_item <- as.list(reading_item)
   output <- reading_item$markdown_title
@@ -11,13 +38,17 @@ format_textbook_reading_item <- function(reading_item) {
   output
 }
 
+
+#' @describeIn format_reading_items Format a collection of textbook readings.
+#'
+#' @export
 format_textbook_reading <- function(reading_list) {
   # Nice trick for row-wise function calls thanks to
   # Jenny Bryan.
   # See https://speakerdeck.com/jennybc/row-oriented-workflows-in-r-with-the-tidyverse?slide=40
   if (nrow(reading_list) > 0) {
     output <- reading_list %>%
-      purrr::transpose(.) %>%
+      purrr::pmap(list) %>%
       purrr::map_chr(format_textbook_reading_item)
   }  else {
     output <- NULL
@@ -25,6 +56,10 @@ format_textbook_reading <- function(reading_list) {
   output
 }
 
+
+#' @describeIn format_reading_item Format a handout reading item.
+#'
+#' @export
 format_handout_reading_item <- function(reading_item, online_location = getOption("semestr.online_reading_loc")) {
   reading_item <- as.list(reading_item)
   if(is_mt_or_na(reading_item$url) || is.null(reading_item$url)) {
@@ -49,6 +84,10 @@ format_handout_reading_item <- function(reading_item, online_location = getOptio
   output
 }
 
+
+#' @describeIn format_reading_items Format reading from multiple handouts.
+#'
+#' @export
 format_handout_reading <- function(reading_list) {
   if (nrow(reading_list) > 0) {
     output <- reading_list %>% purrr::transpose() %>%
@@ -59,6 +98,17 @@ format_handout_reading <- function(reading_list) {
   output
 }
 
+#' Make a Reading Assignment
+#'
+#' Format all readings from a reading assignment entry.
+#'
+#' @param reading_entry A reading entry assembled from the semester database
+#'   by `\link{make_reading_page}`
+#'
+#' @return A formatted reading assignment, suitable for including in an
+#'   assignment page.
+#'
+#' @keywords internal
 make_reading_assignment <- function(reading_entry) {
   textbook_reading <- reading_entry %>%
     dplyr::filter(.data$textbook,
@@ -155,6 +205,18 @@ make_reading_assignment <- function(reading_entry) {
   output
 }
 
+#' Make a Reading Assignment Page
+#'
+#' Make a page for the reading assignment for one class, from the semester
+#'   database.
+#'
+#' @param semester A semester object (a list returned by
+#'   `\link{load_semester_db}`)
+#'
+#' @return A character string with the Markdown content for the reading
+#'   assignment page.
+#'
+#' @export
 make_reading_page <- function(cal_id, semester){
   cal_id <- enquo(cal_id)
   reading <- semester$rd_items %>%

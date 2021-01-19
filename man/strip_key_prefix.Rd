@@ -34,7 +34,7 @@ A data frame with the prefixes stripped from the specified column.
 }
 \description{
 Keys in the master calendar's \code{cal_key} column have prefixes according to
-the type of calennder entry they represent (e.g., "\code{LAB_}" for labs,
+the type of calendar entry they represent (e.g., "\code{LAB_}" for labs,
 "\code{CLS_}" for classes/reading assignments, "\code{EXAM_}" for exams, etc.). This
 function strips those off.
 }

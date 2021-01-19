@@ -1,7 +1,7 @@
 #' Strip prefixes off keys.
 #'
 #' Keys in the master calendar's `cal_key` column have prefixes according to
-#' the type of calennder entry they represent (e.g., "`LAB_`" for labs,
+#' the type of calendar entry they represent (e.g., "`LAB_`" for labs,
 #' "`CLS_`" for classes/reading assignments, "`EXAM_`" for exams, etc.). This
 #' function strips those off.
 #'

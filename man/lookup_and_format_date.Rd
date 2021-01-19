@@ -8,7 +8,7 @@
 \alias{format_day_date_by_cal_id}
 \alias{format_day_date_by_class_num}
 \alias{format_day_date_by_key}
-\title{Look up and format a date}
+\title{Look Up and Format a Date}
 \usage{
 format_date_by_cal_id(calendar, id, abbr = TRUE)
 
@@ -41,7 +41,7 @@ format_day_date_by_key(
 )
 }
 \arguments{
-\item{calendar}{The calendar to use for lookin up the date.}
+\item{calendar}{The calendar to use for looking up the date.}
 
 \item{id}{The \code{cal_id} index to look up.}
 
@@ -58,6 +58,9 @@ format_day_date_by_key(
 \item{abbr_month}{Abbreviate the month.}
 
 \item{abbr_wday}{Abbreviate the day of the week.}
+}
+\value{
+A formatted date.
 }
 \description{
 Look up a date from the semester schedule and format it.

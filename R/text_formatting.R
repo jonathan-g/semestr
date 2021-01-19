@@ -2,9 +2,9 @@
 #'
 #' Append newlines to the end of strings.
 #'
-#' Take a character vectore, ensure that eack element ends in a newline,
+#' Take a character vector, ensure that each element ends in a newline,
 #' Optionally add an extra newline to the beginning of each element, add
-#' extra blank lines at the end, and optionally contatenate the elements
+#' extra blank lines at the end, and optionally concatenate the elements
 #' together into a single string, separated by an optional separator in
 #' addition to the new lines.
 #'
@@ -154,7 +154,7 @@ NULL
 #' @export
 format_month <- function(d, abbr = TRUE) {
   m <- lubridate::month(d, label = TRUE, abbr = abbr)
-  a <- as.character(a)
+  m <- as.character(m)
   if (abbr) m <- stringr::str_c(m, '.')
   m
 }
@@ -236,7 +236,7 @@ format_date_range <- function(dates, abbr = TRUE) {
 }
 
 
-#' @describeIn format_date_range Format a range of dates, including day of the week..
+#' @describeIn format_date_range Format a range of dates, including day of the week.
 #'
 #' @param abbr_month Abbreviate the months.
 #' @param abbr_wday Abbreviate the days of the week.
@@ -258,12 +258,14 @@ format_day_date_range<- function(dates, abbr_month = TRUE, abbr_wday = TRUE) {
   })
 }
 
-#' Look up and format a date
+#' Look Up and Format a Date
 #'
 #' Look up a date from the semester schedule and format it.
 #'
-#' @param calendar The calendar to use for lookin up the date.
+#' @param calendar The calendar to use for looking up the date.
 #' @param abbr Abbreviate the month.
+#'
+#' @return A formatted date.
 #'
 #' @name lookup_and_format_date
 NULL
@@ -346,6 +348,7 @@ format_day_date_by_cal_id <- function(calendar, id, abbr_month = TRUE,
 #' \dontrun{
 #' format_day_date_by_class_num(calendar, 11)
 #' }
+#' @export
 format_day_date_by_class_num <- function(calendar, num, abbr_month = TRUE,
                                          abbr_wday = TRUE) {
   d <- calendar %>% dplyr::filter(.data$cal_type == "class", .data$class_num == num)
@@ -393,20 +396,26 @@ sanitize_date_range <- function(dates) {
   list(start = start, stop = stop)
 }
 
+#' Look up and format a range of dates
+#'
+#' Look up dates from the semester schedule and format them as a range from
+#' earliest to latest.
+#'
+#' @param calendar The calendar to use for looking up the date.
+#' @param abbr Abbreviate the month.
+#' @param days Include day of week in formatted date.
+#' @param abbr_wday Abbreviate weekdays (if this is `NULL`, use `abbr`).
+#'
+#' @return A formatted date range
+#'
+#' @name lookup_and_format_date_range
+NULL
 
-#' FUNCTION_TITLE
+
+#' @describeIn lookup_and_format_date_range Look up dates by calendar ID.
 #'
-#' FUNCTION_DESCRIPTION
+#' @param cal_ids A list or vector of calendar IDs.
 #'
-#' @param calendar DESCRIPTION.
-#' @param cal_ids DESCRIPTION.
-#' @param abbr DESCRIPTION.
-#' @param days DESCRIPTION.
-#' @param abbr_wday DESCRIPTION.
-#'
-#' @return RETURN_DESCRIPTION
-#' @examples
-#' # ADD_EXAMPLES_HERE
 #' @export
 format_date_range_by_cal_id <- function(calendar, cal_ids, abbr = TRUE,
                                         days = FALSE, abbr_wday = NULL) {
@@ -424,20 +433,10 @@ format_date_range_by_cal_id <- function(calendar, cal_ids, abbr = TRUE,
   }
 }
 
-
-#' FUNCTION_TITLE
+#' @describeIn lookup_and_format_date_range Look up dates by class number.
 #'
-#' FUNCTION_DESCRIPTION
+#' @param nums A list or vector of class numbers.
 #'
-#' @param calendar DESCRIPTION.
-#' @param nums DESCRIPTION.
-#' @param abbr DESCRIPTION.
-#' @param days DESCRIPTION.
-#' @param abbr_wday DESCRIPTION.
-#'
-#' @return RETURN_DESCRIPTION
-#' @examples
-#' # ADD_EXAMPLES_HERE
 #' @export
 format_date_range_by_class_num <- function(calendar, nums, abbr = TRUE,
                                            days = FALSE, abbr_wday = NULL) {
@@ -456,20 +455,17 @@ format_date_range_by_class_num <- function(calendar, nums, abbr = TRUE,
 }
 
 
-#' FUNCTION_TITLE
+#' @describeIn lookup_and_format_date_range Look up dates by key
 #'
-#' FUNCTION_DESCRIPTION
+#' @param keys A list or vector of key indices to look up.
+#' @param type Which type of key is this ("class", "reading", "lab",
+#'   "homework", "exam", "holiday", "event", "due date", or "raw")
 #'
-#' @param calendar DESCRIPTION.
-#' @param keys DESCRIPTION.
-#' @param type DESCRIPTION.
-#' @param abbr DESCRIPTION.
-#' @param days DESCRIPTION.
-#' @param abbr_wday DESCRIPTION.
+#' @details If the key type is `"raw"`, then the fully formatted key should
+#'   be used (e.g., "CLS_INTRO" for a class key). Otherwise, the prefix will
+#'   be added automatically based on the type, so `key = "INTRO", type = "lab"`
+#'   will become `LAB_INTRO`.
 #'
-#' @return RETURN_DESCRIPTION
-#' @examples
-#' # ADD_EXAMPLES_HERE
 #' @export
 format_date_range_by_key <- function(calendar, keys,
                                      type = c("class", "reading", "lab",
@@ -498,19 +494,11 @@ format_date_range_by_key <- function(calendar, keys,
 }
 
 
-#' FUNCTION_TITLE
+
+#' @describeIn lookup_and_format_date_range Look up dates by event id.
 #'
-#' FUNCTION_DESCRIPTION
+#' @param nums A list or vector of event ids.
 #'
-#' @param calendar DESCRIPTION.
-#' @param event_ids DESCRIPTION.
-#' @param abbr DESCRIPTION.
-#' @param days DESCRIPTION.
-#' @param abbr_wday DESCRIPTION.
-#'
-#' @return RETURN_DESCRIPTION
-#' @examples
-#' # ADD_EXAMPLES_HERE
 #' @export
 format_date_range_by_event_id <- function(calendar, event_ids, abbr = TRUE,
                                           days = FALSE, abbr_wday = NULL) {
@@ -528,15 +516,21 @@ format_date_range_by_event_id <- function(calendar, event_ids, abbr = TRUE,
 }
 
 
-#' FUNCTION_TITLE
+#' Format a Range of Pages
 #'
-#' FUNCTION_DESCRIPTION
+#' Format a range of pages, accounting for both consecutive and non-consecutive
+#'   pages.
 #'
-#' @param pages DESCRIPTION.
+#' Figures out whether there is one page or more than one. Add the appropriate
+#'   prefix ("p." or "pp.").
 #'
-#' @return RETURN_DESCRIPTION
+#' @param pages A string describing the pages.
+#'
+#' @return Formatted page range.
 #' @examples
-#' # ADD_EXAMPLES_HERE
+#' format_page_range("99")
+#' format_page_range("72 and 103")
+#' format_page_range("50--75")
 #' @export
 format_page_range <- function(pages) {
   str <- stringr::str_trim(pages) %>% stringr::str_replace_all("^p+\\. *", "")
@@ -545,15 +539,22 @@ format_page_range <- function(pages) {
 }
 
 
-#' FUNCTION_TITLE
+#' Add a Period If Necessary
 #'
-#' FUNCTION_DESCRIPTION
+#' Add a period at the end of a sentence if necessary.
 #'
-#' @param str DESCRIPTION.
+#' Trim any whitespace at the end, and if the line does not end with
+#' punctuation, add a period.
 #'
-#' @return RETURN_DESCRIPTION
+#' @param str A string, ending in a sentence.
+#'
+#' @return A string ending in punctuation.
 #' @examples
-#' # ADD_EXAMPLES_HERE
+#' add_period("This needs a period")
+#' add_period("This does not need another period.")
+#' add_period("Fix spaces at the end   ")
+#' add_period("Shouldn't I omit a period if the sentence already ends with other punctuation?  ")
+#'
 #' @export
 add_period <- function(str) {
   stringr::str_trim(str, "right") %>%

@@ -49,15 +49,18 @@ get_md_extensions <- function() {
 }
 
 
-#' FUNCTION_TITLE
+#' Create default metadata
 #'
-#' FUNCTION_DESCRIPTION
+#' `default_semestr_metadata` creates a named list with metadata for the
+#'   structure of a syllabus.
 #'
-#' @param  DESCRIPTION.
+#' @return A named list whose elements are named vectors corresponding to the
+#'   type of syllabus entries, the data frame columns used to store data for
+#'   those events, prefixes used in calendar keys, and numeric bases used for
+#'   calendar ID entries, as well as modifiers for calendar IDs used to
+#'   indicate canceled and rescheduled classes.
 #'
-#' @return RETURN_DESCRIPTION
-#' @examples
-#' # ADD_EXAMPLES_HERE
+#' @export
 default_semestr_metadata <- function() {
   list(
     type2idx = c(class = "class", lab = "lab", homework = "homework",
@@ -86,8 +89,8 @@ default_semestr_metadata <- function() {
     rev_base = c("1000" = "class",  "2000" = "lab", "3000" = "homework",
                  "4000" = "due date", "5000" = "exam",  "6000" = "holiday",
                  "7000" = "event"),
-    mods = c(cancelled = 100,  make_up = 200),
-    rev_mods = c("100" = "cancelled", "200" = "make_up" )
+    mods = c(canceled = 100,  make_up = 200),
+    rev_mods = c("100" = "canceled", "200" = "make_up" )
   )
 }
 
@@ -133,6 +136,15 @@ get_semestr_tz <- function() {
   tz
 }
 
+
+strip_leading_slash <- function(s) {
+  stringr::str_replace_all(s, "^[/\\\\]+", "")
+}
+
+cat_path <- function(dir, base) {
+  file.path(dir, strip_leading_slash(base))
+}
+
 make_root_criteria <- function(crit, ... ) {
   dots <- list(...)
   crit <- rprojroot::as.root_criterion(crit)
@@ -141,6 +153,56 @@ make_root_criteria <- function(crit, ... ) {
   }
   crit
 }
+
+find_root_dir <- function(path = ".", crit = NULL, use_globals = FALSE) {
+  if (use_globals) {
+    if (exists("root_dir", envir = .globals)) {
+      if (dir.exists(.globals$root_dir)) {
+        return (.globals$root_dir)
+      }
+    }
+  }
+  if (is.null(crit)) {
+    crit <- make_root_criteria(".semestr.here",
+                               rprojroot::has_file_pattern("^.*\\.RProj$"),
+                               rprojroot::has_dir(".Rproj.user"),
+                               rprojroot::has_dir("content"))
+
+  } else {
+    crit <- rprojroot::as.root_criterion(crit)
+  }
+
+  root_dir <- rprojroot::find_root(crit, path)
+  root_dir
+}
+
+assignment_source_dirs <- function(root_dir = NULL, content_path = "content",
+                                   targets = NULL) {
+  if (is.null(root_dir)) {
+    root_dir <- find_root_dir(use_globals = TRUE)
+  }
+  content_path <- strip_leading_slash(content_path)
+
+  targets_avail <-  c("assignment", "homework_solutions", "lab_docs",
+                      "lab_solutions", "labs", "reading")
+
+  if (is.null(targets)) {
+    targets <- targets_avail
+  } else {
+    targets <- interaction(basename(targets), targets_avail)
+  }
+
+  targets <- file.path(root_dir, content_path, targets) %>%
+    purrr::keep(dir.exists)
+  targets
+}
+
+find_assignment_rmds <- function(root_dir = NULL, content_path = "content",
+                                 targets = NULL) {
+  list.files(assignment_source_dirs(root_dir, content_path, targets),
+             pattern = "\\.Rmd$", full.names = TRUE)
+}
+
 
 
 #' Extends is.na to report TRUE if the object has length zero.

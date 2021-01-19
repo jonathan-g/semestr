@@ -9,7 +9,7 @@
 #'
 #' @param db_file An SQLite database file.
 #' @param root_crit Criteria for `rprojroot` to use in finding the project
-#'   root directiry.
+#'   root directory.
 #' @param ignore_root Ignore the root criteria and work from the current
 #'   directory.
 #'
@@ -17,7 +17,7 @@
 #'   tibbles with details on reading assignments, homework assignments,
 #'   labs, exams, holidays, and other events.
 #'
-#'   THe list contains the following tibbles:
+#'   The list contains the following tibbles:
 #'   `calendar`, `due_dates`, `rd_items`, `rd_src`,
 #'   `class_topics`, `hw_asgt`, `hw_items`, `hw_sol`, `hw_topics`,
 #'   `lab_asgt`, `lab_items`, `lab_sol`, `exams`,

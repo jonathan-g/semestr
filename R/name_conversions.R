@@ -1,13 +1,34 @@
 
-#' FUNCTION_TITLE
+#' Metadata Name Conversion Functions
 #'
-#' FUNCTION_DESCRIPTION
+#' Convert between different types of metadata representing categories of
+#'   possible calendar entries.
 #'
-#' @param type DESCRIPTION.
+#' The kinds of metadata include
+#' * **type**: A type of calendar entry, in text. "class", "lab", "homework",
+#'   "due date", "exam", "holiday", and "event".
+#' * **idx**: Indices for entries in vectors and lists: "class", "homework",
+#'   "due_date", "exam", "holiday", "event", "notice".
+#' * **col**: A string used as prefix or suffix for a data frame column:
+#'   "class", "lab", "hw", "due", "exam", "holiday", "event", "notice".
+#' * **prefix**: A prefix used to distinguish calendar keys:
+#'   "CLS_", "LAB_", "HW_", "DUE_", "EXAM_", "VAC_", and "EVT_".
+#' * **base**: An integer value used to identify numeric calendar entries.
+#'   Multiples of 1000.
 #'
-#' @return RETURN_DESCRIPTION
-#' @examples
-#' # ADD_EXAMPLES_HERE
+#' @param type A type (character)
+#' @param idx An index (character)
+#' @param col A column prefix/suffix (character)
+#' @param prefix A calendar key prefix (character)
+#' @param base An integer base.#'
+#'
+#' @return A character or integer value corresponding to the request.
+#'
+#' @name name_conversions
+NULL
+
+#' @describeIn name_conversions Convert a type to a column name.
+#'
 #' @export
 type2col <- function(type) {
   metadata <- get_semestr_metadata()
@@ -20,15 +41,8 @@ type2col <- function(type) {
 }
 
 
-#' FUNCTION_TITLE
+#' @describeIn name_conversions Convert a type to an index.
 #'
-#' FUNCTION_DESCRIPTION
-#'
-#' @param type DESCRIPTION.
-#'
-#' @return RETURN_DESCRIPTION
-#' @examples
-#' # ADD_EXAMPLES_HERE
 #' @export
 type2idx <- function(type) {
   metadata <- get_semestr_metadata()
@@ -41,15 +55,8 @@ type2idx <- function(type) {
 }
 
 
-#' FUNCTION_TITLE
+#' @describeIn name_conversions Convert a type to a prefix.
 #'
-#' FUNCTION_DESCRIPTION
-#'
-#' @param type DESCRIPTION.
-#'
-#' @return RETURN_DESCRIPTION
-#' @examples
-#' # ADD_EXAMPLES_HERE
 #' @export
 type2prefix <- function(type) {
   metadata <- get_semestr_metadata()
@@ -62,15 +69,8 @@ type2prefix <- function(type) {
 }
 
 
-#' FUNCTION_TITLE
+#' @describeIn name_conversions Convert a type to a base.
 #'
-#' FUNCTION_DESCRIPTION
-#'
-#' @param type DESCRIPTION.
-#'
-#' @return RETURN_DESCRIPTION
-#' @examples
-#' # ADD_EXAMPLES_HERE
 #' @export
 type2base <- function(type) {
   metadata <- get_semestr_metadata()
@@ -82,16 +82,8 @@ type2base <- function(type) {
   metadata$bases[type]
 }
 
-
-#' FUNCTION_TITLE
+#' @describeIn name_conversions Convert an index to a column.
 #'
-#' FUNCTION_DESCRIPTION
-#'
-#' @param idx DESCRIPTION.
-#'
-#' @return RETURN_DESCRIPTION
-#' @examples
-#' # ADD_EXAMPLES_HERE
 #' @export
 idx2col <- function(idx) {
   metadata <- get_semestr_metadata()
@@ -104,15 +96,8 @@ idx2col <- function(idx) {
 }
 
 
-#' FUNCTION_TITLE
+#' @describeIn name_conversions Convert an index to a type.
 #'
-#' FUNCTION_DESCRIPTION
-#'
-#' @param idx DESCRIPTION.
-#'
-#' @return RETURN_DESCRIPTION
-#' @examples
-#' # ADD_EXAMPLES_HERE
 #' @export
 idx2type <- function(idx) {
   metadata <- get_semestr_metadata()
@@ -125,15 +110,8 @@ idx2type <- function(idx) {
 }
 
 
-#' FUNCTION_TITLE
+#' @describeIn name_conversions Convert a column to an index.
 #'
-#' FUNCTION_DESCRIPTION
-#'
-#' @param col DESCRIPTION.
-#'
-#' @return RETURN_DESCRIPTION
-#' @examples
-#' # ADD_EXAMPLES_HERE
 #' @export
 col2idx <- function(col) {
   metadata <- get_semestr_metadata()
@@ -146,15 +124,8 @@ col2idx <- function(col) {
 }
 
 
-#' FUNCTION_TITLE
+#' @describeIn name_conversions Convert a column to a type.
 #'
-#' FUNCTION_DESCRIPTION
-#'
-#' @param col DESCRIPTION.
-#'
-#' @return RETURN_DESCRIPTION
-#' @examples
-#' # ADD_EXAMPLES_HERE
 #' @export
 col2type <- function(col) {
   metadata <- get_semestr_metadata()
@@ -167,15 +138,8 @@ col2type <- function(col) {
 }
 
 
-#' FUNCTION_TITLE
+#' @describeIn name_conversions Convert a base to a type.
 #'
-#' FUNCTION_DESCRIPTION
-#'
-#' @param base DESCRIPTION.
-#'
-#' @return RETURN_DESCRIPTION
-#' @examples
-#' # ADD_EXAMPLES_HERE
 #' @export
 base2type <- function(base) {
   metadata <- get_semestr_metadata()
@@ -205,12 +169,12 @@ item_type <- function(cal_id) {
 
 #' Determine the modification type of calendar entry from its calendar id.
 #'
-#' Modifications include cancelled and re-scheduled (make-up) classes.
+#' Modifications include canceled and re-scheduled (make-up) classes.
 #'
 #' @param cal_id an integer calendar ID number.
 #'
 #' @return A string identifying the type of modification. Current values are
-#'   "cancelled" and "make-up"
+#'   "canceled" and "make-up"
 #'
 #' @export
 item_mod <- function(cal_id) {

@@ -10,7 +10,7 @@ load_semester_db(db_file, root_crit = NULL, ignore_root = FALSE)
 \item{db_file}{An SQLite database file.}
 
 \item{root_crit}{Criteria for \code{rprojroot} to use in finding the project
-root directiry.}
+root directory.}
 
 \item{ignore_root}{Ignore the root criteria and work from the current
 directory.}
@@ -20,7 +20,7 @@ A list containing a tibbles with the calendar for the semester and
 tibbles with details on reading assignments, homework assignments,
 labs, exams, holidays, and other events.
 
-THe list contains the following tibbles:
+The list contains the following tibbles:
 \code{calendar}, \code{due_dates}, \code{rd_items}, \code{rd_src},
 \code{class_topics}, \code{hw_asgt}, \code{hw_items}, \code{hw_sol}, \code{hw_topics},
 \code{lab_asgt}, \code{lab_items}, \code{lab_sol}, \code{exams},

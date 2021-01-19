@@ -33,9 +33,9 @@ A vector of character strings.
 Append newlines to the end of strings.
 }
 \details{
-Take a character vectore, ensure that eack element ends in a newline,
+Take a character vector, ensure that each element ends in a newline,
 Optionally add an extra newline to the beginning of each element, add
-extra blank lines at the end, and optionally contatenate the elements
+extra blank lines at the end, and optionally concatenate the elements
 together into a single string, separated by an optional separator in
 addition to the new lines.
 }

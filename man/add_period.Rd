@@ -2,19 +2,27 @@
 % Please edit documentation in R/text_formatting.R
 \name{add_period}
 \alias{add_period}
-\title{FUNCTION_TITLE}
+\title{Add a Period If Necessary}
 \usage{
 add_period(str)
 }
 \arguments{
-\item{str}{DESCRIPTION.}
+\item{str}{A string, ending in a sentence.}
 }
 \value{
-RETURN_DESCRIPTION
+A string ending in punctuation.
 }
 \description{
-FUNCTION_DESCRIPTION
+Add a period at the end of a sentence if necessary.
+}
+\details{
+Trim any whitespace at the end, and if the line does not end with
+punctuation, add a period.
 }
 \examples{
-# ADD_EXAMPLES_HERE
+add_period("This needs a period")
+add_period("This does not need another period.")
+add_period("Fix spaces at the end   ")
+add_period("Shouldn't I omit a period if the sentence already ends with other punctuation?  ")
+
 }
