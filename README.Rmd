@@ -1,7 +1,7 @@
 ---
 title: "semestr"
 author: "Jonathan Gilligan"
-date: "2019-12-20"
+date: "2021-01-18"
 output: github_document
 ---
 
@@ -25,37 +25,38 @@ knitr::opts_chunk$set(
 [![R-CMD-check](https://github.com/jonathan-g/semestr/workflows/R-CMD-check/badge.svg)](https://github.com/jonathan-g/semestr/actions)
 <!-- badges: end -->
 
-The goal of semestr is to ...
+The goal of semestr is to manage a syllabus for a university course.
+The package uses a SQL database with a schedule of reading, homework,
+and laboratory assignments and due dates, exams, holidays, etc.
+There are functions for generating content for a HUGO-based web site
+with the semester schedule and the assignents, as well as PDF copies
+of the assignments and a full syllabus.
+
+## Status
+
+This project is at a very early state of development and is not ready for 
+general use. Use this at your own risk.
 
 ## Installation
 
-You can install the released version of semestr from [CRAN](https://CRAN.R-project.org) with:
+This package has not been released to CRAN. You can install the 
+development version from GitHub using the `remotes` package:
 
 ``` r
-install.packages("semestr")
+remotes::install_github("jonathan-g/semestr")
 ```
 
 ## Example
 
-This is a basic example which shows you how to solve a common problem:
+To get started, you need a SQL database. I have not yet written 
+instructions or specifications for this database, but there is an example
+database `planning/ees_3310/example_semester_db.sqlite3` and you can 
+inspect it and figure out how it works.
 
-```{r example}
+
+```{r example, eval=FALSE}
 library(semestr)
-## basic example code
+semester <- load_semester_db("planning/example_semester_db.sqlite3")
+generate_assignments(semester)
+build_pdf_files(semester)
 ```
-
-What is special about using `README.Rmd` instead of just `README.md`? You can include R chunks like so:
-
-```{r cars}
-summary(cars)
-```
-
-You'll still need to render `README.Rmd` regularly, to keep `README.md` up-to-date.
-
-You can also embed plots, for example:
-
-```{r pressure, echo = FALSE}
-plot(pressure)
-```
-
-In that case, don't forget to commit and push the resulting figure files, so they display on GitHub!

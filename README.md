@@ -1,7 +1,7 @@
 semestr
 ================
 Jonathan Gilligan
-2019-12-20
+2021-01-18
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
@@ -18,46 +18,37 @@ MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.or
 [![R-CMD-check](https://github.com/jonathan-g/semestr/workflows/R-CMD-check/badge.svg)](https://github.com/jonathan-g/semestr/actions)
 <!-- badges: end -->
 
-The goal of semestr is to …
+The goal of semestr is to manage a syllabus for a university course. The
+package uses a SQL database with a schedule of reading, homework, and
+laboratory assignments and due dates, exams, holidays, etc. There are
+functions for generating content for a HUGO-based web site with the
+semester schedule and the assignents, as well as PDF copies of the
+assignments and a full syllabus.
+
+## Status
+
+This project is at a very early state of development and is not ready
+for general use. Use this at your own risk.
 
 ## Installation
 
-You can install the released version of semestr from
-[CRAN](https://CRAN.R-project.org) with:
+This package has not been released to CRAN. You can install the
+development version from GitHub using the `remotes` package:
 
 ``` r
-install.packages("semestr")
+remotes::install_github("jonathan-g/semestr")
 ```
 
 ## Example
 
-This is a basic example which shows you how to solve a common problem:
+To get started, you need a SQL database. I have not yet written
+instructions or specifications for this database, but there is an
+example database `planning/ees_3310/example_semester_db.sqlite3` and you
+can inspect it and figure out how it works.
 
 ``` r
 library(semestr)
-## basic example code
+semester <- load_semester_db("planning/example_semester_db.sqlite3")
+generate_assignments(semester)
+build_pdf_files(semester)
 ```
-
-What is special about using `README.Rmd` instead of just `README.md`?
-You can include R chunks like so:
-
-``` r
-summary(cars)
-#>      speed           dist       
-#>  Min.   : 4.0   Min.   :  2.00  
-#>  1st Qu.:12.0   1st Qu.: 26.00  
-#>  Median :15.0   Median : 36.00  
-#>  Mean   :15.4   Mean   : 42.98  
-#>  3rd Qu.:19.0   3rd Qu.: 56.00  
-#>  Max.   :25.0   Max.   :120.00
-```
-
-You’ll still need to render `README.Rmd` regularly, to keep `README.md`
-up-to-date.
-
-You can also embed plots, for example:
-
-<img src="man/figures/README-pressure-1.png" width="100%" />
-
-In that case, don’t forget to commit and push the resulting figure
-files, so they display on GitHub!
