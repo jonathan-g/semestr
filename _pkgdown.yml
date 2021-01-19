@@ -1,1 +1,73 @@
 destination: docs
+home:
+  title: Build a syllabus from a database
+author:
+  Jonathan Gilligan:
+    href: https://www.jonathangilligan.org/
+template:
+  params:
+    bootswatch: cerulean
+  opengraph:
+    image:
+      src: man/figures/semestr.png
+    twitter:
+      creator: "@jg_environ"
+      card: summary_large_image
+development:
+  mode: auto
+reference:
+- title: Build
+  desc: Build a syllabus
+- contents:
+  - load_semester_db
+  - generate_assignments
+  - build_pdf_files
+- title: Maintenance
+  desc: Maintain a syllabus.
+- contents:
+  - update_latex_styles
+  - update_pdfs
+  - update_pdf_digests
+  - prune_pdf_digests
+  - clean_assignment_files
+- title: Text formatting
+  desc: Text formatting functions
+- contents:
+  - starts_with("format_")
+  - add_period
+  - append_newline_if_needed
+  - concat_with_nl
+  - date_parts
+  - escape_dollar
+  - lookup_and_format_date
+  - lookup_and_format_date_range
+  - make_reading_page
+  - sanitize_date_range
+- title: Data manipulation
+  desc: Access and modify semester data
+- contents:
+  - starts_with("col_")
+  - starts_with("global_")
+  - default_semestr_metadata
+  - starts_with("get_")
+  - base2type
+  - starts_with("col2")
+  - starts_with("type2")
+  - pull_env
+  - item_mod
+  - item_type
+  - starts_with("add_key")
+  - name_conversions
+- title: File manipulation
+  desc: Manage files
+- contents:
+  - get_pdf_url
+  - grab_header
+  - pdf_filename
+  - pdf_digest_if_exists
+  - update_pdf_dir
+  - update_pdf_file_digests
+- title: Helper functions
+  desc: Miscellaneous helper functions
+- contents:
+  - everything()

@@ -1,10 +1,10 @@
-.Rproj.user
+.Rproj.user/
 .Rhistory
 .RData
 *.Rproj
 cache/
-/content/**/*.Rmd
-/static/slides/**/*
+/content/
+/static/
 /scratch/
-/data/lessons.yml
-/planning/ees_3310/*_semester.png
+/data/
+/planning/

@@ -11,6 +11,10 @@
 ^planning/.*$
 ^data/.*$
 ^content/.*$
+^public/.*$
 ^scratch/.*$
 ^static/.*$
 ^\.gitlab-ci\.yml$
+^\_pkgdown\.yml$
+^.RData$
+^.Rhistory$
