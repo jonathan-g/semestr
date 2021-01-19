@@ -1,9 +1,33 @@
-image: jgilligan/jg-verse
+image: jgilligan/jg-verse:4.0.3
+
+stages:
+  - test
+  - document
 
 test:
+  stage: test
   script:
     - R -e "install.packages(c('janitor'))"
     - R -e "sessionInfo()"
     - R CMD build . --build-vignettes --no-manual
     - PKG_FILE_NAME=$(ls -1t *.tar.gz | head -n 1)
     - R CMD check "${PKG_FILE_NAME}" --no-manual --as-cran
+
+pages:
+  stage: document
+  dependencies:
+    - test
+  script:
+    - Rscript -e 'pgkdown::build_site(preview = FALSE, new_process = TRUE, devel = FALSE, install = TRUE)
+  artifacts:
+    paths:
+      - public
+    expire_in: 30 days
+  only:
+    - master
+  artifacts:
+    paths:
+      - doc
+    expire_in: 30 days
+  only:
+    - main
