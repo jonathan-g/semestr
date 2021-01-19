@@ -18,7 +18,7 @@ pages:
   dependencies:
     - test
   script:
-    - Rscript -e 'pgkdown::build_site(preview = FALSE, new_process = TRUE, devel = FALSE, install = TRUE)'
+    - Rscript -e 'pkgdown::build_site(preview = FALSE, new_process = TRUE, devel = FALSE, install = TRUE)'
   artifacts:
     paths:
       - public
