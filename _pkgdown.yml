@@ -9,7 +9,7 @@ template:
     bootswatch: cerulean
   opengraph:
     image:
-      src: man/figures/semestr.png
+      src: man/figures/logo.png
     twitter:
       creator: "@jg_environ"
       card: summary
