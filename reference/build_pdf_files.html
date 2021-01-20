@@ -132,7 +132,8 @@
   <span class='va'>semester</span>,
   content_path <span class='op'>=</span> <span class='st'>"content"</span>,
   static_path <span class='op'>=</span> <span class='st'>"static"</span>,
-  force_dest <span class='op'>=</span> <span class='cn'>TRUE</span>
+  force_dest <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  output_options <span class='op'>=</span> <span class='cn'>NULL</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -153,6 +154,11 @@
     <tr>
       <th>force_dest</th>
       <td><p>Create any missing directories.</p></td>
+    </tr>
+    <tr>
+      <th>output_options</th>
+      <td><p>A list of extra output options
+for <code>\link{pdf_document}</code>.</p></td>
     </tr>
     </table>
 

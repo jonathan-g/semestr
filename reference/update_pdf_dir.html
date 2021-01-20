@@ -135,7 +135,9 @@
   content_path <span class='op'>=</span> <span class='st'>"content"</span>,
   quiet <span class='op'>=</span> <span class='cn'>TRUE</span>,
   force <span class='op'>=</span> <span class='cn'>FALSE</span>,
-  ignore <span class='op'>=</span> <span class='cn'>NA</span>
+  force_dest <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  ignore <span class='op'>=</span> <span class='cn'>NA</span>,
+  output_options <span class='op'>=</span> <span class='cn'>NULL</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -171,8 +173,17 @@ be rebuilt.</p></td>
       <td><p>Force rebuilding source files that are not out of date.</p></td>
     </tr>
     <tr>
+      <th>force_dest</th>
+      <td><p>Create missing destination directories.</p></td>
+    </tr>
+    <tr>
       <th>ignore</th>
       <td><p>A regular expression pattern for files to ignore.</p></td>
+    </tr>
+    <tr>
+      <th>output_options</th>
+      <td><p>A list of extra output options
+for <code>\link{pdf_document}</code>.</p></td>
     </tr>
     </table>
 

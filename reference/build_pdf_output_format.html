@@ -128,7 +128,7 @@
     <p>Build an RMarkdown output format for PDF files.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>build_pdf_output_format</span><span class='op'>(</span><span class='va'>header</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>build_pdf_output_format</span><span class='op'>(</span><span class='va'>header</span>, output_options <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -136,6 +136,11 @@
     <tr>
       <th>header</th>
       <td><p>Metadata from the RMarkdown file.</p></td>
+    </tr>
+    <tr>
+      <th>output_options</th>
+      <td><p>A list of extra output options
+for <code>\link{pdf_document}</code>.</p></td>
     </tr>
     </table>
 
