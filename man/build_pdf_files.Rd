@@ -8,7 +8,8 @@ build_pdf_files(
   semester,
   content_path = "content",
   static_path = "static",
-  force_dest = TRUE
+  force_dest = TRUE,
+  output_options = NULL
 )
 }
 \arguments{
@@ -19,6 +20,9 @@ build_pdf_files(
 \item{static_path}{Relative path to the HUGO static directory.}
 
 \item{force_dest}{Create any missing directories.}
+
+\item{output_options}{A list of extra output options
+for \verb{\link{pdf_document}}.}
 }
 \value{
 A vector of paths to the resulting PDF files.

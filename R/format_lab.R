@@ -197,6 +197,9 @@ make_lab_assignment_page <- function(key, semester, use_solutions = FALSE) {
   lab_num <- assignment$lab_num
   lab_slug <- make_lab_slug(assignment)
   pub_date <- semester$semester_dates$pub_date
+  pres_date <- assignment$pres_date
+  report_date <- assignment$report_date
+  asgt_url <- assignment$assignment_url
 
   message("Making lab page for Lab #", lab_num, " (index = ", lab_idx,
           ", slug = ", lab_slug, ")")
@@ -204,15 +207,15 @@ make_lab_assignment_page <- function(key, semester, use_solutions = FALSE) {
   delim <- "---"
 
   header <- list(
-    title = assignment$title,
-    lab_date = lubridate::as_date(assignment$date) %>% as.character(),
-    presentation_date = lubridate::as_date(assignment$pres_date) %>% as.character(),
-    report_due_date = as.character(assignment$report_date),
-    lab_number = assignment$lab_num,
-    github_classroom_assignment_url = assignment$assignment_url,
-    pubdate = as.character(semester$semester_dates$pub_date),
-    date = lubridate::as_date(assignment$date) %>% as.character(),
-    slug = sprintf("lab_%02d_assignment", assignment$lab_num),
+    title = lab_title,
+    lab_date = as.character(lab_date),
+    presentation_date = as.character(pres_date),
+    report_due_date = as.character(report_date),
+    lab_number = lab_num,
+    github_classroom_assignment_url = asgt_url,
+    pubdate = as.character(pub_date),
+    date = as.character(lab_date),
+    slug = lab_slug,
     output = list("blogdown::html_page" =
                     list(md_extensions = get_md_extensions()))
   ) %>% purrr::discard(is_mt_or_na) %>%

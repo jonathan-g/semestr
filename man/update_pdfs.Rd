@@ -10,7 +10,9 @@ update_pdfs(
   static_path = "static",
   content_path = "content",
   quiet = FALSE,
-  force = FALSE
+  force = FALSE,
+  force_dest = TRUE,
+  output_options = NULL
 )
 }
 \arguments{
@@ -29,6 +31,11 @@ function emits an informational message about how many files will
 be rebuilt.}
 
 \item{force}{Force rebuilding source files that are not out of date.}
+
+\item{force_dest}{Create missing destination directories.}
+
+\item{output_options}{A list of extra output options
+for \verb{\link{pdf_document}}.}
 }
 \value{
 This function does not return anything

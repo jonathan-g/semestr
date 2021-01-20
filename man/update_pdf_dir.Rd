@@ -11,7 +11,9 @@ update_pdf_dir(
   content_path = "content",
   quiet = TRUE,
   force = FALSE,
-  ignore = NA
+  force_dest = FALSE,
+  ignore = NA,
+  output_options = NULL
 )
 }
 \arguments{
@@ -32,7 +34,12 @@ be rebuilt.}
 
 \item{force}{Force rebuilding source files that are not out of date.}
 
+\item{force_dest}{Create missing destination directories.}
+
 \item{ignore}{A regular expression pattern for files to ignore.}
+
+\item{output_options}{A list of extra output options
+for \verb{\link{pdf_document}}.}
 }
 \value{
 A list of out-of-date files to rebuild.

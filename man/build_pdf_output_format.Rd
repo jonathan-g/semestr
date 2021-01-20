@@ -4,10 +4,13 @@
 \alias{build_pdf_output_format}
 \title{Build an RMarkdown output format for PDF files.}
 \usage{
-build_pdf_output_format(header)
+build_pdf_output_format(header, output_options = NULL)
 }
 \arguments{
 \item{header}{Metadata from the RMarkdown file.}
+
+\item{output_options}{A list of extra output options
+for \verb{\link{pdf_document}}.}
 }
 \value{
 An RMarkdown output format object.

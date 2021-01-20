@@ -1,18 +1,33 @@
+listdiff <- function(x, y) {
+  x[setdiff(names(x), names(y))]
+}
+
+merge_lists <- function(x, y) {
+  c(x, listdiff(y, x))
+}
+
 #' Build an RMarkdown output format for PDF files.
 #'
 #' Build an RMarkdown output format for PDF files.
 #'
 #' @param header Metadata from the RMarkdown file.
+#' @param output_options A list of extra output options
+#'   for `\link{pdf_document}`.
 #'
 #' @return An RMarkdown output format object.
 #'
 #' @export
-build_pdf_output_format <- function(header) {
-  if (tibble::has_name(header, "output") && tibble::has_name(header$output, "pdf_document")) {
-    output_options <- header$output$pdf_document
-  } else {
+build_pdf_output_format <- function(header, output_options = NULL) {
+  if (is.null(output_options))
     output_options <- list()
+  doc_output_options <- list()
+  if (tibble::has_name(header, "output") &&
+      tibble::has_name(header$output, "pdf_document")) {
+    doc_output_options <- header$output$pdf_document
+  } else if (tibble::has_name(header, "output.blogdown::html_page")) {
+    doc_output_options <- header[["output.blogdown::html_page"]]
   }
+  output_options <- merge_lists(output_options, doc_output_options)
   if (! tibble::has_name(output_options, "toc"))
     output_options$toc <- FALSE
   if (! tibble::has_name(output_options, "md_extensions"))
@@ -65,12 +80,14 @@ pdf_filename <- function(pdf_url, root_dir, static_path = "static",
 #' @param root_dir The root directory of the HUGO project.
 #' @param static_path Relative path to the HUGO static directory.
 #' @param force_dest Create any missing directories.
+#' @param output_options A list of extra output options
+#'   for `\link{pdf_document}`.
 #'
 #' @return The path to the resulting PDF file.
 #'
 #' @export
 build_pdf_from_rmd <- function(source_file, root_dir, static_path = "static",
-                               force_dest = FALSE) {
+                               force_dest = FALSE, output_options = NULL) {
   # message("building file ", source_file)
   hdr <- grab_header(source_file)
   if (tibble::has_name(hdr, "pdf_url")) {
@@ -83,7 +100,7 @@ build_pdf_from_rmd <- function(source_file, root_dir, static_path = "static",
     # message("No pdf output declared")
     return(NA_character_)
   }
-  pdf_output <- build_pdf_output_format(hdr)
+  pdf_output <- build_pdf_output_format(hdr, output_options)
 
   message("building ", pdf_dest, " from ", basename(source_file))
 
@@ -100,12 +117,15 @@ build_pdf_from_rmd <- function(source_file, root_dir, static_path = "static",
 #' @param content_path A relative path to the HUGO content directory.
 #' @param static_path Relative path to the HUGO static directory.
 #' @param force_dest Create any missing directories.
+#' @param output_options A list of extra output options
+#'   for `\link{pdf_document}`.
 #'
 #' @return A vector of paths to the resulting PDF files.
 #'
 #' @export
 build_pdf_files <- function(semester, content_path = "content",
-                            static_path = "static", force_dest = TRUE) {
+                            static_path = "static", force_dest = TRUE,
+                            output_options = NULL) {
   root_dir <- semester$root_dir
   if (! dir.exists(content_path)) {
     content_path = cat_path(root_dir, content_path)
@@ -116,7 +136,9 @@ build_pdf_files <- function(semester, content_path = "content",
                       full.names = TRUE)
   dest_paths <- character(0)
   for (f in files) {
-    dest <- build_pdf_from_rmd(f, root_dir, static_path, force_dest)
+    dest <- build_pdf_from_rmd(f, root_dir, static_path, force_dest,
+                               output_options)
+    update_pdf_file_digests(f, root_dir, static_path, content_path, FALSE)
     dest_paths <- c(dest_paths, dest)
   }
 

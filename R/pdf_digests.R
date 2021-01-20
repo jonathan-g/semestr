@@ -223,6 +223,9 @@ pdfs_to_rebuild <- function(files, root_dir, static_path = "static",
 #' function emits an informational message about how many files will
 #' be rebuilt.
 #' @param force Force rebuilding source files that are not out of date.
+#' @param force_dest Create missing destination directories.
+#' @param output_options A list of extra output options
+#'   for `\link{pdf_document}`.
 #'
 #' @return This function does not return anything
 #'
@@ -233,7 +236,8 @@ pdfs_to_rebuild <- function(files, root_dir, static_path = "static",
 #' @export
 update_pdfs <-  function(dir = NULL, root_dir = NULL,
                          static_path = "static", content_path = "content",
-                         quiet = FALSE, force = FALSE) {
+                         quiet = FALSE, force = FALSE, force_dest = TRUE,
+                         output_options = NULL) {
   if (is.null(root_dir)) {
     root_dir <- find_root_dir(dir, use_globals = TRUE)
   }
@@ -269,7 +273,8 @@ update_pdfs <-  function(dir = NULL, root_dir = NULL,
   }
 
   for (f in to_build) {
-    build_pdf_from_rmd(f, root_dir, static_path, force_dest = TRUE)
+    build_pdf_from_rmd(f, root_dir, static_path, force_dest = force_dest,
+                       output_options = output_options)
     update_pdf_file_digests(f, root_dir, static_path, content_path,
                             partial = TRUE)
   }
@@ -294,14 +299,17 @@ update_pdfs <-  function(dir = NULL, root_dir = NULL,
 #' function emits an informational message about how many files will
 #' be rebuilt.
 #' @param force Force rebuilding source files that are not out of date.
+#' @param force_dest Create missing destination directories.
 #' @param ignore A regular expression pattern for files to ignore.
+#' @param output_options A list of extra output options
+#'   for `\link{pdf_document}`.
 #'
 #' @return A list of out-of-date files to rebuild.
 #'
 #' @export
 update_pdf_dir <- function(dir = '.', root_dir = NULL, static_path = "static",
                        content_path = "content", quiet = TRUE, force = FALSE,
-                       ignore = NA) {
+                       force_dest = FALSE, ignore = NA, output_options = NULL) {
   if (is.null(root_dir)) {
     start <- "."
     if (dir.exists(dir)) {
@@ -343,7 +351,8 @@ update_pdf_dir <- function(dir = '.', root_dir = NULL, static_path = "static",
   }
 
   for (f in to_build) {
-    build_pdf_from_rmd(f, root_dir, static_path, force_dest = TRUE)
+    build_pdf_from_rmd(f, root_dir, static_path, force_dest = force_dest,
+                       output_options = output_options)
   }
 
   # message("On exit stack: ", deparse(sys.on.exit()))

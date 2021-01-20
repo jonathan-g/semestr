@@ -8,7 +8,8 @@ build_pdf_from_rmd(
   source_file,
   root_dir,
   static_path = "static",
-  force_dest = FALSE
+  force_dest = FALSE,
+  output_options = NULL
 )
 }
 \arguments{
@@ -19,6 +20,9 @@ build_pdf_from_rmd(
 \item{static_path}{Relative path to the HUGO static directory.}
 
 \item{force_dest}{Create any missing directories.}
+
+\item{output_options}{A list of extra output options
+for \verb{\link{pdf_document}}.}
 }
 \value{
 The path to the resulting PDF file.
