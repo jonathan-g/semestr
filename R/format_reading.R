@@ -92,7 +92,7 @@ format_handout_reading_item <- function(reading_item, online_location = getOptio
 #' @export
 format_handout_reading <- function(reading_list) {
   if (nrow(reading_list) > 0) {
-    output <- reading_list %>% purrr::transpose() %>%
+    output <- reading_list %>% purrr::pmap(list) %>%
       purrr::map_chr(format_handout_reading_item)
   } else {
     output <- NULL

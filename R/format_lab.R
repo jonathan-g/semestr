@@ -100,7 +100,7 @@ make_lab_doc <- function(lab, semester) {
     file.path("/lab_docs", .)
   lab_doc_page <- make_lab_doc_page(lab, semester)
   cat(lab_doc_page, file = doc_path)
-  c(title = lab$document_title, key = lab$lab_grp_key, path = doc_path, url = doc_url)
+  c(title = lab$lab_document_title, key = lab$lab_grp_key, path = doc_path, url = doc_url)
 }
 
 make_lab_docs <- function(lab_key, semester) {
@@ -128,22 +128,22 @@ make_lab_assignment_content <- function(key, semester, use_solutions = FALSE) {
     dplyr::filter(.data$lab_grp_key == key) %>%
     # merge_dates(semester) %>%
     dplyr::arrange(.data$lab_item_id)
-  output <- cat_nl(output, "## Reading", TRUE)
+  output <- cat_nl(output, "## Reading", start_par = TRUE)
   if (nrow(docs) > 0) {
     output <- cat_nl(output,
                      stringr::str_c("**Before you come to lab**, please read the following document",
                                     ifelse(nrow(docs) > 1, "s", ""), ":"),
-                     extra_lines = 1)
+                     start_par = TRUE, extra_lines = 1)
     doc_links <- make_lab_docs(key, semester)
     if (is.list(doc_links)) {
-      doc_links <- purrr::transpose(doc_links)
+      doc_links <- purrr::pmap(doc_links, list)
     } else {
       doc_links <- as_list(doc_links)
     }
     doc_items <- stringr::str_c("[", doc_links$title, "](",
                                 doc_links$url, '){target="_blank"}') %>%
       itemize()
-    output <- cat_nl(output, doc_items)
+    output <- cat_nl(output, doc_items,  start_par = TRUE)
   } else {
     output <- cat_nl(output, "No reading has been posted yet for this lab.")
   }
@@ -154,8 +154,7 @@ make_lab_assignment_content <- function(key, semester, use_solutions = FALSE) {
                      stringr::str_c("Accept the assignment at GitHub Classroom at <",
                                     url, ">."))
   } else {
-    output <- cat_nl(output, "## Assignment",
-                     "The GitHub Classroom has not been posted yet.",
+    output <- cat_nl(output, "The GitHub Classroom has not been posted yet.",
                      start_par = TRUE)
   }
 
@@ -173,10 +172,10 @@ make_lab_assignment_content <- function(key, semester, use_solutions = FALSE) {
       output <- cat_nl(output, "## Solutions",
                        "**Solutions for Lab Exercises**:",
                        start_par = TRUE)
-      sol_links <- purrr::map(purrr::transpose(solutions),
+      sol_links <- purrr::map(purrr::pmap(solutions, list),
                               ~make_lab_solution(.x, semester))
       if (is.list(sol_links)) {
-        sol_links <- purrr::transpose(sol_links)
+        sol_links <- purrr::pmap(sol_links, list)
       }
       output <- cat_nl(output,
                        stringr::str_c("[", sol_links$sol_title, "](",
@@ -193,7 +192,7 @@ make_lab_assignment_page <- function(key, semester, use_solutions = FALSE) {
   assignment <- get_lab_assignment(key, semester)
 
   lab_date <- assignment$date
-  lab_title <- assignment$title
+  lab_title <- assignment$lab_title
   lab_idx <- assignment$lab_id
   lab_num <- assignment$lab_num
   lab_slug <- make_lab_slug(assignment)
@@ -217,7 +216,8 @@ make_lab_assignment_page <- function(key, semester, use_solutions = FALSE) {
     output = list("blogdown::html_page" =
                     list(md_extensions = get_md_extensions()))
   ) %>% purrr::discard(is_mt_or_na) %>%
-    yaml::as.yaml() %>% stringr::str_trim("right") %>%
+    yaml::as.yaml(.) %>%
+    stringr::str_trim("right") %>%
     stringr::str_c(delim, ., delim, sep = "\n")
 
   context <- make_context(assignment, "lab", semester)

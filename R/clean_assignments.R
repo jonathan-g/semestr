@@ -25,7 +25,7 @@ clean_assignment_files <- function(verbose = TRUE, dry_run = TRUE) {
         if (verbose) {
           message("deleting ", stringr::str_c(files, collapse = ", "))
         }
-        file.remove("files")
+        file.remove(files)
       }
     } else {
       if (verbose) {

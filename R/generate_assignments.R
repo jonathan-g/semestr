@@ -366,6 +366,7 @@ generate_assignments <- function(semester) {
     dplyr::select(date, title = "topic", reading = "page_reading",
                   assignment = "page_hw", lecture = "page_lecture",
                   lab = "page_lab", "topic") %>%
+    dplyr::filter(! is.na(.data$date)) %>%
     dplyr::arrange(.data$date) %>%
     dplyr::mutate(date = as.character(.data$date)) %>%
     purrr::pmap(list) %>%

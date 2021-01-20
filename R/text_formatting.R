@@ -35,7 +35,8 @@
 #' @export
 append_newline_if_needed <- function(txt, start_par = FALSE, extra_lines = 0,
                                      collapse = NULL) {
-  txt <- stringr::str_trim(txt)
+  # txt <- stringr::str_trim(txt)
+  txt <- stringr::str_trim(txt, "right")
   txt[stringr::str_detect(txt, '[^\n]$')] <- stringr::str_c(txt, '\n')
   if (length(start_par) > 1) {
     assertthat::assert_that(length(txt) == length(start_par),
