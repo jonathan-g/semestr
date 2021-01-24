@@ -238,7 +238,8 @@ generate_lab_assignment <- function(key, semester, use_solutions = FALSE) {
 
   fname <- sprintf("lab_%02d_assignment.Rmd", assignment$lab_num)
   lab_path <- fname %>% file.path(semester$root_dir, "content", "labs", .)
-  lab_url <- fname %>% stringr::str_replace("\\.Rmd$", "")
+  # lab_url <- fname %>% stringr::str_replace("\\.Rmd$", "")
+  lab_url <- fname %>% stringr::str_replace("_assignment\\.Rmd$", "")
   message("Making lab assignment page for lab # ", lab_num,
           " (index = ", assignment$lab_id,
           ", filename = ", fname, ")")
