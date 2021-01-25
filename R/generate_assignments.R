@@ -1,3 +1,14 @@
+
+#' FUNCTION_TITLE (TODO)
+#'
+#' FUNCTION_DESCRIPTION  (TODO)
+#'
+#' @param semester DESCRIPTION  (TODO).
+#'
+#' @return RETURN_DESCRIPTION  (TODO)
+#' @examples
+#' # ADD_EXAMPLES_HERE  (TODO)
+#' @export
 init_schedule <- function(semester) {
   schedule <- semester$calendar %>%
     dplyr::filter(.data$cal_type %in% c("class", "exam", "homework", "lab",
@@ -10,6 +21,18 @@ init_schedule <- function(semester) {
   invisible(schedule)
 }
 
+
+#' FUNCTION_TITLE  (TODO)
+#'
+#' FUNCTION_DESCRIPTION  (TODO)
+#'
+#' @param schedule DESCRIPTION  (TODO).
+#' @param semester DESCRIPTION  (TODO).
+#'
+#' @return RETURN_DESCRIPTION  (TODO)
+#' @examples
+#' # ADD_EXAMPLES_HERE  (TODO)
+#' @export
 schedule_strip_finals <- function(schedule, semester) {
   final_exams <- schedule %>%
     dplyr::filter(.data$key %in%
@@ -324,6 +347,33 @@ build_assignments <- function(schedule, semester) {
   invisible(schedule)
 }
 
+#' Prepare schedule from database
+#'
+#' @param semester A semester object returned from
+#' \code{\link{load_semester_db}}.
+#'
+#' @return A tibble containing a schedule
+#' @examples
+#' \dontrun{
+#' sem <- load_semester_db("foo.sqlite3")
+#' sched <- prepare_schedule(sem)
+#' }
+#' @export
+prepare_schedule <- function(semester) {
+  schedule <- init_schedule(semester)
+  tmp <- schedule_strip_finals(schedule, semester)
+  schedule <- tmp$schedule
+  final_exams <- tmp$final_exams
+
+  tmp <- schedule %>% schedule_add_homework(semester)
+  schedule <- tmp$schedule
+
+  tmp <- schedule_widen(schedule, final_exams, semester, TRUE)
+  schedule <- tmp$schedule
+
+  set_schedule_globals(schedule, semester)
+  invisible(schedule)
+}
 
 #' Generate assignments from database
 #'

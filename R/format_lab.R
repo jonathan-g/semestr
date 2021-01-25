@@ -147,7 +147,7 @@ make_lab_assignment_content <- function(key, semester, use_solutions = FALSE) {
   } else {
     output <- cat_nl(output, "No reading has been posted yet for this lab.")
   }
-  url <- assignment$assignment_url
+  url <- assignment$lab_assignment_url
   output <- cat_nl(output, "## Assignment", start_par = TRUE, extra_lines = 1)
   if (! is_mt_or_na(url)) {
     output <- cat_nl(output,
@@ -199,7 +199,7 @@ make_lab_assignment_page <- function(key, semester, use_solutions = FALSE) {
   pub_date <- semester$semester_dates$pub_date
   pres_date <- assignment$pres_date
   report_date <- assignment$report_date
-  asgt_url <- assignment$assignment_url
+  asgt_url <- assignment$lab_assignment_url
 
   message("Making lab page for Lab #", lab_num, " (index = ", lab_idx,
           ", slug = ", lab_slug, ")")
