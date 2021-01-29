@@ -186,7 +186,7 @@ pdfs_to_rebuild <- function(files, root_dir, static_path = "static",
 
 
 
-  df <- get_current_pdf_digests(files)
+  df <- get_current_pdf_digests(files, root_dir)
 
   df$rebuild = pdf_needs_rebuild(df$cur_digest, df$cur_dest_digest,
                              df$digest, df$dest_digest)
@@ -386,10 +386,11 @@ update_pdf_dir <- function(dir = '.', root_dir = NULL, static_path = "static",
 #' @seealso \code{\link{pdfs_to_rebuild}()},
 #' \code{\link{pdf_digest_if_exists}()}, \code{\link{digests}}.
 #' @keywords internal
-get_current_pdf_digests <- function(files, root_dir = NULL, static_path = "static",
+get_current_pdf_digests <- function(files, root_dir = NULL,
+                                    static_path = "static",
                                     content_path = "content") {
   if (is.null(root_dir)) {
-    root_dir <- find_root_dir(dir, use_globals = TRUE)
+    root_dir <- find_root_dir(".", use_globals = TRUE)
   }
   root_dir <- root_dir %>% normalizePath(winslash = "/")
 
