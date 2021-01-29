@@ -103,6 +103,9 @@
     <loc>https://jonathan-g.github.io/semestr/reference/grab_header.html</loc>
   </url>
   <url>
+    <loc>https://jonathan-g.github.io/semestr/reference/init_schedule.html</loc>
+  </url>
+  <url>
     <loc>https://jonathan-g.github.io/semestr/reference/is_mt_or_na.html</loc>
   </url>
   <url>
@@ -148,6 +151,9 @@
     <loc>https://jonathan-g.github.io/semestr/reference/pipe.html</loc>
   </url>
   <url>
+    <loc>https://jonathan-g.github.io/semestr/reference/prepare_schedule.html</loc>
+  </url>
+  <url>
     <loc>https://jonathan-g.github.io/semestr/reference/prune_pdf_digests.html</loc>
   </url>
   <url>
@@ -155,6 +161,9 @@
   </url>
   <url>
     <loc>https://jonathan-g.github.io/semestr/reference/sanitize_date_range.html</loc>
+  </url>
+  <url>
+    <loc>https://jonathan-g.github.io/semestr/reference/schedule_strip_finals.html</loc>
   </url>
   <url>
     <loc>https://jonathan-g.github.io/semestr/reference/semestr-package.html</loc>
