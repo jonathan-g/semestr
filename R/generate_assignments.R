@@ -283,7 +283,10 @@ build_reading_assignment <- function(schedule, date, cal_entry, semester) {
 }
 
 build_hw_assignment <- function(schedule, date, cal_entry, semester) {
-  if (! is.na(cal_entry$id_hw)) {
+  if (! tibble::has_name(schedule, "page_hw")) {
+    schedule <- dplyr::mutate(schedule, page_hw = NA_character_)
+  }
+  if (tibble::has_name(cal_entry, "id_hw") && ! is.na(cal_entry$id_hw)) {
     message("Making homework page for ", cal_entry$key_hw)
     links <- generate_hw_assignment(cal_entry$key_hw, semester, TRUE)
     schedule <- schedule %>%
@@ -294,7 +297,10 @@ build_hw_assignment <- function(schedule, date, cal_entry, semester) {
 }
 
 build_lab_assignment <- function(schedule, date, cal_entry, semester) {
-  if (!is.na(cal_entry$id_lab)) {
+  if (! tibble::has_name(schedule, "page_lab")) {
+    schedule <- dplyr::mutate(schedule, page_lab = NA_character_)
+  }
+  if (tibble::has_name(cal_entry, "id_lab") && !is.na(cal_entry$id_lab)) {
     message("Making lab page for lab ", cal_entry$key_lab )
     links <- generate_lab_assignment(cal_entry$key_lab, semester, TRUE)
     schedule <- schedule %>%

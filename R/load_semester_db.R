@@ -148,7 +148,8 @@ load_semester_db <- function(db_file, root_crit = NULL, ignore_root = FALSE) {
 
   calendar <- calendar %>%
     dplyr::mutate(date = lubridate::as_datetime(.data$date, tz = tz),
-                  cal_type = item_type(.data$cal_id))
+                  cal_type = item_type(.data$cal_id)) %>%
+    dplyr::filter(! is.na(date))
 
   bare_dates <- calendar %>% dplyr::select("cal_id", "date")
 
@@ -162,7 +163,8 @@ load_semester_db <- function(db_file, root_crit = NULL, ignore_root = FALSE) {
   # Set up due dates
   #==========================================================================
 
-  due_dates <- link_cal_due %>% dplyr::left_join(due_dates, by = "due_id")
+  due_dates <- link_cal_due %>% dplyr::left_join(due_dates, by = "due_id") %>%
+    dplyr::filter(! is.na(.data$due_key), ! is.na(.data$cal_id))
 
   missing_due_dates <- calendar %>%
     dplyr::filter(.data$cal_type == "due date") %>%

@@ -52,7 +52,7 @@ make_lab_solution_page <- function(sol, semester) {
 }
 
 make_lab_solution <- function(sol, semester) {
-  fname <- sprintf("lab_%02d_%s.Rmd", sol$lab_num, sol$sol_filename)
+  fname <- sprintf("lab_%02d_%s.Rmd", sol$lab_num, sol$lab_sol_filename)
   solution_path <- fname %>%
     file.path(semester$root_dir, "content", "lab_solutions/", .)
   solution_url <- fname %>% stringr::str_replace("\\.Rmd$", "") %>%
