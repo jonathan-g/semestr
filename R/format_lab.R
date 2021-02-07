@@ -39,8 +39,8 @@ make_lab_solution_page <- function(sol, semester) {
                    sol$sol_filename)) %>%
     purrr::discard(is_mt_or_na) %>%
     c(
-      output = list("blogdown::html_page" =
-                      list(md_extensions = get_md_extensions(), toc = TRUE))
+      list(output = list("blogdown::html_page" =
+                      list(md_extensions = get_md_extensions(), toc = TRUE)))
     ) %>%
     yaml::as.yaml() %>% stringr::str_trim("right") %>%
     stringr::str_c(delim, ., delim, sep = "\n")
@@ -82,8 +82,8 @@ make_lab_doc_page <- function(doc, semester) {
     slug = sprintf("lab_%02d_%s", doc$lab_num, doc$doc_filename)) %>%
     purrr::discard(is_mt_or_na) %>%
     c(
-      output = list("blogdown::html_page" =
-                      list(md_extensions = get_md_extensions(), toc = TRUE))
+      list(output = list("blogdown::html_page" =
+                      list(md_extensions = get_md_extensions(), toc = TRUE)))
     ) %>%
     yaml::as.yaml() %>% stringr::str_trim("right") %>%
     stringr::str_c(delim, ., delim, sep = "\n")
@@ -104,11 +104,10 @@ make_lab_doc <- function(lab, semester) {
 }
 
 make_lab_docs <- function(lab_key, semester) {
-  lab_key <- enquo(lab_key)
   labs <- semester$lab_items %>%
-    dplyr::filter(.data$lab_grp_key == !!lab_key,
+    dplyr::filter(.data$lab_grp_key == lab_key,
                   ! is.na(.data$doc_filename)) # %>%
-    # merge_dates(semester)
+  # merge_dates(semester)
 
   # purrr::pmap(list) is a nice way to transpose without screwing up classes
   # of date columns the way purrr::transpose() does.

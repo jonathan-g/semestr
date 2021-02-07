@@ -40,9 +40,9 @@ make_hw_solution_page <- function(solution, semester, slug = NA_character_) {
     slug = stringr::str_c(slug, "_", solution$hw_sol_filename)) %>%
     purrr::discard(is_mt_or_na) %>%
     c(
-      output = list("blogdown::html_page" =
+      list(output = list("blogdown::html_page" =
                       list(md_extensions = get_md_extensions(),
-                           toc = TRUE))
+                           toc = TRUE)))
     ) %>%
     yaml::as.yaml() %>% stringr::str_trim("right") %>%
     stringr::str_c(delim, ., delim, sep = "\n")
