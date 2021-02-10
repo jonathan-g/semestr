@@ -34,7 +34,7 @@ make_lab_solution_page <- function(sol, semester) {
     sol_date = lubridate::as_date(sol$sol_pub_date) %>% as.character(),
     pubdate = as.character(sol$sol_pub_date),
     date = lubridate::as_date(sol$report_date) %>% as.character(),
-    pdf_url = sol$sol_pdf_url,
+    pdf_url = sol$lab_sol_pdf_url,
     slug = sprintf("lab_%02d_%s", sol$lab_num,
                    sol$lab_sol_filename)) %>%
     purrr::discard(is_mt_or_na) %>%
