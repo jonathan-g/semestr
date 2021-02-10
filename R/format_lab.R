@@ -179,7 +179,8 @@ make_lab_assignment_content <- function(key, semester, use_solutions = FALSE) {
       output <- cat_nl(output,
                        stringr::str_c("[", sol_links$title, "](",
                                       sol_links$url, '){target="_blank"}') %>%
-                         itemize())
+                         itemize(),
+                       start_par = TRUE)
     }
   }
   context <- make_context(assignment, "lab", semester)
