@@ -59,7 +59,7 @@ make_lab_solution <- function(sol, semester) {
     file.path("/lab_solutions", .)
   lab_solution_page <- make_lab_solution_page(sol, semester)
   cat(lab_solution_page, file = solution_path)
-  c(title = sol$sol_title, key = sol$lab_grp_key, path = solution_path,
+  c(title = sol$lab_sol_title, key = sol$lab_grp_key, path = solution_path,
     url = solution_url)
 }
 
@@ -177,7 +177,7 @@ make_lab_assignment_content <- function(key, semester, use_solutions = FALSE) {
         sol_links <- purrr::pmap(sol_links, list)
       }
       output <- cat_nl(output,
-                       stringr::str_c("[", sol_links$sol_title, "](",
+                       stringr::str_c("[", sol_links$title, "](",
                                       sol_links$url, '){target="_blank"}') %>%
                          itemize())
     }
