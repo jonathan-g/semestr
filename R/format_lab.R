@@ -27,8 +27,8 @@ make_lab_solution_page <- function(sol, semester) {
   sol <- as.list(sol)
   delim <- "---"
   header <- list(
-    title = sol$sol_title,
-    author = sol$sol_author,
+    title = sol$lab_sol_title,
+    author = sol$lab_sol_author,
     lab_number = sol$lab_num,
     lab_date = lubridate::as_date(sol$lab_date) %>% as.character(),
     sol_date = lubridate::as_date(sol$sol_pub_date) %>% as.character(),
@@ -36,7 +36,7 @@ make_lab_solution_page <- function(sol, semester) {
     date = lubridate::as_date(sol$report_date) %>% as.character(),
     pdf_url = sol$sol_pdf_url,
     slug = sprintf("lab_%02d_%s", sol$lab_num,
-                   sol$sol_filename)) %>%
+                   sol$lab_sol_filename)) %>%
     purrr::discard(is_mt_or_na) %>%
     c(
       list(output = list("blogdown::html_page" =

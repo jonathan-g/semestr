@@ -320,11 +320,15 @@ load_semester_db <- function(db_file, root_crit = NULL, ignore_root = FALSE) {
       dplyr::inner_join(dplyr::select(lab_groups, "lab_grp_id", "lab_grp_key"),
                         by = "lab_grp_key") %>%
       dplyr::inner_join(link_cal_lab, by = "lab_grp_id") %>%
-      dplyr::left_join(dplyr::select(lab_asgt, "lab_grp_id", "lab_num"),
+      dplyr::left_join(dplyr::select(lab_asgt, "lab_grp_id", "lab_num",
+                                     "report_due_key"),
                        by = "lab_grp_id") %>%
-      dplyr::inner_join( dplyr::select(due_dates, lab_sol_pub_key = "due_key",
+      dplyr::inner_join(dplyr::select(due_dates, lab_sol_pub_key = "due_key",
                                        sol_pub_cal_id  = "cal_id"),
-                         by = "lab_sol_pub_key")
+                         by = "lab_sol_pub_key") %>%
+      dplyr::inner_join(dplyr::select(due_dates, report_due_key = "due_key",
+                                      report_due_cal_id = "cal_id"),
+                                      by = "report_due_key")
   } else {
     lab_asgt <- NULL
     lab_items <- NULL
@@ -454,17 +458,22 @@ load_semester_db <- function(db_file, root_crit = NULL, ignore_root = FALSE) {
   }
   if (has_labs) {
     lab_asgt <- lab_asgt %>% dplyr::left_join(bare_dates, by = "cal_id") %>%
-      dplyr::left_join( dplyr::rename(bare_dates, report_cal_id = "cal_id",
+      dplyr::left_join(dplyr::rename(bare_dates, report_cal_id = "cal_id",
                                       report_date = "date"),
                         by = "report_cal_id") %>%
-      dplyr::left_join( dplyr::rename(bare_dates, pres_cal_id = "cal_id",
+      dplyr::left_join(dplyr::rename(bare_dates, pres_cal_id = "cal_id",
                                       pres_date = "date"),
                         by = "pres_cal_id")
     lab_items <- lab_items %>% dplyr::left_join(bare_dates, by = "cal_id")
-    lab_sol <- lab_sol %>% dplyr::left_join(bare_dates, by = "cal_id") %>%
-      dplyr::left_join( dplyr::select(bare_dates, sol_pub_cal_id = "cal_id",
+    lab_sol <- lab_sol %>%
+      dplyr::left_join(dplyr::select(bare_dates, "cal_id", lab_date = "date"),
+                                     by = "cal_id") %>%
+      dplyr::left_join(dplyr::select(bare_dates, sol_pub_cal_id = "cal_id",
                                       sol_pub_date = "date"),
-                        by = "sol_pub_cal_id")
+                        by = "sol_pub_cal_id") %>%
+      dplyr::left_join(dplyr::select(bare_dates, report_due_cal_id = "cal_id",
+                                     report_date = "date"),
+                       by = "report_due_cal_id")
   }
   if (has_holidays) {
     holidays <- holidays  %>% dplyr::left_join(bare_dates, by = "cal_id")
