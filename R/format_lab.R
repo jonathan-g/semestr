@@ -1,5 +1,5 @@
 make_lab_slug <- function(lab_asgt) {
-  message("Making lab slug for ", lab_asgt$lab_key,
+  message("Making lab slug for ", lab_asgt$lab_grp_key,
           ", lab_num = ", lab_asgt$lab_num)
   slug <- sprintf("lab_%02d", lab_asgt$lab_num)
   slug
@@ -52,6 +52,7 @@ make_lab_solution_page <- function(sol, semester) {
 }
 
 make_lab_solution <- function(sol, semester) {
+  message("Making solutions for lab ", sol$lab_num, ".")
   fname <- sprintf("lab_%02d_%s.Rmd", sol$lab_num, sol$lab_sol_filename)
   solution_path <- fname %>%
     file.path(semester$root_dir, "content", "lab_solutions/", .)
@@ -120,7 +121,7 @@ make_lab_docs <- function(lab_key, semester) {
 make_lab_assignment_content <- function(key, semester, use_solutions = FALSE) {
   assignment <- get_lab_assignment(key, semester)
 
-  output <- adj_nl("# Overview:", assignment$description, start_par = TRUE,
+  output <- cat_nl("# Overview:", assignment$lab_description, start_par = TRUE,
                    extra_lines = 1)
 
   docs <- semester$lab_items %>%
