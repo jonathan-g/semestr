@@ -100,6 +100,92 @@ format_handout_reading <- function(reading_list) {
   output
 }
 
+#' @describeIn format_reading_item Format a web page reading item.
+#'
+#' @param online_location An URL for where to find the web page.
+#'
+#' @export
+format_web_reading_item <- function(reading_item, online_location = getOption("semestr.online_reading_loc")) {
+  reading_item <- as.list(reading_item)
+  if(is_mt_or_na(reading_item$url) || is.null(reading_item$url)) {
+    pre = ""
+    post = ""
+    loc = stringr::str_c(" (", online_location, ")")
+  } else {
+    pre = "["
+    post = stringr::str_c("](", reading_item$url, '){target="_blank"}')
+    loc = ""
+  }
+  output <- stringr::str_c("Web Page: ", pre, reading_item$citation, post)
+  if (! is_mt_or_na(reading_item$chapter)) {
+    output <- stringr::str_c(output, ", ", reading_item$chapter)
+  }
+  if (! is_mt_or_na(reading_item$pages)) {
+    output <- stringr::str_c(output, ", ", reading_item$pages)
+  }
+  output <- output %>% stringr::str_trim() %>%
+    stringr::str_c(loc) %>%
+    add_period()
+  output
+}
+
+
+#' @describeIn format_reading_items Format reading from multiple web pages.
+#'
+#' @export
+format_web_reading <- function(reading_list) {
+  if (nrow(reading_list) > 0) {
+    output <- reading_list %>% purrr::pmap(list) %>%
+      purrr::map_chr(format_web_reading_item)
+  } else {
+    output <- NULL
+  }
+  output
+}
+
+#' @describeIn format_reading_item Format a YouTube video.
+#'
+#' @param online_location An URL for where to find the video.
+#'
+#' @export
+format_youtube_reading_item <- function(reading_item, online_location = getOption("semestr.online_reading_loc")) {
+  reading_item <- as.list(reading_item)
+  if(is_mt_or_na(reading_item$url) || is.null(reading_item$url)) {
+    pre = ""
+    post = ""
+    loc = stringr::str_c(" (", online_location, ")")
+  } else {
+    pre = "["
+    post = stringr::str_c("](", reading_item$url, '){target="_blank"}')
+    loc = ""
+  }
+  output <- stringr::str_c("YouTube Video: ", pre, reading_item$citation, post)
+  if (! is_mt_or_na(reading_item$chapter)) {
+    output <- stringr::str_c(output, ", ", reading_item$chapter)
+  }
+  if (! is_mt_or_na(reading_item$pages)) {
+    output <- stringr::str_c(output, ", ", reading_item$pages)
+  }
+  output <- output %>% stringr::str_trim() %>%
+    stringr::str_c(loc) %>%
+    add_period()
+  output
+}
+
+
+#' @describeIn format_reading_items Format reading from multiple YouTube videos.
+#'
+#' @export
+format_youtube_reading <- function(reading_list) {
+  if (nrow(reading_list) > 0) {
+    output <- reading_list %>% purrr::pmap(list) %>%
+      purrr::map_chr(format_youtube_reading_item)
+  } else {
+    output <- NULL
+  }
+  output
+}
+
 #' Make a Reading Assignment
 #'
 #' Format all readings from a reading assignment entry.
@@ -120,31 +206,62 @@ make_reading_assignment <- function(reading_entry) {
     dplyr::filter(.data$handout,
                   ! (.data$optional | .data$undergraduate_only |
                        .data$graduate_only ))
+  web_reading <- reading_entry %>%
+    dplyr::filter(.data$web_page,
+                  ! (.data$optional | .data$undergraduate_only |
+                       .data$graduate_only ))
+  youtube_videos <- reading_entry %>%
+    dplyr::filter(.data$youtube,
+                  ! (.data$optional | .data$undergraduate_only |
+                       .data$graduate_only ))
   ugrad_textbook_reading <- reading_entry %>%
     dplyr::filter(.data$textbook, .data$undergraduate_only )
   ugrad_handout_reading <- reading_entry %>%
     dplyr::filter(.data$handout, .data$undergraduate_only )
+  ugrad_web_reading <- reading_entry %>%
+    dplyr::filter(.data$web_page, .data$undergraduate_only )
+  ugrad_youtube_videos <- reading_entry %>%
+    dplyr::filter(.data$youtube, .data$undergraduate_only )
   grad_textbook_reading <- reading_entry %>%
     dplyr::filter(.data$textbook, .data$graduate_only )
   grad_handout_reading <- reading_entry %>%
     dplyr::filter(.data$handout, .data$graduate_only )
+  grad_web_reading <- reading_entry %>%
+    dplyr::filter(.data$web_page, .data$graduate_only )
+  grad_youtube_videos <- reading_entry %>%
+    dplyr::filter(.data$youtube, .data$graduate_only )
   optional_textbook_reading <- reading_entry %>%
     dplyr::filter(.data$textbook, .data$optional)
   optional_handout_reading <- reading_entry %>%
     dplyr::filter(.data$handout, .data$optional)
+  optional_web_reading <- reading_entry %>%
+    dplyr::filter(.data$web_page, .data$optional)
+  optional_youtube_videos <- reading_entry %>%
+    dplyr::filter(.data$youtube, .data$optional)
 
   reading_notes <- reading_entry %>%
     dplyr::filter(!is.na(.data$reading_notes))
 
-  has_req_reading <- (nrow(textbook_reading) + nrow(handout_reading)) > 0
+  youtube_items <- reading_entry %>%
+    dplyr::filter(.data$youtube)
+
+  has_req_reading <- (nrow(textbook_reading) + nrow(handout_reading) +
+                        nrow(web_reading) + nrow(youtube_videos)) > 0
   has_ugrad_reading <- (nrow(ugrad_textbook_reading) +
-                          nrow(ugrad_handout_reading)) > 0
+                          nrow(ugrad_handout_reading) +
+                          nrow(ugrad_web_reading) +
+                          nrow(ugrad_youtube_videos)) > 0
   has_grad_reading <- (nrow(grad_textbook_reading) +
-                         nrow(grad_handout_reading)) > 0
+                         nrow(grad_handout_reading) +
+                         nrow(grad_web_reading) +
+                         nrow(grad_youtube_videos)) > 0
   has_opt_reading <- (nrow(optional_textbook_reading) +
-                        nrow(optional_handout_reading)) > 0
+                        nrow(optional_handout_reading) +
+                        nrow(optional_web_reading) +
+                        nrow(optional_youtube_videos)) > 0
   has_any_reading <- has_req_reading || has_ugrad_reading ||
     has_grad_reading || has_opt_reading
+  has_any_youtube_videos <- nrow(youtube_videos) > 0
 
   has_notes <- nrow(reading_notes) > 0
 
@@ -156,7 +273,9 @@ make_reading_assignment <- function(reading_entry) {
   } else {
     if (has_req_reading) {
       readings <- c(format_textbook_reading(textbook_reading),
-                    format_handout_reading(handout_reading)) %>%
+                    format_handout_reading(handout_reading),
+                    format_web_reading(web_reading),
+                    format_youtube_reading(youtube_videos)) %>%
         itemize()
       output <- stringr::str_c(stringr::str_trim(output),
                                "",
@@ -166,7 +285,9 @@ make_reading_assignment <- function(reading_entry) {
     }
     if (has_ugrad_reading) {
       ug_readings <- c(format_textbook_reading(ugrad_textbook_reading),
-                       format_handout_reading(ugrad_handout_reading)) %>%
+                       format_handout_reading(ugrad_handout_reading),
+                       format_web_reading(ugrad_web_reading),
+                       format_youtube_reading(ugrad_youtube_videos)) %>%
         itemize()
       output <- stringr::str_c(stringr::str_trim(output),
                                "",
@@ -176,7 +297,9 @@ make_reading_assignment <- function(reading_entry) {
     }
     if (has_grad_reading) {
       g_readings <- c(format_textbook_reading(grad_textbook_reading),
-                      format_handout_reading(grad_handout_reading)) %>%
+                      format_handout_reading(grad_handout_reading),
+                      format_web_reading(grad_web_reading),
+                      format_youtube_reading(grad_youtube_videos)) %>%
         itemize()
       output <- stringr::str_c(stringr::str_trim(output),
                                "",
@@ -186,7 +309,9 @@ make_reading_assignment <- function(reading_entry) {
     }
     if (has_opt_reading) {
       extra_readings <- c(format_textbook_reading(optional_textbook_reading),
-                          format_handout_reading(optional_handout_reading)) %>%
+                          format_handout_reading(optional_handout_reading),
+                          format_web_reading(optional_web_reading),
+                          format_youtube_reading(optional_youtube_videos)) %>%
         itemize()
       output <- stringr::str_c(stringr::str_trim(output), "",
                                "### Optional Extra Reading:",
@@ -195,13 +320,30 @@ make_reading_assignment <- function(reading_entry) {
     }
   }
   if (has_notes) {
-    reading_note_str <- reading_notes$reading_notes %>% stringr::str_trim() %>%
+    reading_note_str <- reading_notes$reading_notes %>%
+      stringr::str_trim(.) %>%
       stringr::str_c(collapse = "\n\n")
     output <- stringr::str_c(stringr::str_trim(output), "",
                              ifelse(has_req_reading || has_opt_reading,
                                     "### Reading Notes:",
                                     "### Notes:"),
                              "", reading_note_str, "",
+                             sep = "\n")
+  }
+  if (has_any_youtube_videos) {
+    youtube_videos_str <- youtube_items %>%
+      dplyr::mutate(item_str =
+                      stringr::str_c('`r htmltools::HTML(\'{{< youtube id="',
+                                     .data$youtube_id, '" title="',
+                                     .data$short_markdown_title,
+                                     '" >}}\')`')) %>%
+      dplyr::pull("item_str") %>% itemize()
+    youtube_title <- "### YouTube Video"
+    if (nrow(youtube_items) > 1) {
+      youtube_title <- stringr::str_c(youtube_title, "s")
+    }
+    output <- stringr::str_c(stringr::str_trim(output), "",
+                             youtube_title, "", youtube_videos_str, "",
                              sep = "\n")
   }
   output

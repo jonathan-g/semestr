@@ -4,11 +4,17 @@
 \alias{format_reading_items}
 \alias{format_textbook_reading}
 \alias{format_handout_reading}
+\alias{format_web_reading}
+\alias{format_youtube_reading}
 \title{Format a Collection of Reading Items}
 \usage{
 format_textbook_reading(reading_list)
 
 format_handout_reading(reading_list)
+
+format_web_reading(reading_list)
+
+format_youtube_reading(reading_list)
 }
 \arguments{
 \item{reading_list}{A data frame with rows corresponding to reading items
@@ -25,5 +31,9 @@ Takes a collection of reading items and formats them.
 \item \code{format_textbook_reading}: Format a collection of textbook readings.
 
 \item \code{format_handout_reading}: Format reading from multiple handouts.
+
+\item \code{format_web_reading}: Format reading from multiple web pages.
+
+\item \code{format_youtube_reading}: Format reading from multiple YouTube videos.
 }}
 

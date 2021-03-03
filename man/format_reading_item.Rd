@@ -4,6 +4,8 @@
 \alias{format_reading_item}
 \alias{format_textbook_reading_item}
 \alias{format_handout_reading_item}
+\alias{format_web_reading_item}
+\alias{format_youtube_reading_item}
 \title{Format a Reading Item}
 \usage{
 format_textbook_reading_item(reading_item)
@@ -12,12 +14,22 @@ format_handout_reading_item(
   reading_item,
   online_location = getOption("semestr.online_reading_loc")
 )
+
+format_web_reading_item(
+  reading_item,
+  online_location = getOption("semestr.online_reading_loc")
+)
+
+format_youtube_reading_item(
+  reading_item,
+  online_location = getOption("semestr.online_reading_loc")
+)
 }
 \arguments{
 \item{reading_item}{The reading item (a row from the semester  \code{rd_items}
 data frame)}
 
-\item{online_location}{An URL for where to find the handout.}
+\item{online_location}{An URL for where to find the video.}
 }
 \value{
 A character string with the formatted output.
@@ -30,5 +42,9 @@ Takes a reading item and formats it.
 \item \code{format_textbook_reading_item}: Format reading from a textbook.
 
 \item \code{format_handout_reading_item}: Format a handout reading item.
+
+\item \code{format_web_reading_item}: Format a web page reading item.
+
+\item \code{format_youtube_reading_item}: Format a YouTube video.
 }}
 

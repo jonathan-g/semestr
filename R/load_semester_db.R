@@ -257,6 +257,7 @@ load_semester_db <- function(db_file, root_crit = NULL, ignore_root = FALSE) {
       dplyr::left_join(reading_sources, by = "src_key") %>%
       dplyr::mutate(dplyr::across(c("undergraduate_only", "graduate_only",
                                     "optional", "textbook", "handout",
+                                    "web_page", "youtube",
                                     "rd_prologue", "rd_epilogue", "rd_break_before"),
                                   ~as.logical(.x) %>% tidyr::replace_na(FALSE)))
     missing_reading <- calendar %>%
