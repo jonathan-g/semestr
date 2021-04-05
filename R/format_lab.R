@@ -149,13 +149,17 @@ make_lab_assignment_content <- function(key, semester, use_solutions = FALSE) {
   }
   url <- assignment$lab_assignment_url
   output <- cat_nl(output, "## Assignment", start_par = TRUE, extra_lines = 1)
-  if (! is_mt_or_na(url)) {
-    output <- cat_nl(output,
-                     stringr::str_c("Accept the assignment at GitHub Classroom at <",
-                                    url, ">."))
+  if (assignment$uses_gh_classroom) {
+    if (! is_mt_or_na(url)) {
+      output <- cat_nl(output,
+                       stringr::str_c("Accept the assignment at GitHub Classroom at <",
+                                      url, ">."))
+    } else {
+      output <- cat_nl(output, "The GitHub Classroom has not been posted yet.",
+                       start_par = TRUE)
+    }
   } else {
-    output <- cat_nl(output, "The GitHub Classroom has not been posted yet.",
-                     start_par = TRUE)
+    output <- cat_nl(output, "This lab does not use GitHub Classroom.")
   }
 
   if (use_solutions) {

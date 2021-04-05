@@ -294,7 +294,8 @@ load_semester_db <- function(db_file, root_crit = NULL, ignore_root = FALSE) {
                                       pres_cal_id = "cal_id"),
                         by = "presentation_key") %>%
       dplyr::arrange(.data$lab_grp_order) %>%
-      dplyr::mutate(lab_num = seq(dplyr::n())) %>%
+      dplyr::mutate(lab_num = seq(dplyr::n()),
+                    uses_gh_classroom = as.logical(.data$uses_gh_classroom)) %>%
       dplyr::select(-"lab_grp_order")
 
     missing_labs <- calendar %>%
