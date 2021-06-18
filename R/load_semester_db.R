@@ -135,7 +135,7 @@ load_semester_db <- function(db_file, root_crit = NULL, ignore_root = FALSE) {
       }
     } else {
       df <- NULL
-      warning("Database has mo table ", t)
+      warning("Database has no table ", t)
     }
     assign(t, df)
   }

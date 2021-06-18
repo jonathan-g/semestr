@@ -148,6 +148,7 @@ schedule_widen <- function(schedule, final_exams, semester,
     if (! tibble::has_name(schedule, "key_holiday")) {
       schedule <- schedule %>% dplyr::mutate(key_holiday = NA_character_)
     }
+    schedule <- schedule %>%
     dplyr::left_join( holiday_topics, by = "key_holiday")
   }
 
