@@ -44,8 +44,8 @@ schedule_strip_finals <- function(schedule, semester) {
 
 schedule_add_homework <- function(schedule, semester) {
   hw_due <- semester$due_dates %>%
-    dplyr::filter(.data$due_type == "homework",
-                  .data$due_action %in% c("homework", "report")) %>%
+    dplyr::filter(.data$due_type %in% c("homework", "project"),
+                  .data$due_action %in% c("homework", "report", "presentation")) %>%
     dplyr::filter(.data$cal_id %in% semester$calendar$cal_id)
 
   hw <- semester$hw_asgt %>% dplyr::filter(.data$hw_due_key %in% hw_due$due_key)

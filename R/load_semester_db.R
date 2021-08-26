@@ -211,15 +211,19 @@ load_semester_db <- function(db_file, root_crit = NULL, ignore_root = FALSE) {
       dplyr::mutate(dplyr::across(c("undergraduate_only", "graduate_only",
                                     "hw_break_before", "hw_prologue", "hw_epilogue"),
                                   ~as.logical(.x) %>% tidyr::replace_na(FALSE)))
-    hw_sol <- homework_solutions %>%
-      dplyr::inner_join(dplyr::select(homework_groups, "hw_grp_id", "hw_grp_key"),
-                        by = c(sol_grp_key = "hw_grp_key")) %>%
-      dplyr::inner_join(link_cal_hw, by = "hw_grp_id") %>%
-      dplyr::left_join(dplyr::select(hw_asgt, "hw_grp_id", "hw_num"),
-                       by = "hw_grp_id") %>%
-      dplyr::inner_join( dplyr::select(due_dates, sol_pub_key = "due_key",
-                                       sol_pub_cal_id = "cal_id"),
-                         by = "sol_pub_key")
+    if (!is.null(homework_solutions)) {
+      hw_sol <- homework_solutions %>%
+        dplyr::inner_join(dplyr::select(homework_groups, "hw_grp_id", "hw_grp_key"),
+                          by = c(sol_grp_key = "hw_grp_key")) %>%
+        dplyr::inner_join(link_cal_hw, by = "hw_grp_id") %>%
+        dplyr::left_join(dplyr::select(hw_asgt, "hw_grp_id", "hw_num"),
+                         by = "hw_grp_id") %>%
+        dplyr::inner_join( dplyr::select(due_dates, sol_pub_key = "due_key",
+                                         sol_pub_cal_id = "cal_id"),
+                           by = "sol_pub_key")
+    } else {
+      hw_sol <- NULL
+    }
 
     missing_hw <- calendar %>%
       dplyr::filter(.data$cal_type == "homework") %>%
@@ -453,10 +457,12 @@ load_semester_db <- function(db_file, root_crit = NULL, ignore_root = FALSE) {
       dplyr::left_join( dplyr::rename(bare_dates, due_cal_id = "cal_id",
                                       due_date = "date"), by = "due_cal_id")
     hw_items <- hw_items %>% dplyr::left_join(bare_dates, by = "cal_id")
+    if (! is.null(hw_sol)) {
     hw_sol <- hw_sol %>% dplyr::left_join(bare_dates, by = "cal_id") %>%
       dplyr::left_join( dplyr::select(bare_dates, sol_pub_cal_id = "cal_id",
                                       sol_pub_date = "date"),
                         by = "sol_pub_cal_id")
+    }
   }
   if (has_labs) {
     lab_asgt <- lab_asgt %>% dplyr::left_join(bare_dates, by = "cal_id") %>%
@@ -500,9 +506,11 @@ load_semester_db <- function(db_file, root_crit = NULL, ignore_root = FALSE) {
       dplyr::mutate(cal_key = add_key_prefix(.data$hw_grp_key, "homework"))
     hw_items <- hw_items %>%
       dplyr::mutate(cal_key = add_key_prefix(.data$hw_grp_key, "homework"))
+    if (!is.null(hw_sol)) {
     hw_sol <- hw_sol %>%
       dplyr::mutate(cal_key = add_key_prefix(.data$sol_grp_key, "homework"),
                     pub_cal_key = add_key_prefix(.data$sol_pub_key, "due date"))
+    }
   }
   if (has_labs) {
     lab_asgt <- lab_asgt %>%

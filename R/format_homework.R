@@ -17,7 +17,7 @@ make_hw_slug <- function(hw_asgt) {
   if (hw_asgt$hw_is_numbered) {
     slug <- sprintf("homework_%02d", hw_asgt$hw_num)
   } else {
-    slug <- hw_asgt$slug
+    slug <- hw_asgt$hw_slug
   }
   slug
 }
@@ -77,7 +77,7 @@ make_hw_asgt_content <- function(key, semester, use_solutions = FALSE) {
   items <- semester$hw_items %>% dplyr::filter(.data$hw_grp_key == key) %>%
     # merge_dates(semester) %>%
     dplyr::arrange(.data$hw_item_id)
-  if (use_solutions) {
+  if (use_solutions && ! is.null(semester$hw_sol)) {
     solutions <- semester$hw_sol %>% dplyr::filter(.data$sol_grp_key == key)
     solutions <- solutions %>%
       dplyr::mutate( due_cal_id = assignment$due_cal_id,
@@ -312,7 +312,7 @@ make_short_hw_assignment <- function(key, semester) {
   hw <- items %>%
     dplyr::mutate(short_homework = ifelse(is.na(.data$short_homework),
                                           .data$homework, .data$short_homework)) %>%
-    dplyr::filter(!.data$prologue, !.data$epilogue,
+    dplyr::filter(!.data$hw_prologue, !.data$hw_epilogue,
                   ! is.na(.data$short_homework)) %>%
     dplyr::arrange(.data$undergraduate_only, .data$graduate_only, .data$hw_item_id)
   hw_topics <- hw %>% dplyr::mutate(topic = stringr::str_trim(.data$short_homework))
