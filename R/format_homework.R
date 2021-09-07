@@ -130,26 +130,31 @@ make_hw_asgt_content <- function(key, semester, use_solutions = FALSE) {
 
   output <- stringr::str_c(output, "## Homework")
   if (nrow(prologue) > 0) {
-    prologue_str <-
-      stringr::str_c(purrr::discard(prologue$homework,
+    prologue_str <- stringr::str_c(
+                     purrr::discard(prologue$homework,
                                     ~is_mt_or_na(.x) || .x == "") %>%
                        unique(),
                      collapse = "\n\n")
+    prologue_str <- stringr::str_c("### Preliminary Information",
+                                   prologue_str, sep = "\n\n")
+
   } else {
     prologue_str <- NULL
   }
 
   if (nrow(epilogue) > 0) {
-    epilogue_str <-
-      stringr::str_c(purrr::discard(epilogue$homework,
+    epilogue_str <- stringr::str_c(
+                     purrr::discard(epilogue$homework,
                                     ~is_mt_or_na(.x) || .x == "") %>%
                        unique(),
                      collapse = "\n\n")
+    epilogue_str <- stringr::str_c("### General Notes:",
+                                   epilogue_str, sep = "\n\n")
   } else {
     epilogue_str <-  NULL
   }
 
-  output <- stringr::str_c(output, prologue_str, "", "", sep = "\n")
+  output <- stringr::str_c(output, prologue_str, "", sep = "\n\n")
   if (nrow(ugrad_hw) > 0) {
     ugrad_hw_items <- ugrad_hw$homework %>% unique() %>% itemize() %>%
       stringr::str_c(stringr::str_c("**Undergraduate Students",
@@ -181,18 +186,19 @@ make_hw_asgt_content <- function(key, semester, use_solutions = FALSE) {
   }
   if (all(is.null(grad_hw_items), is.null(ugrad_hw_items))) {
     output <- stringr::str_c(stringr::str_trim(output), "",
+                             "### Homework Exercises:", "",
                              everyone_hw_items,
                              "", sep = "\n")
   } else {
     output <- stringr::str_c(stringr::str_trim(output), "",
-                             itemize(c(everyone_hw_items, ugrad_hw_items, grad_hw_items)),
+                             "### Homework Exercises:", "",
+                             itemize(c(everyone_hw_items, ugrad_hw_items,
+                                       grad_hw_items)),
                              "", sep = "\n")
   }
 
-  output <- stringr::str_c(stringr::str_trim(output), "",
-                           epilogue_str, "",
-                           sep = "\n"
-  )
+  output <- stringr::str_c(stringr::str_trim(output), epilogue_str, "",
+                           sep = "\n\n")
 
   everyone_notes <- dplyr::bind_rows(prologue_notes, everyone_notes,
                                      epilogue_notes) %>%
@@ -222,19 +228,25 @@ make_hw_asgt_content <- function(key, semester, use_solutions = FALSE) {
   if (c(everyone_note_items, ugrad_note_items, grad_note_items) %>%
       purrr::map_lgl(is.null) %>% all() %>% not()) {
     output <- output %>% stringr::str_trim() %>%
-      stringr::str_c("", "### Notes on Homework:", "", sep = "\n")
+      stringr::str_c("### Notes on Homework:", "", sep = "\n\n")
 
     if (c(ugrad_note_items, grad_note_items) %>%
         purrr::map_lgl(is.null) %>% all()) {
       output <- stringr::str_c(output, everyone_note_items, sep = "\n")
     } else {
-      everyone_note_items <- stringr::str_c("**Everyone:**",
+      if (! is.null(everyone_note_items)) {
+      everyone_note_items <- stringr::str_c("**Everyone:** ",
                                             everyone_note_items,
                                             collapse = "\n")
-      ugrad_note_items <- stringr::str_c("**Undergraduates:**",
+      }
+      if (! is.null(ugrad_note_items)) {
+      ugrad_note_items <- stringr::str_c("**Undergraduates:** ",
                                          ugrad_note_items, collapse = "\n")
-      grad_note_items <- stringr::str_c("**Graduate Students:**",
+      }
+      if (! is.null(grad_note_items)) {
+      grad_note_items <- stringr::str_c("**Graduate Students:** ",
                                         grad_note_items, collapse = "\n")
+      }
       notes <- c(everyone_note_items, ugrad_note_items, grad_note_items) %>%
         itemize()
       output <- stringr::str_c(output, adj_nl(notes, TRUE, 1), sep = "\n")
