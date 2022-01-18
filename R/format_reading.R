@@ -357,12 +357,14 @@ make_reading_assignment <- function(reading_entry) {
 #' @param cal_id The calendar ID for this assignment.
 #' @param semester A semester object (a list returned by
 #'   `\link{load_semester_db}`).
+#' @param use_pdfs Add a `pdf_url` field to the YAML header so a PDF file will
+#'   be generated for the reading assignment.
 #'
 #' @return A character string with the Markdown content for the reading
 #'   assignment page.
 #'
 #' @export
-make_reading_page <- function(cal_id, semester){
+make_reading_page <- function(cal_id, semester, use_pdfs = TRUE){
   cal_id <- enquo(cal_id)
   reading <- semester$rd_items %>%
     dplyr::filter(.data$cal_id == !!cal_id) %>%
@@ -398,7 +400,12 @@ make_reading_page <- function(cal_id, semester){
                            date = lubridate::as_date(rd_date) %>% as.character(),
                            output = list("blogdown::html_page" =
                                            list(md_extensions = get_md_extensions()))
-  ) %>%
+  )
+  if (use_pdfs) {
+    header <- header %>% mutate(pdf_url = str_c("/files/reading_asgts/",
+                                                slug, ".pdf"))
+  }
+  header <- header %>%
     yaml::as.yaml() %>% stringr::str_trim("right") %>%
     stringr::str_c(delim, ., delim, sep = "\n")
   rd_page <- stringr::str_c(

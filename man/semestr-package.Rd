@@ -8,8 +8,7 @@
 \description{
 \if{html}{\figure{logo.png}{options: align='right' alt='logo' width='120'}}
 
-Manage a syllabus, reading, homework, and lab assignments, and a course
-    web site from a SQL database.
+Manage a syllabus, reading, homework, and lab assignments, and a course web site from a SQL database.
 }
 \seealso{
 Useful links:
