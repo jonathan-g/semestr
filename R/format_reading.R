@@ -385,7 +385,8 @@ make_reading_page <- function(cal_id, semester){
   assertthat::assert_that(length(key) == 1,
                           msg = "A calendar ID should have a unique reading key # (make_reading)")
   if (semester$has_notices) {
-    notices <- semester$notices %>% dplyr::filter(.data$topic_id == class_key)
+    notices <- semester$notices %>%
+      dplyr::filter(.data$topic_id == class_key, ! is.na(.data$notice))
   } else {
     notices <- NULL
   }

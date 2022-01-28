@@ -1,6 +1,8 @@
 make_notice <- function(notice_entries) {
-  if (is.null(notice_entries)) { return(character(0)) }
-  if (length(notice_entries) > 1) {
+  if (is.null(notice_entries) || nrow(notice_entries) == 0) {
+    return(character(0))
+  }
+  if (nrow(notice_entries) > 1) {
     output <- stringr::str_c("## Notices:", "",
                              stringr::str_c("*", notice_entries$notice,
                                             sep = "  ", collapse = "\n"), "", "",
