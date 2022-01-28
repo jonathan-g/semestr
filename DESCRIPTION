@@ -1,7 +1,7 @@
 Package: semestr
 Title: Generate Assignments for a Semester from a SQLlite Database
-Version: 0.1.2
-Date: 2021-09-07
+Version: 0.1.3
+Date: 2022-01-18
 Authors@R: 
     person(given = "Jonathan",
            family = "Gilligan",

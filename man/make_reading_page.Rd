@@ -4,13 +4,16 @@
 \alias{make_reading_page}
 \title{Make a Reading Assignment Page}
 \usage{
-make_reading_page(cal_id, semester)
+make_reading_page(cal_id, semester, use_pdfs = TRUE)
 }
 \arguments{
 \item{cal_id}{The calendar ID for this assignment.}
 
 \item{semester}{A semester object (a list returned by
 \verb{\link{load_semester_db}}).}
+
+\item{use_pdfs}{Add a \code{pdf_url} field to the YAML header so a PDF file will
+be generated for the reading assignment.}
 }
 \value{
 A character string with the Markdown content for the reading

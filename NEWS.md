@@ -1,3 +1,7 @@
+# semestr 0.1.3
+
+* Make PDFs for reading assignments.
+
 # semestr 0.1.2
 
 * Fix some problems with homework formatting.
