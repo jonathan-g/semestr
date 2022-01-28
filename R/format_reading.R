@@ -378,11 +378,17 @@ make_reading_page <- function(cal_id, semester){
   assertthat::assert_that(length(rd_date) == 1,
                           msg = "A calendar ID should have a unique topic (make_reading)")
   class_num <- unique(reading$class_num)
+  class_key <- unique(reading$class_key)
   assertthat::assert_that(length(class_num) == 1,
                           msg = "A calendar ID should have a unique class # (make_reading)")
   key <- unique(reading$rd_grp_key)
   assertthat::assert_that(length(key) == 1,
                           msg = "A calendar ID should have a unique reading key # (make_reading)")
+  if (semester$has_notices) {
+    notices <- semester$notices %>% dplyr::filter(.data$topic_id == class_key)
+  } else {
+    notices <- NULL
+  }
 
   homework <- semester$hw_asgt %>%
     dplyr::filter(.data$cal_id == !!cal_id) %>%
@@ -403,6 +409,7 @@ make_reading_page <- function(cal_id, semester){
     stringr::str_c(delim, ., delim, sep = "\n")
   rd_page <- stringr::str_c(
     header,
+    make_notice(notices),
     # make_short_hw_assignment(homework) %>% escape_dollar(),
     make_reading_assignment(reading) %>% escape_dollar(),
     sep = "\n"

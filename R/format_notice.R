@@ -1,4 +1,5 @@
 make_notice <- function(notice_entries) {
+  if (is.null(notice_entries)) { return(character(0)) }
   if (length(notice_entries) > 1) {
     output <- stringr::str_c("## Notices:", "",
                              stringr::str_c("*", notice_entries$notice,
