@@ -1,3 +1,9 @@
+# semestr 0.1.4
+
+* Use relative paths for PDF output when rendering PDF files. 
+  This addresses a problem with knitr or Pandoc putting paths into 
+  \include_graphics that include illegal characters for LaTeX.
+
 # semestr 0.1.3
 
 * Make PDFs for reading assignments.

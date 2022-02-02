@@ -104,8 +104,10 @@ build_pdf_from_rmd <- function(source_file, root_dir, static_path = "static",
 
   message("building ", pdf_dest, " from ", basename(source_file))
 
+  rel_dest <- R.utils::getRelativePath(pdf_dest, dirname(source_file))
+
   result <- rmarkdown::render(source_file, output_format = pdf_output,
-                              output_file = pdf_dest)
+                              output_file = rel_dest)
   result
 }
 

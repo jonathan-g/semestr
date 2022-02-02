@@ -369,9 +369,11 @@ make_reading_page <- function(cal_id, semester, use_pdfs = TRUE){
   reading <- semester$rd_items %>%
     dplyr::filter(.data$cal_id == !!cal_id) %>%
     # merge_dates(semester) %>%
-    dplyr::left_join(dplyr::select(semester$calendar, "cal_id", "class_num", "week_num"),
+    dplyr::left_join(dplyr::select(semester$calendar, "cal_id", "class_num",
+                                   "week_num"),
                      by = "cal_id") %>%
-    dplyr::left_join( dplyr::select(semester$class_topics, "topic", "rd_grp_key"),
+    dplyr::left_join( dplyr::select(semester$class_topics, "topic",
+                                    "rd_grp_key"),
                       by = "rd_grp_key")
   rd_date <- unique(reading$date)
   assertthat::assert_that(length(rd_date) == 1,
@@ -409,8 +411,9 @@ make_reading_page <- function(cal_id, semester, use_pdfs = TRUE){
                                            list(md_extensions = get_md_extensions()))
   )
   if (use_pdfs) {
-    header <- header %>% mutate(pdf_url = str_c("/files/reading_asgts/",
-                                                slug, ".pdf"))
+    header <- header %>%
+      dplyr::mutate(pdf_url = stringr::str_c("/files/reading_asgts/",
+                                             .data$slug, ".pdf"))
   }
   header <- header %>%
     yaml::as.yaml() %>% stringr::str_trim("right") %>%
