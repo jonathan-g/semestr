@@ -1,7 +1,7 @@
 ---
 title: "semestr"
 author: "Jonathan Gilligan"
-date: "2021-01-18"
+date: "`r read.dcf('DESCRIPTION')[1,'Date']`"
 output: github_document
 ---
 
@@ -14,11 +14,15 @@ knitr::opts_chunk$set(
   fig.path = "man/figures/README-",
   out.width = "100%"
 )
+
+library(tidyverse)
+pkg <- read.dcf("DESCRIPTION") %>% as_tibble() %>% head(1)
 ```
 
 # semestr
 
 <!-- badges: start -->
+![Version: `r pkg$Version`](https://img.shields.io/github/r-package/v/jonathan-g/semestr?label=version)
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://www.tidyverse.org/lifecycle/#experimental)
 [![CRAN status](https://www.r-pkg.org/badges/version/semestr)](https://CRAN.R-project.org/package=semestr)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
