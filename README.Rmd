@@ -22,7 +22,7 @@ pkg <- read.dcf("DESCRIPTION") %>% as_tibble() %>% head(1)
 # semestr
 
 <!-- badges: start -->
-![Version: `r pkg$Version`](https://img.shields.io/github/r-package/v/jonathan-g/semestr?label=version)
+[![Version: `r pkg$Version`](https://img.shields.io/github/r-package/v/jonathan-g/semestr?label=version)](`r str_c("https://github.com/jonathan-g", pkg$Package, "releases", "tag", str_c("v", pkg$Version), sep = "/")`)
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://www.tidyverse.org/lifecycle/#experimental)
 [![CRAN status](https://www.r-pkg.org/badges/version/semestr)](https://CRAN.R-project.org/package=semestr)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
