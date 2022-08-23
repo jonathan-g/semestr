@@ -31,6 +31,8 @@
 <![endif]-->
 </head>
 <body data-spy="scroll" data-target="#toc">
+    
+
     <div class="container template-home">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -43,18 +45,12 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">semestr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.2</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
-<li>
-  <a href="index.html">
-    <span class="fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
 <li>
   <a href="reference/index.html">Reference</a>
 </li>
@@ -64,7 +60,7 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.com/jonathan-g/semestr/">
+  <a href="https://github.com/jonathan-g/semestr/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -82,39 +78,38 @@
       </header><div class="row">
   <div class="contents col-md-9">
 
-<div id="semestr" class="section level1">
-<div class="page-header"><h1 class="hasAnchor">
-<a href="#semestr" class="anchor"></a>semestr</h1></div>
+<div class="section level1">
+<div class="page-header"><h1 id="semestr">semestr<a class="anchor" aria-label="anchor" href="#semestr"></a>
+</h1></div>
 <p>Jonathan Gilligan 2021-01-18</p>
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 </div>
-<div id="semestr-1" class="section level1">
-<h1 class="hasAnchor">
-<a href="#semestr-1" class="anchor"></a>semestr</h1>
+<div class="section level1">
+<h1 id="semestr-1">semestr<a class="anchor" aria-label="anchor" href="#semestr-1"></a>
+</h1>
 <!-- badges: start -->
-<p><a href="https://www.tidyverse.org/lifecycle/#experimental"><img src="https://img.shields.io/badge/lifecycle-experimental-orange.svg" alt="Lifecycle: experimental"></a> <a href="https://CRAN.R-project.org/package=semestr"><img src="https://www.r-pkg.org/badges/version/semestr" alt="CRAN status"></a> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a> <a href="https://github.com/jonathan-g/semestr/actions"><img src="https://github.com/jonathan-g/semestr/workflows/R-CMD-check/badge.svg" alt="R-CMD-check"></a> <!-- badges: end --></p>
 <p>The goal of semestr is to manage a syllabus for a university course. The package uses a SQL database with a schedule of reading, homework, and laboratory assignments and due dates, exams, holidays, etc. There are functions for generating content for a HUGO-based web site with the semester schedule and the assignents, as well as PDF copies of the assignments and a full syllabus.</p>
-<div id="status" class="section level2">
-<h2 class="hasAnchor">
-<a href="#status" class="anchor"></a>Status</h2>
+<div class="section level2">
+<h2 id="status">Status<a class="anchor" aria-label="anchor" href="#status"></a>
+</h2>
 <p>This project is at a very early state of development and is not ready for general use. Use this at your own risk.</p>
 </div>
-<div id="installation" class="section level2">
-<h2 class="hasAnchor">
-<a href="#installation" class="anchor"></a>Installation</h2>
+<div class="section level2">
+<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+</h2>
 <p>This package has not been released to CRAN. You can install the development version from GitHub using the <code>remotes</code> package:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html">install_github</a></span><span class="op">(</span><span class="st">"jonathan-g/semestr"</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"jonathan-g/semestr"</span><span class="op">)</span></span></code></pre></div>
 </div>
-<div id="example" class="section level2">
-<h2 class="hasAnchor">
-<a href="#example" class="anchor"></a>Example</h2>
+<div class="section level2">
+<h2 id="example">Example<a class="anchor" aria-label="anchor" href="#example"></a>
+</h2>
 <p>To get started, you need a SQL database. I have not yet written instructions or specifications for this database, but there is an example database <code>planning/ees_3310/example_semester_db.sqlite3</code> and you can inspect it and figure out how it works.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://jonathan-g.github.io/semestr/">semestr</a></span><span class="op">)</span>
-<span class="va">semester</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/load_semester_db.html">load_semester_db</a></span><span class="op">(</span><span class="st">"planning/example_semester_db.sqlite3"</span><span class="op">)</span>
-<span class="fu"><a href="reference/generate_assignments.html">generate_assignments</a></span><span class="op">(</span><span class="va">semester</span><span class="op">)</span>
-<span class="fu"><a href="reference/build_pdf_files.html">build_pdf_files</a></span><span class="op">(</span><span class="va">semester</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://jonathan-g.github.io/semestr/">semestr</a></span><span class="op">)</span></span>
+<span><span class="va">semester</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/load_semester_db.html">load_semester_db</a></span><span class="op">(</span><span class="st">"planning/example_semester_db.sqlite3"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/generate_assignments.html">generate_assignments</a></span><span class="op">(</span><span class="va">semester</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/build_pdf_files.html">build_pdf_files</a></span><span class="op">(</span><span class="va">semester</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
 
@@ -122,45 +117,58 @@
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <div class="links">
-<h2>Links</h2>
+<h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">
-<li>Browse source code at <br><a href="https://github.com/jonathan-g/semestr/">https://​github.com/​jonathan-g/​semestr/​</a>
-</li>
-<li>Report a bug at <br><a href="https://github.com/jonathan-g/semestr/issues">https://​github.com/​jonathan-g/​semestr/​issues</a>
-</li>
+<li><a href="https://github.com/jonathan-g/semestr/" class="external-link">Browse source code</a></li>
+<li><a href="https://github.com/jonathan-g/semestr/issues" class="external-link">Report a bug</a></li>
 </ul>
 </div>
+
 <div class="license">
-<h2>License</h2>
+<h2 data-toc-skip>License</h2>
 <ul class="list-unstyled">
 <li><a href="LICENSE.html">Full license</a></li>
-<li><small><a href="https://opensource.org/licenses/mit-license.php">MIT</a> + file <a href="LICENSE-text.html">LICENSE</a></small></li>
+<li><small><a href="https://opensource.org/licenses/mit-license.php" class="external-link">MIT</a> + file <a href="LICENSE-text.html">LICENSE</a></small></li>
 </ul>
 </div>
+
 <div class="community">
-<h2>Community</h2>
+<h2 data-toc-skip>Community</h2>
 <ul class="list-unstyled">
 <li><a href="CONTRIBUTING.html">Contributing guide</a></li>
 <li><a href="CODE_OF_CONDUCT.html">Code of conduct</a></li>
+<li><a href="SUPPORT.html">Getting help</a></li>
 </ul>
 </div>
-<div class="developers">
-<h2>Developers</h2>
+
+<div class="citation">
+<h2 data-toc-skip>Citation</h2>
 <ul class="list-unstyled">
-<li>Jonathan Gilligan <br><small class="roles"> Author, maintainer </small> <a href="https://orcid.org/0000-0003-1375-6686" target="orcid.widget" aria-label="ORCID"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a> </li>
+<li><a href="authors.html#citation">Citing semestr</a></li>
 </ul>
 </div>
+
+<div class="developers">
+<h2 data-toc-skip>Developers</h2>
+<ul class="list-unstyled">
+<li>Jonathan Gilligan <br><small class="roles"> Author, maintainer </small> <a href="https://orcid.org/0000-0003-1375-6686" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a> </li>
+</ul>
+</div>
+
+
 
   </div>
 </div>
 
 
       <footer><div class="copyright">
-  <p>Developed by Jonathan Gilligan.</p>
+  <p></p>
+<p>Developed by Jonathan Gilligan.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p></p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
 </div>
 
       </footer>
@@ -168,6 +176,8 @@
 
   
 
+
+  
 
   </body>
 </html>

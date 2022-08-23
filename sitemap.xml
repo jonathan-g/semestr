@@ -1,7 +1,34 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
+    <loc>https://jonathan-g.github.io/semestr/404.html</loc>
+  </url>
+  <url>
+    <loc>https://jonathan-g.github.io/semestr/CODE_OF_CONDUCT.html</loc>
+  </url>
+  <url>
+    <loc>https://jonathan-g.github.io/semestr/CONTRIBUTING.html</loc>
+  </url>
+  <url>
+    <loc>https://jonathan-g.github.io/semestr/ISSUE_TEMPLATE.html</loc>
+  </url>
+  <url>
+    <loc>https://jonathan-g.github.io/semestr/LICENSE-text.html</loc>
+  </url>
+  <url>
+    <loc>https://jonathan-g.github.io/semestr/LICENSE.html</loc>
+  </url>
+  <url>
+    <loc>https://jonathan-g.github.io/semestr/SUPPORT.html</loc>
+  </url>
+  <url>
+    <loc>https://jonathan-g.github.io/semestr/authors.html</loc>
+  </url>
+  <url>
     <loc>https://jonathan-g.github.io/semestr/index.html</loc>
+  </url>
+  <url>
+    <loc>https://jonathan-g.github.io/semestr/news/index.html</loc>
   </url>
   <url>
     <loc>https://jonathan-g.github.io/semestr/reference/add_key_prefix.html</loc>
@@ -101,6 +128,9 @@
   </url>
   <url>
     <loc>https://jonathan-g.github.io/semestr/reference/grab_header.html</loc>
+  </url>
+  <url>
+    <loc>https://jonathan-g.github.io/semestr/reference/index.html</loc>
   </url>
   <url>
     <loc>https://jonathan-g.github.io/semestr/reference/init_schedule.html</loc>
