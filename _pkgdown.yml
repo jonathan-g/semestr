@@ -72,4 +72,11 @@ reference:
 - title: Helper functions
   desc: Miscellaneous helper functions
   contents:
-    - everything()
+    - build_pdf_from_rmd
+    - build_pdf_output_format
+    - init_schedule
+    - make_rmd_output_format
+    - prepare_schedule
+    - is_mt_or_na
+    - schedule_strip_finals
+    - strip_key_prefix
