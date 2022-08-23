@@ -8,7 +8,7 @@ prepare_schedule(semester)
 }
 \arguments{
 \item{semester}{A semester object returned from
-\code{\link{load_semester_db}}.}
+\code{\link[=load_semester_db]{load_semester_db()}}.}
 }
 \value{
 A tibble containing a schedule

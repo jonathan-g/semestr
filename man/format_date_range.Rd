@@ -26,7 +26,7 @@ Format a range of dates.
 }
 \details{
 Format a range of dates, using a similar format to
-\code{\link{format_class_date}}
+\code{\link[=format_class_date]{format_class_date()}}
 }
 \section{Functions}{
 \itemize{

@@ -26,6 +26,7 @@ returns a vector of files that need to be rebuilt because the source file is
 new or has changed since the last time the site was built.
 }
 \seealso{
-\code{\link{get_current_pdf_digests}()}, \code{\link{digests}}.
+\code{\link[=get_current_pdf_digests]{get_current_pdf_digests()}},
+\link[blogdownDigest:digests]{blogdownDigest::digests}.
 }
 \keyword{internal}

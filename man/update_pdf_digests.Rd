@@ -36,14 +36,16 @@ source files in the source directory and its descendants.}
 The path to the digest file.
 }
 \description{
-\code{update_site_digests} calculates hashed digests for a site.
+\code{blogdownDigest::update_site_digests} calculates hashed digests for a
+site.
 }
 \details{
 Generates new hashed digests for both source and destination (output) files
-and save the digests to a file "\code{digests.Rds}" in the root directory of the
-site.
+and save the digests to a file "\code{digests.Rds}" in the root directory of
+the site.
 }
 \seealso{
-\code{\link{prune_pdf_digests}()}, \code{\link{update_site}()},
-\code{\link{digests}}.
+\code{\link[=prune_pdf_digests]{prune_pdf_digests()}},
+\code{\link[blogdownDigest]{update_site}()},
+\link[blogdownDigest:digests]{blogdownDigest::digests}.
 }

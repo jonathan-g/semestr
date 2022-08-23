@@ -17,6 +17,6 @@ Set the algorithm with \verb{options(blogdown.hash.algorithm = <algorithm>)}.
 If the option is not set, then use crc32.
 }
 \seealso{
-\code{\link{digests}}.
+\link[blogdownDigest:digests]{blogdownDigest::digests}.
 }
 \keyword{internal}

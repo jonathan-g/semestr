@@ -62,5 +62,5 @@ and saves it to a file.
 \seealso{
 \code{\link[blogdown]{build_site}()},
 \code{\link[blogdown]{build_dir}()},
-\code{\link{digests}}.
+\link[blogdownDigest:digests]{blogdownDigest::digests}.
 }

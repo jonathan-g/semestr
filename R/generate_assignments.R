@@ -357,7 +357,7 @@ build_assignments <- function(schedule, semester) {
 #' Prepare schedule from database
 #'
 #' @param semester A semester object returned from
-#' \code{\link{load_semester_db}}.
+#' [load_semester_db()].
 #'
 #' @return A tibble containing a schedule
 #' @examples
@@ -388,10 +388,10 @@ prepare_schedule <- function(semester) {
 #' a lessons.yml file for Hugo to use in making a schedule for a course.
 #'
 #' @param semester A semester object returned from
-#' \code{\link{load_semester_db}}.
+#' [load_semester_db()].
 #'
 #' @return A named list containing the lesson plan in YAML text format and
-#'   the semester schedule, as a \code{\link{tibble}}.
+#'   the semester schedule, as a [tibble()].
 #' @examples
 #' \dontrun{
 #' sem <- load_semester_db("foo.sqlite3")

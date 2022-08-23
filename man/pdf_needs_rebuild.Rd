@@ -46,6 +46,6 @@ missing, then the source file is new or the output file has been deleted
 and in either case, the source file needs to be rebuilt.
 }
 \seealso{
-\code{\link{digests}}.
+\link[blogdownDigest:digests]{blogdownDigest::digests}.
 }
 \keyword{internal}

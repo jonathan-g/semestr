@@ -23,5 +23,6 @@ Modifies the stored digest file to remove lines corresponding to selected
 source files.
 }
 \seealso{
-\code{\link{update_site_digests}()}, \code{\link{digests}}.
+\code{\link[blogdownDigest:update_site_digests]{blogdownDigest::update_site_digests()}},
+\link[blogdownDigest:digests]{blogdownDigest::digests}.
 }

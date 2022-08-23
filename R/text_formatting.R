@@ -208,7 +208,7 @@ format_class_day_date <- function(d, abbr_month = TRUE, abbr_wday = TRUE) {
 #' Format a range of dates.
 #'
 #' Format a range of dates, using a similar format to
-#' \code{\link{format_class_date}}
+#' [format_class_date()]
 #'
 #' @param dates A named list or vector of dates with elements `start` and `stop`.
 #' @param abbr Abbreviate the month.

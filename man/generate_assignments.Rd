@@ -8,11 +8,11 @@ generate_assignments(semester)
 }
 \arguments{
 \item{semester}{A semester object returned from
-\code{\link{load_semester_db}}.}
+\code{\link[=load_semester_db]{load_semester_db()}}.}
 }
 \value{
 A named list containing the lesson plan in YAML text format and
-the semester schedule, as a \code{\link{tibble}}.
+the semester schedule, as a \code{\link[=tibble]{tibble()}}.
 }
 \description{
 Generate RMarkdown files for reading, homework, and lab  assignments and

@@ -6,7 +6,7 @@
 #' If the option is not set, then use crc32.
 #'
 #' @return A string containing the name of the algorithm.
-#' @seealso \code{\link{digests}}.
+#' @seealso [blogdownDigest::digests].
 #' @keywords internal
 get_pdf_digest_algorithm <- function() {
   getOption("blogdownDigest.hash.algorithm", default = "crc32")
@@ -156,7 +156,7 @@ update_pdf_file_digests <- function (files, root_dir, static_path = "static",
 #'
 #' If a destination file is missing or if any of the digests don't match,
 #' then the file needs to be rebuilt.
-#' @seealso \code{\link{digests}}.
+#' @seealso [blogdownDigest::digests].
 #' @keywords internal
 pdf_needs_rebuild <- function(current_digest, current_dest_digest,
                           old_digest, old_dest_digest) {
@@ -176,7 +176,8 @@ pdf_needs_rebuild <- function(current_digest, current_dest_digest,
 #'
 #' @param files A character vector of paths to source files (e.g., \code{.Rmd}).
 #' @return A character vector of files that need to be rebuilt.
-#' @seealso \code{\link{get_current_pdf_digests}()}, \code{\link{digests}}.
+#' @seealso [get_current_pdf_digests()],
+#'   [blogdownDigest::digests].
 #' @keywords internal
 pdfs_to_rebuild <- function(files, root_dir, static_path = "static",
                              content_path = "content") {
@@ -231,7 +232,7 @@ pdfs_to_rebuild <- function(files, root_dir, static_path = "static",
 #'
 #' @seealso \code{\link[blogdown]{build_site}()},
 #'   \code{\link[blogdown]{build_dir}()},
-#'   \code{\link{digests}}.
+#'   [blogdownDigest::digests].
 #'
 #' @export
 update_pdfs <-  function(dir = NULL, root_dir = NULL,
@@ -383,8 +384,8 @@ update_pdf_dir <- function(dir = '.', root_dir = NULL, static_path = "static",
 #' }
 #'
 #' Digests for missing files are set to \code{NA}.
-#' @seealso \code{\link{pdfs_to_rebuild}()},
-#' \code{\link{pdf_digest_if_exists}()}, \code{\link{digests}}.
+#' @seealso [pdfs_to_rebuild()],
+#' [pdf_digest_if_exists()], [blogdownDigest::digests].
 #' @keywords internal
 get_current_pdf_digests <- function(files, root_dir = NULL,
                                     static_path = "static",
@@ -448,11 +449,12 @@ get_current_pdf_digests <- function(files, root_dir = NULL,
 
 #' Generates and stores digests for all source and output files.
 #'
-#' \code{update_site_digests} calculates hashed digests for a site.
+#' \code{blogdownDigest::update_site_digests} calculates hashed digests for a
+#' site.
 #'
 #' Generates new hashed digests for both source and destination (output) files
-#' and save the digests to a file "\code{digests.Rds}" in the root directory of the
-#' site.
+#' and save the digests to a file "\code{digests.Rds}" in the root directory of
+#' the site.
 #'
 #' @param dir A string with the name of the directory to search
 #'   (by default the "content" directory at the top-level directory of the site)
@@ -471,8 +473,9 @@ get_current_pdf_digests <- function(files, root_dir = NULL,
 #'
 #' @return The path to the digest file.
 #'
-#' @seealso \code{\link{prune_pdf_digests}()}, \code{\link{update_site}()},
-#' \code{\link{digests}}.
+#' @seealso [prune_pdf_digests()],
+#' \code{\link[blogdownDigest]{update_site}()},
+#' [blogdownDigest::digests].
 #'
 #' @export
 #'
@@ -498,7 +501,8 @@ update_pdf_digests <- function(dir = NULL, root_dir = NULL,
 #'
 #' @return The path to the digest file.
 #'
-#' @seealso \code{\link{update_site_digests}()}, \code{\link{digests}}.
+#' @seealso [blogdownDigest::update_site_digests()],
+#'   [blogdownDigest::digests].
 #'
 #' @export
 #'

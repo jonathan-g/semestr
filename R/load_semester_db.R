@@ -205,7 +205,7 @@ load_semester_db <- function(db_file, root_crit = NULL, ignore_root = FALSE) {
     if (!has_name(homework_items, "hw_self_assess")) {
       warning("Database table homework_items is missing column hw_self_assess.",
               "Setting to default of FALSE.")
-      homework_items <- homework_items %>% mutate(hw_self_assess = FALSE)
+      homework_items <- homework_items %>% dplyr::mutate(hw_self_assess = FALSE)
     }
     hw_items <- homework_items %>%
       dplyr::inner_join(dplyr::select(homework_groups, "hw_grp_id", "hw_grp_key"),

@@ -38,7 +38,7 @@ returns a data frame with a row for each file and columns for the
 stored digests and the digests of current source and output files.
 }
 \seealso{
-\code{\link{pdfs_to_rebuild}()},
-\code{\link{pdf_digest_if_exists}()}, \code{\link{digests}}.
+\code{\link[=pdfs_to_rebuild]{pdfs_to_rebuild()}},
+\code{\link[=pdf_digest_if_exists]{pdf_digest_if_exists()}}, \link[blogdownDigest:digests]{blogdownDigest::digests}.
 }
 \keyword{internal}

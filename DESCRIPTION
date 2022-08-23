@@ -19,7 +19,6 @@ Depends:
     R (>= 4.0)
 Imports: 
     assertthat (>= 0.2),
-    blogdownDigest,
     DBI (>= 1.0),
     dbplyr (>= 2.0),
     digest,
@@ -40,6 +39,7 @@ Imports:
     withr (>= 2.0),
     yaml (>= 2.2)
 Suggests: 
+    blogdownDigest,
     testthat (>= 3.0),
     roxygen2 (>= 7.1)
 Remotes:
