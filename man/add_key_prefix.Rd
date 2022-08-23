@@ -40,13 +40,13 @@ function adds those prefixes.
 }
 \section{Methods (by class)}{
 \itemize{
-\item \code{character}: Add key prefixes to a character vector.
+\item \code{add_key_prefix(character)}: Add key prefixes to a character vector.
 
-\item \code{list}: Add key prefixes to a list of character objects.
+\item \code{add_key_prefix(list)}: Add key prefixes to a list of character objects.
 
-\item \code{data.frame}: Add key prefix to a column in a data frame.
+\item \code{add_key_prefix(data.frame)}: Add key prefix to a column in a data frame.
+
 }}
-
 \seealso{
 strip_key_prefix
 

@@ -17,8 +17,8 @@ format_date_by_class_num(calendar, num, abbr = TRUE)
 format_date_by_key(
   calendar,
   key,
-  type = c("class", "reading", "lab", "homework", "exam", "holiday", "event",
-    "due date", "raw"),
+  type = c("class", "reading", "lab", "homework", "exam", "holiday", "event", "due date",
+    "raw"),
   abbr = TRUE
 )
 
@@ -34,8 +34,8 @@ format_day_date_by_class_num(
 format_day_date_by_key(
   calendar,
   key,
-  type = c("class", "reading", "lab", "homework", "exam", "holiday", "event",
-    "due date", "raw"),
+  type = c("class", "reading", "lab", "homework", "exam", "holiday", "event", "due date",
+    "raw"),
   abbr_month = TRUE,
   abbr_wday = TRUE
 )
@@ -73,19 +73,19 @@ will become \code{LAB_INTRO}.
 }
 \section{Functions}{
 \itemize{
-\item \code{format_date_by_cal_id}: Look up a date by calendar id
+\item \code{format_date_by_cal_id()}: Look up a date by calendar id
 
-\item \code{format_date_by_class_num}: Look up a date by class session
+\item \code{format_date_by_class_num()}: Look up a date by class session
 
-\item \code{format_date_by_key}: Look up a date by arbitrary key.
+\item \code{format_date_by_key()}: Look up a date by arbitrary key.
 
-\item \code{format_day_date_by_cal_id}: Look up a date by calendar id.
+\item \code{format_day_date_by_cal_id()}: Look up a date by calendar id.
 
-\item \code{format_day_date_by_class_num}: Look up a date by class session.
+\item \code{format_day_date_by_class_num()}: Look up a date by class session.
 
-\item \code{format_day_date_by_key}: Look up a date by arbitrary key.
+\item \code{format_day_date_by_key()}: Look up a date by arbitrary key.
+
 }}
-
 \examples{
 \dontrun{
 format_date_by_key(calendar, "IR_RADIATION", "class")

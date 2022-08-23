@@ -71,6 +71,43 @@ make_hw_solution <- function(solution, assignment, semester, slug = NA_character
   c(path = solution_path, url = solution_url)
 }
 
+make_hw_asgt_section_content <- function(items, heading, also_flag) {
+  output <- ""
+  if (nrow(items) > 0) {
+    items <- items %>%
+      dplyr::mutate(hw_self_assess = tidyr::replace_na(hw_self_assess, FALSE))
+    self_study_items <- items %>% dplyr::filter(hw_self_assess) %>%
+      dplyr::pull(homework) %>% unique() %>% itemize()
+    turn_in_items <- items %>% dplyr::filter(!hw_self_assess) %>%
+      dplyr::pull(homework) %>% unique() %>% itemize()
+    item_output <- ""
+    if (length(self_study_items) > 0) {
+      item_output <- stringr::str_c(
+        item_output,
+        "**Self-study:** Work these exercises, but do not turn them in.",
+        self_study_items, sep = "\n"
+      )
+    }
+    if (length(turn_in_items) > 0) {
+      if (length(self_study_items) > 0) {
+        item_output <- stringr::str_c(
+          item_output,
+          "**Turn in:** Work these exercises and turn them in.",
+          sep = "\n")
+      }
+      item_output <- stringr::str_c(item_output, turn_in_items, sep = "\n")
+    }
+    output <-
+      stringr::str_c(output,
+                     stringr::str_c("**", heading,
+                                    ifelse(also_flag,
+                                           ",** also do the following:",
+                                           ":**")),
+                     output_items, sep = "\n")
+  }
+  invisible(output)
+}
+
 make_hw_asgt_content <- function(key, semester, use_solutions = FALSE) {
   assignment <- get_hw_assignment(key, semester)
 
@@ -326,7 +363,8 @@ make_short_hw_assignment <- function(key, semester) {
                                           .data$homework, .data$short_homework)) %>%
     dplyr::filter(!.data$hw_prologue, !.data$hw_epilogue,
                   ! is.na(.data$short_homework)) %>%
-    dplyr::arrange(.data$undergraduate_only, .data$graduate_only, .data$hw_item_id)
+    dplyr::arrange(.data$undergraduate_only, .data$graduate_only,
+                   dplyr::desc(.data$hw_self_assess), .data$hw_item_id)
   hw_topics <- hw %>% dplyr::mutate(topic = stringr::str_trim(.data$short_homework))
 
   if (any(hw_topics$undergraduate_only | hw_topics$graduate_only)) {

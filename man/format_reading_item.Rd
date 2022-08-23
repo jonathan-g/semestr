@@ -39,12 +39,12 @@ Takes a reading item and formats it.
 }
 \section{Functions}{
 \itemize{
-\item \code{format_textbook_reading_item}: Format reading from a textbook.
+\item \code{format_textbook_reading_item()}: Format reading from a textbook.
 
-\item \code{format_handout_reading_item}: Format a handout reading item.
+\item \code{format_handout_reading_item()}: Format a handout reading item.
 
-\item \code{format_web_reading_item}: Format a web page reading item.
+\item \code{format_web_reading_item()}: Format a web page reading item.
 
-\item \code{format_youtube_reading_item}: Format a YouTube video.
+\item \code{format_youtube_reading_item()}: Format a YouTube video.
+
 }}
-

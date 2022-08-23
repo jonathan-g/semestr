@@ -26,9 +26,9 @@ Format a date as month and day.
 }
 \section{Functions}{
 \itemize{
-\item \code{format_class_day_date}: Format a date as day of week, month, and day.
-}}
+\item \code{format_class_day_date()}: Format a date as day of week, month, and day.
 
+}}
 \examples{
 format_class_date(Sys.Date())
 

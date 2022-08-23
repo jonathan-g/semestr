@@ -23,11 +23,11 @@ Format the month or day of week for a date.
 }
 \section{Functions}{
 \itemize{
-\item \code{format_month}: Format the month
+\item \code{format_month()}: Format the month
 
-\item \code{format_wday}: Format the day of the week
+\item \code{format_wday()}: Format the day of the week
+
 }}
-
 \examples{
 format_month(as.Date("2001-02-25"), FALSE)
 format_month(Sys.Date(), TRUE)

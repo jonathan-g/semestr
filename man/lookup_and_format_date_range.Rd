@@ -27,8 +27,8 @@ format_date_range_by_class_num(
 format_date_range_by_key(
   calendar,
   keys,
-  type = c("class", "reading", "lab", "homework", "exam", "holiday", "event",
-    "due date", "raw"),
+  type = c("class", "reading", "lab", "homework", "exam", "holiday", "event", "due date",
+    "raw"),
   abbr = TRUE,
   days = FALSE,
   abbr_wday = NULL
@@ -77,12 +77,12 @@ will become \code{LAB_INTRO}.
 }
 \section{Functions}{
 \itemize{
-\item \code{format_date_range_by_cal_id}: Look up dates by calendar ID.
+\item \code{format_date_range_by_cal_id()}: Look up dates by calendar ID.
 
-\item \code{format_date_range_by_class_num}: Look up dates by class number.
+\item \code{format_date_range_by_class_num()}: Look up dates by class number.
 
-\item \code{format_date_range_by_key}: Look up dates by key
+\item \code{format_date_range_by_key()}: Look up dates by key
 
-\item \code{format_date_range_by_event_id}: Look up dates by event id.
+\item \code{format_date_range_by_event_id()}: Look up dates by event id.
+
 }}
-

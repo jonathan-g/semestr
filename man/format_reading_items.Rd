@@ -28,12 +28,12 @@ Takes a collection of reading items and formats them.
 }
 \section{Functions}{
 \itemize{
-\item \code{format_textbook_reading}: Format a collection of textbook readings.
+\item \code{format_textbook_reading()}: Format a collection of textbook readings.
 
-\item \code{format_handout_reading}: Format reading from multiple handouts.
+\item \code{format_handout_reading()}: Format reading from multiple handouts.
 
-\item \code{format_web_reading}: Format reading from multiple web pages.
+\item \code{format_web_reading()}: Format reading from multiple web pages.
 
-\item \code{format_youtube_reading}: Format reading from multiple YouTube videos.
+\item \code{format_youtube_reading()}: Format reading from multiple YouTube videos.
+
 }}
-

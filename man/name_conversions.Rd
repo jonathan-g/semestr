@@ -64,22 +64,22 @@ Multiples of 1000.
 }
 \section{Functions}{
 \itemize{
-\item \code{type2col}: Convert a type to a column name.
+\item \code{type2col()}: Convert a type to a column name.
 
-\item \code{type2idx}: Convert a type to an index.
+\item \code{type2idx()}: Convert a type to an index.
 
-\item \code{type2prefix}: Convert a type to a prefix.
+\item \code{type2prefix()}: Convert a type to a prefix.
 
-\item \code{type2base}: Convert a type to a base.
+\item \code{type2base()}: Convert a type to a base.
 
-\item \code{idx2col}: Convert an index to a column.
+\item \code{idx2col()}: Convert an index to a column.
 
-\item \code{idx2type}: Convert an index to a type.
+\item \code{idx2type()}: Convert an index to a type.
 
-\item \code{col2idx}: Convert a column to an index.
+\item \code{col2idx()}: Convert a column to an index.
 
-\item \code{col2type}: Convert a column to a type.
+\item \code{col2type()}: Convert a column to a type.
 
-\item \code{base2type}: Convert a base to a type.
+\item \code{base2type()}: Convert a base to a type.
+
 }}
-

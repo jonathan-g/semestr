@@ -40,13 +40,13 @@ function strips those off.
 }
 \section{Methods (by class)}{
 \itemize{
-\item \code{character}: Strip key prefixes from character vector.
+\item \code{strip_key_prefix(character)}: Strip key prefixes from character vector.
 
-\item \code{list}: Strip key prefixes from a list of character objects.
+\item \code{strip_key_prefix(list)}: Strip key prefixes from a list of character objects.
 
-\item \code{data.frame}: Strip key prefixes from a column in a data frame.
+\item \code{strip_key_prefix(data.frame)}: Strip key prefixes from a column in a data frame.
+
 }}
-
 \seealso{
 add_key_prefix
 

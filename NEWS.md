@@ -1,3 +1,9 @@
+# semestr 0.2.0
+
+* Add database column `hw_self_assess` to the table `homework_items` and 
+  adjust homework assignment formatting to separate self-study items that
+  students should not turn in from items they should turn in.
+
 # semestr 0.1.4
 
 * Use relative paths for PDF output when rendering PDF files. 

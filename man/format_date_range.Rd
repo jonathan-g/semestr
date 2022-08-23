@@ -30,9 +30,9 @@ Format a range of dates, using a similar format to
 }
 \section{Functions}{
 \itemize{
-\item \code{format_day_date_range}: Format a range of dates, including day of the week.
-}}
+\item \code{format_day_date_range()}: Format a range of dates, including day of the week.
 
+}}
 \examples{
 format_date_range(list(start = as.Date("2020-02-14"),
                        stop  = as.Date("2020-03-15")))
