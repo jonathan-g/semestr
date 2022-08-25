@@ -207,6 +207,11 @@ load_semester_db <- function(db_file, root_crit = NULL, ignore_root = FALSE) {
               "Setting to default of FALSE.")
       homework_items <- homework_items %>% dplyr::mutate(hw_self_assess = FALSE)
     }
+    if (!has_name(homework_items, "hw_optional")) {
+      warning("Database table homework_items is missing column hw_optional.",
+              "Setting to default of FALSE.")
+      homework_items <- homework_items %>% dplyr::mutate(hw_optional = FALSE)
+    }
     hw_items <- homework_items %>%
       dplyr::inner_join(dplyr::select(homework_groups, "hw_grp_id", "hw_grp_key"),
                         by = "hw_grp_key") %>%
@@ -214,7 +219,7 @@ load_semester_db <- function(db_file, root_crit = NULL, ignore_root = FALSE) {
       dplyr::left_join(dplyr::select(hw_asgt, "hw_grp_id", "hw_num"),
                        by = "hw_grp_id") %>%
       dplyr::mutate(dplyr::across(c("undergraduate_only", "graduate_only",
-                                    "hw_self_assess",
+                                    "hw_self_assess", "hw_optional",
                                     "hw_break_before", "hw_prologue", "hw_epilogue"),
                                   ~as.logical(.x) %>% tidyr::replace_na(FALSE)))
     if (!is.null(homework_solutions)) {
