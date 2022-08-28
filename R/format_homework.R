@@ -42,7 +42,11 @@ make_hw_solution_page <- function(solution, semester, slug = NA_character_) {
     c(
       list(output = list("blogdown::html_page" =
                            list(md_extensions = get_md_extensions(),
-                                toc = TRUE)))
+                                toc = TRUE),
+                         pdf_document =
+                           list(toc = TRUE, toc_depth = 3)
+                         )
+      )
     ) %>%
     yaml::as.yaml() %>% stringr::str_trim("right") %>% #nolint
     stringr::str_c(delim, ., delim, sep = "\n")
@@ -338,7 +342,8 @@ make_hw_asgt_content <- function(key, semester, use_solutions = FALSE) {
   output
 }
 
-make_hw_asgt_page <- function(key, semester, use_solutions = FALSE) {
+make_hw_asgt_page <- function(key, semester, use_solutions = FALSE,
+                              use_pdfs = TRUE) {
   assignment <- get_hw_assignment(key, semester)
 
   hw_date <- assignment$date
@@ -354,17 +359,25 @@ make_hw_asgt_page <- function(key, semester, use_solutions = FALSE) {
           ", slug = ", hw_slug, ")")
 
   delim <- "---"
-  header <- tibble::tibble(title = hw_topic,
-                           due_date = lubridate::as_date(hw_date) %>% as.character(),
-                           assignment_type = hw_type,
-                           short_assignment_type = short_hw_type,
-                           assignment_number = hw_num, weight = hw_idx,
-                           slug = hw_slug,
-                           pubdate = as.character(pub_date),
-                           date = as.character(hw_date),
-                           output = list("blogdown::html_page" =
-                                           list(md_extensions = get_md_extensions()))
-  ) %>% purrr::discard(is_mt_or_na) %>%
+  header <- list(
+    title = hw_topic,
+    due_date = lubridate::as_date(hw_date) %>% as.character(),
+    assignment_type = hw_type,
+    short_assignment_type = short_hw_type,
+    assignment_number = hw_num, weight = hw_idx,
+    slug = hw_slug,
+    pubdate = as.character(pub_date),
+    date = as.character(hw_date),
+    output = list("blogdown::html_page" =
+                    list(md_extensions = get_md_extensions()),
+                  pdf_document =
+                    list(toc = TRUE, toc_depth = 3L))
+  )
+  if (use_pdfs) {
+    header$pdf_url = stringr::str_c("/files/homework_asgts/",
+                                    header$slug, ".pdf")
+  }
+  header <- header %>% purrr::discard(is_mt_or_na) %>%
     yaml::as.yaml() %>% stringr::str_trim("right") %>% # nolint
     stringr::str_c(delim, ., delim, sep = "\n")
   context <- make_context(assignment, "homework", semester)
