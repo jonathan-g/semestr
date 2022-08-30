@@ -198,6 +198,9 @@ format_youtube_reading <- function(reading_list) {
 #'
 #' @keywords internal
 make_reading_assignment <- function(reading_entry) {
+  reading_entry <- reading_entry %>%
+    dplyr::arrange(dplyr::desc(.data$rd_prologue), .data$rd_epilogue,
+                   .data$rd_item_id)
   textbook_reading <- reading_entry %>%
     dplyr::filter(.data$textbook,
                   ! (.data$optional | .data$undergraduate_only |
@@ -320,7 +323,10 @@ make_reading_assignment <- function(reading_entry) {
     }
   }
   if (has_notes) {
-    reading_note_str <- reading_notes$reading_notes %>%
+    reading_note_str <- reading_notes %>%
+      dplyr::arrange(dplyr::desc(.data$rd_prologue), .data$rd_epilogue,
+                     .data$rd_item_id) %>%
+      dplyr::pull("reading_notes") %>%
       stringr::str_trim(.) %>%
       stringr::str_c(collapse = "\n\n")
     output <- stringr::str_c(stringr::str_trim(output), "",

@@ -191,7 +191,7 @@ pdfs_to_rebuild <- function(files, root_dir, static_path = "static",
 
   df$rebuild = pdf_needs_rebuild(df$cur_digest, df$cur_dest_digest,
                              df$digest, df$dest_digest)
-  df %>% dplyr::filter(.data$rebuild) %>% dplyr::pull(file)
+  df %>% dplyr::filter(.data$rebuild) %>% dplyr::pull("file")
 }
 
 
