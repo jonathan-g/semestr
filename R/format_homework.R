@@ -42,9 +42,13 @@ make_hw_solution_page <- function(solution, semester, slug = NA_character_) {
     c(
       list(output = list("blogdown::html_page" =
                            list(md_extensions = get_md_extensions(),
-                                toc = TRUE)))
+                                toc = TRUE),
+                         pdf_document =
+                           list(toc = TRUE, toc_depth = 3)
+                         )
+      )
     ) %>%
-    yaml::as.yaml() %>% stringr::str_trim("right") %>%
+    yaml::as.yaml() %>% stringr::str_trim("right") %>% #nolint
     stringr::str_c(delim, ., delim, sep = "\n")
   context <- make_context(solution, "homework solution", semester)
   hw_solution_page <- stringr::str_c(
@@ -73,62 +77,86 @@ make_hw_solution <- function(solution, assignment, semester, slug = NA_character
 
 make_hw_asgt_section_content <- function(items, heading, also_flag) {
   output <- NULL
+  message("Making homework section ", heading, ": ")
+  message("class(items) = [", stringr::str_c(class(items), collapse = ","), "]")
+  message("  dim = (", stringr::str_c(dim(items), collapse = ","),
+          ", length = ", length(items))
   if (nrow(items) > 0) {
     items <- items %>%
       dplyr::mutate(hw_self_assess = tidyr::replace_na(.data$hw_self_assess,
-                                                       FALSE))
+                                                       FALSE),
+                    hw_optional = tidyr::replace_na(.data$hw_optional, FALSE)
+      )
     self_study_items <- items %>% dplyr::filter(.data$hw_self_assess) %>%
       dplyr::pull("homework") %>% unique() %>% itemize()
-    turn_in_items <- items %>% dplyr::filter(!.data$hw_self_assess) %>%
+    optional_items <- items %>% dplyr::filter(.data$hw_optional) %>%
+      dplyr::pull("homework") %>% unique() %>% itemize()
+    turn_in_items <- items %>% dplyr::filter(!.data$hw_self_assess,
+                                             !.data$hw_optional) %>%
       dplyr::pull("homework") %>% unique() %>% itemize()
     item_output <- ""
-    if (length(self_study_items) > 0) {
+    if (stringr::str_length(self_study_items) > 0) {
       item_output <- stringr::str_c(
         item_output,
         "**Self-study:** Work these exercises, but do not turn them in.",
-        self_study_items, sep = "\n"
+        self_study_items, sep = "\n\n"
       )
     }
-    if (length(turn_in_items) > 0) {
-      if (length(self_study_items) > 0) {
+    if (stringr::str_length(turn_in_items) > 0) {
+      if (stringr::str_length(self_study_items) > 0) {
         item_output <- stringr::str_c(
           item_output,
           "**Turn in:** Work these exercises and turn them in.",
-          sep = "\n")
+          sep = "\n\n")
       }
-      item_output <- stringr::str_c(item_output, turn_in_items, sep = "\n")
+      item_output <- stringr::str_c(item_output, turn_in_items, sep = "\n\n")
     }
-    if (! is.null(heading)) {
-      output <-
-        stringr::str_c(output,
-                       stringr::str_c("**", heading,
-                                      ifelse(also_flag,
-                                             ",** also do the following:",
-                                             ":**")),
-                       item_output, sep = "\n")
+    if (stringr::str_length(optional_items) > 0) {
+      item_output <- stringr::str_c(
+        item_output,
+        "**Optional:** The following exercises are optional. You can turn them in for extra credit.",
+        optional_items,
+        sep = "\n\n")
     }
   }
+  if (! is.null(heading)) {
+    output <-
+      stringr::str_c(output,
+                     stringr::str_c("**", heading,
+                                    ifelse(also_flag,
+                                           ",** also do the following:",
+                                           ":**")),
+                     sep = "\n")
+  }
+  output <- stringr::str_c(output, item_output, sep = "\n\n")
+
   invisible(output)
 }
 
 make_hw_asgt_content <- function(key, semester, use_solutions = FALSE) {
   assignment <- get_hw_assignment(key, semester)
 
+  message("Making content for HW ", key)
+
   items <- semester$hw_items %>% dplyr::filter(.data$hw_grp_key == key) %>%
     # merge_dates(semester) %>%
     dplyr::arrange(.data$hw_item_id)
   if (use_solutions && ! is.null(semester$hw_sol)) {
     solutions <- semester$hw_sol %>% dplyr::filter(.data$sol_grp_key == key)
-    solutions <- solutions %>%
-      dplyr::mutate( due_cal_id = assignment$due_cal_id,
-                     due_date = assignment$due_date) %>%
-      # merge_dates(semester, id_col = "sol_pub_cal_id",
-      #             date_col = "sol_pub_date") %>%
-      dplyr::mutate(sol_pub_date =
-                      lubridate::as_datetime(.data$sol_pub_date,
-                                             tz = get_semestr_tz())) %>%
-      dplyr::filter(.data$sol_pub_date <= lubridate::now()) %>%
-      dplyr::arrange(.data$sol_id)
+    if (nrow(solutions) > 0) {
+      solutions <- solutions %>%
+        dplyr::mutate( due_cal_id = assignment$due_cal_id,
+                       due_date = assignment$due_date) %>%
+        # merge_dates(semester, id_col = "sol_pub_cal_id",
+        #             date_col = "sol_pub_date") %>%
+        dplyr::mutate(sol_pub_date =
+                        lubridate::as_datetime(.data$sol_pub_date,
+                                               tz = get_semestr_tz())) %>%
+        dplyr::filter(.data$sol_pub_date <= lubridate::now()) %>%
+        dplyr::arrange(.data$sol_id)
+    } else {
+      solutions <- NULL
+    }
   } else {
     solutions <- NULL
   }
@@ -154,11 +182,20 @@ make_hw_asgt_content <- function(key, semester, use_solutions = FALSE) {
   prologue_notes <- notes %>% dplyr::filter(.data$hw_prologue)
   epilogue_notes <- notes %>% dplyr::filter(.data$hw_epilogue)
 
-  output <- ""
+  message("Building content: ",
+          nrow(prologue), " prologue items, ",
+          nrow(epilogue), " epilogue items, ",
+          nrow(notes), " notes", "\n  ",
+          nrow(everyone_hw), " items for everyone, ",
+          nrow(ugrad_hw), " items for undergrads, ",
+          nrow(grad_hw), " items for grads."
+          )
+
+  output <- NULL
 
   if (! is.null(solutions) && nrow(solutions) >= 1) {
     message("Making homework solutions")
-    output <- output %>% stringr::str_c("## Solutions:\n\n")
+    output <- stringr::str_c(output, "## Solutions:\n\n")
     for (i in seq(nrow(solutions))) {
       this_sol <- solutions[i,]
       sol <- make_hw_solution(this_sol, assignment, semester)
@@ -168,8 +205,11 @@ make_hw_asgt_content <- function(key, semester, use_solutions = FALSE) {
     output <- stringr::str_c(output, "\n")
   }
 
-  output <- stringr::str_c(output, "## Homework")
+  message("Starting content generation")
+
+  output <- stringr::str_c(output, "## Homework", sep = "\n\n")
   if (nrow(prologue) > 0) {
+    message("  Adding prologue")
     prologue_str <- stringr::str_c(
       purrr::discard(prologue$homework,
                      ~is_mt_or_na(.x) || .x == "") %>%
@@ -183,6 +223,7 @@ make_hw_asgt_content <- function(key, semester, use_solutions = FALSE) {
   }
 
   if (nrow(epilogue) > 0) {
+    message("  Adding epiloque")
     epilogue_str <- stringr::str_c(
       purrr::discard(epilogue$homework,
                      ~is_mt_or_na(.x) || .x == "") %>%
@@ -196,32 +237,41 @@ make_hw_asgt_content <- function(key, semester, use_solutions = FALSE) {
 
   output <- stringr::str_c(output, prologue_str, "", sep = "\n\n")
   if (nrow(ugrad_hw) > 0) {
+    message("  Making undergrad content")
     ugrad_hw_items <- make_hw_asgt_section_content(
-      ugrad_hw$homework,"Undergraduate Students", nrow(everyone_hw) > 0
+      ugrad_hw,"Undergraduate Students", nrow(everyone_hw) > 0
     )
   } else {
     ugrad_hw_items <- NULL
   }
   if (nrow(grad_hw) > 0) {
+    message("  Making grad content")
     grad_hw_items <- make_hw_asgt_section_content(
-      grad_hw$homework, "Graduate Students", nrow(everyone_hw) > 0
+      grad_hw, "Graduate Students", nrow(everyone_hw) > 0
     )
   } else {
     grad_hw_items <- NULL
   }
   if (nrow(everyone_hw) > 0) {
+    message("  Making everyone content")
+    if (nrow(ugrad_hw) + nrow(grad_hw) > 0) {
+      sec_hdr = "Everyone"
+    } else {
+      sec_hdr = NULL
+    }
     everyone_hw_items <- make_hw_asgt_section_content(
-      everyone_hw$homework, ifelse(nrow(ugrad_hw) + nrow(grad_hw) > 0,
-                                   "Everyone", NULL), FALSE)
+      everyone_hw, sec_hdr, FALSE)
   } else {
     everyone_hw_items <- NULL
   }
   if (all(is.null(grad_hw_items), is.null(ugrad_hw_items))) {
+    message(" All content is for everyone")
     output <- stringr::str_c(stringr::str_trim(output), "",
                              "### Homework Exercises:", "",
                              everyone_hw_items,
                              "", sep = "\n")
   } else {
+    message("  Combining undergrad, grad, and everyone content.")
     output <- stringr::str_c(stringr::str_trim(output), "",
                              "### Homework Exercises:", "",
                              itemize(c(everyone_hw_items, ugrad_hw_items,
@@ -232,11 +282,13 @@ make_hw_asgt_content <- function(key, semester, use_solutions = FALSE) {
   output <- stringr::str_c(stringr::str_trim(output), epilogue_str, "",
                            sep = "\n\n")
 
+  message(" Making notes.")
   everyone_notes <- dplyr::bind_rows(prologue_notes, everyone_notes,
                                      epilogue_notes) %>%
     dplyr::distinct()
 
   if (nrow(everyone_notes) > 0) {
+    message("  Making everyone notes")
     everyone_note_items <- everyone_notes$homework_notes %>%
       stringr::str_trim("right") %>% stringr::str_c(collapse = "\n\n")
   } else {
@@ -244,6 +296,7 @@ make_hw_asgt_content <- function(key, semester, use_solutions = FALSE) {
   }
 
   if (nrow(ugrad_notes) > 0) {
+    message("  Making undergrad notes")
     ugrad_note_items <- ugrad_notes$homework_notes %>%
       stringr::str_trim("right") %>% stringr::str_c(collapse = "\n\n")
   } else {
@@ -251,6 +304,7 @@ make_hw_asgt_content <- function(key, semester, use_solutions = FALSE) {
   }
 
   if (nrow(grad_notes) > 0) {
+    message("  Making grad notes")
     grad_note_items <- grad_notes$homework_notes %>%
       stringr::str_trim("right") %>% stringr::str_c(collapse = "\n\n")
   } else {
@@ -259,6 +313,7 @@ make_hw_asgt_content <- function(key, semester, use_solutions = FALSE) {
 
   if (c(everyone_note_items, ugrad_note_items, grad_note_items) %>%
       purrr::map_lgl(is.null) %>% all() %>% not()) {
+    message("  Appending notes to content")
     output <- output %>% stringr::str_trim() %>%
       stringr::str_c("### Notes on Homework:", "", sep = "\n\n")
 
@@ -287,7 +342,8 @@ make_hw_asgt_content <- function(key, semester, use_solutions = FALSE) {
   output
 }
 
-make_hw_asgt_page <- function(key, semester, use_solutions = FALSE) {
+make_hw_asgt_page <- function(key, semester, use_solutions = FALSE,
+                              use_pdfs = TRUE) {
   assignment <- get_hw_assignment(key, semester)
 
   hw_date <- assignment$date
@@ -295,7 +351,7 @@ make_hw_asgt_page <- function(key, semester, use_solutions = FALSE) {
   hw_idx <- assignment$hw_id
   hw_num <- assignment$hw_num
   hw_slug <- make_hw_slug(assignment)
-  hw_type = assignment$hw_type
+  hw_type <- assignment$hw_type
   short_hw_type = assignment$short_hw_type
   pub_date <- semester$semester_dates$pub_date
 
@@ -303,18 +359,26 @@ make_hw_asgt_page <- function(key, semester, use_solutions = FALSE) {
           ", slug = ", hw_slug, ")")
 
   delim <- "---"
-  header <- tibble::tibble(title = hw_topic,
-                           due_date = lubridate::as_date(hw_date) %>% as.character(),
-                           assignment_type = hw_type,
-                           short_assignment_type = short_hw_type,
-                           assignment_number = hw_num, weight = hw_idx,
-                           slug = hw_slug,
-                           pubdate = as.character(pub_date),
-                           date = as.character(hw_date),
-                           output = list("blogdown::html_page" =
-                                           list(md_extensions = get_md_extensions()))
-  ) %>% purrr::discard(is_mt_or_na) %>%
-    yaml::as.yaml() %>% stringr::str_trim("right") %>%
+  header <- list(
+    title = hw_topic,
+    due_date = lubridate::as_date(hw_date) %>% as.character(),
+    assignment_type = hw_type,
+    short_assignment_type = short_hw_type,
+    assignment_number = hw_num, weight = hw_idx,
+    slug = hw_slug,
+    pubdate = as.character(pub_date),
+    date = as.character(hw_date),
+    output = list("blogdown::html_page" =
+                    list(md_extensions = get_md_extensions()),
+                  pdf_document =
+                    list(toc = TRUE, toc_depth = 3L))
+  )
+  if (use_pdfs) {
+    header$pdf_url = stringr::str_c("/files/homework_asgts/",
+                                    header$slug, ".pdf")
+  }
+  header <- header %>% purrr::discard(is_mt_or_na) %>%
+    yaml::as.yaml() %>% stringr::str_trim("right") %>% # nolint
     stringr::str_c(delim, ., delim, sep = "\n")
   context <- make_context(assignment, "homework", semester)
   hw_page <- stringr::str_c(
@@ -352,14 +416,16 @@ make_short_hw_assignment <- function(key, semester) {
     # merge_dates(semester) %>%
     dplyr::arrange(.data$hw_item_id)
 
-  d <- assignment$date %>% unique()
+  # d <- assignment$date %>% unique()
   hw <- items %>%
     dplyr::mutate(short_homework = ifelse(is.na(.data$short_homework),
                                           .data$homework, .data$short_homework)) %>%
     dplyr::filter(!.data$hw_prologue, !.data$hw_epilogue,
                   ! is.na(.data$short_homework)) %>%
     dplyr::arrange(.data$undergraduate_only, .data$graduate_only,
-                   dplyr::desc(.data$hw_self_assess), .data$hw_item_id)
+                   dplyr::desc(.data$hw_self_assess),
+                   dplyr::desc(.data$hw_optional),
+                   .data$hw_item_id)
   hw_topics <- hw %>% dplyr::mutate(topic = stringr::str_trim(.data$short_homework))
 
   if (any(hw_topics$undergraduate_only | hw_topics$graduate_only)) {

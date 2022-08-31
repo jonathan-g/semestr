@@ -4,10 +4,14 @@
 \alias{make_rmd_output_format}
 \title{Make an RMD output format}
 \usage{
-make_rmd_output_format(toc = FALSE)
+make_rmd_output_format(toc = FALSE, toc_depth = NULL, includes = NULL)
 }
 \arguments{
 \item{toc}{Include a table of contents?}
+
+\item{toc_depth}{Depth of the table of contents}
+
+\item{includes}{list of files to include.}
 }
 \value{
 A list containing a named list of output formats.
