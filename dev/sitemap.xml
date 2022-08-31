@@ -1,7 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
+    <loc>https://jonathan-g.github.io/semestr/CODE_OF_CONDUCT.html</loc>
+  </url>
+  <url>
+    <loc>https://jonathan-g.github.io/semestr/CONTRIBUTING.html</loc>
+  </url>
+  <url>
+    <loc>https://jonathan-g.github.io/semestr/ISSUE_TEMPLATE.html</loc>
+  </url>
+  <url>
+    <loc>https://jonathan-g.github.io/semestr/LICENSE-text.html</loc>
+  </url>
+  <url>
+    <loc>https://jonathan-g.github.io/semestr/LICENSE.html</loc>
+  </url>
+  <url>
+    <loc>https://jonathan-g.github.io/semestr/SUPPORT.html</loc>
+  </url>
+  <url>
+    <loc>https://jonathan-g.github.io/semestr/authors.html</loc>
+  </url>
+  <url>
     <loc>https://jonathan-g.github.io/semestr/index.html</loc>
+  </url>
+  <url>
+    <loc>https://jonathan-g.github.io/semestr/news/index.html</loc>
   </url>
   <url>
     <loc>https://jonathan-g.github.io/semestr/reference/add_key_prefix.html</loc>
@@ -103,6 +127,12 @@
     <loc>https://jonathan-g.github.io/semestr/reference/grab_header.html</loc>
   </url>
   <url>
+    <loc>https://jonathan-g.github.io/semestr/reference/index.html</loc>
+  </url>
+  <url>
+    <loc>https://jonathan-g.github.io/semestr/reference/init_schedule.html</loc>
+  </url>
+  <url>
     <loc>https://jonathan-g.github.io/semestr/reference/is_mt_or_na.html</loc>
   </url>
   <url>
@@ -148,6 +178,9 @@
     <loc>https://jonathan-g.github.io/semestr/reference/pipe.html</loc>
   </url>
   <url>
+    <loc>https://jonathan-g.github.io/semestr/reference/prepare_schedule.html</loc>
+  </url>
+  <url>
     <loc>https://jonathan-g.github.io/semestr/reference/prune_pdf_digests.html</loc>
   </url>
   <url>
@@ -155,6 +188,9 @@
   </url>
   <url>
     <loc>https://jonathan-g.github.io/semestr/reference/sanitize_date_range.html</loc>
+  </url>
+  <url>
+    <loc>https://jonathan-g.github.io/semestr/reference/schedule_strip_finals.html</loc>
   </url>
   <url>
     <loc>https://jonathan-g.github.io/semestr/reference/semestr-package.html</loc>
