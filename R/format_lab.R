@@ -1,6 +1,8 @@
 make_lab_slug <- function(lab_asgt) {
-  message("Making lab slug for ", lab_asgt$lab_grp_key,
-          ", lab_num = ", lab_asgt$lab_num)
+  if (getOption("semestr.verbose", default = 1) >= 2) {
+    message("Making lab slug for ", lab_asgt$lab_grp_key,
+            ", lab_num = ", lab_asgt$lab_num)
+  }
   slug <- sprintf("lab_%02d", lab_asgt$lab_num)
   slug
 }
@@ -52,7 +54,9 @@ make_lab_solution_page <- function(sol, semester) {
 }
 
 make_lab_solution <- function(sol, semester) {
-  message("Making solutions for lab ", sol$lab_num, ".")
+  if (getOption("semestr.verbose", default = 1) >= 1) {
+    message("Making solutions for lab ", sol$lab_num, ".")
+  }
   fname <- sprintf("lab_%02d_%s.Rmd", sol$lab_num, sol$lab_sol_filename)
   solution_path <- fname %>%
     file.path(semester$root_dir, "content", "lab_solutions/", .)
@@ -206,8 +210,10 @@ make_lab_assignment_page <- function(key, semester, use_solutions = FALSE) {
   report_date <- assignment$report_date
   asgt_url <- assignment$lab_assignment_url
 
-  message("Making lab page for Lab #", lab_num, " (index = ", lab_idx,
-          ", slug = ", lab_slug, ")")
+  if (getOption("semestr.verbose", default = 1) >= 1) {
+    message("Making lab page for Lab #", lab_num, " (index = ", lab_idx,
+            ", slug = ", lab_slug, ")")
+  }
 
   delim <- "---"
 
@@ -245,9 +251,11 @@ generate_lab_assignment <- function(key, semester, use_solutions = FALSE) {
   lab_path <- fname %>% file.path(semester$root_dir, "content", "labs", .)
   # lab_url <- fname %>% stringr::str_replace("\\.Rmd$", "")
   lab_url <- fname %>% stringr::str_replace("_assignment\\.Rmd$", "")
-  message("Making lab assignment page for lab # ", lab_num,
-          " (index = ", assignment$lab_id,
-          ", filename = ", fname, ")")
+  if (getOption("semestr.verbose", default = 1) >= 1) {
+    message("Making lab assignment page for lab # ", lab_num,
+            " (index = ", assignment$lab_id,
+            ", filename = ", fname, ")")
+  }
   lab_assignment_page <- make_lab_assignment_page(key, semester, use_solutions)
   cat(lab_assignment_page, file = lab_path)
   c(path = lab_path, url = lab_url)

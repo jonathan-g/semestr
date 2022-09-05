@@ -86,9 +86,11 @@ schedule_widen <- function(schedule, final_exams, semester,
     dplyr::select(id_class = "cal_id", "class_num")
 
   if (final_is_take_home) {
-    message("processing final_exams: (",
-            stringr::str_c(names(final_exams), collapse = ", "), "), with ",
-            nrow(final_exams), " rows.")
+    if (getOption("semestr.verbose", default = 1) >= 1) {
+      message("processing final_exams: (",
+              stringr::str_c(names(final_exams), collapse = ", "), "), with ",
+              nrow(final_exams), " rows.")
+    }
     take_home_exam <- dplyr::top_n(final_exams, 1, wt = .data$date)
     take_home_exam$key <- add_key_prefix("TAKE_HOME_FINAL_EXAM", "exam")
     take_home_exam_topics <- tibble::tibble(key_exam = take_home_exam$key,
@@ -221,8 +223,10 @@ copy_slides <- function(schedule, date, cal_entry, semester) {
 
     if (file.exists(file.path(slide_dir, slide_class_dir,
                               "index.html"))) {
-      message("HTML slide_url for class ", class_num, " on ",
-              as.character(date), " is ", slide_url)
+      if (getOption("semestr.verbose", default = 1) >= 2) {
+        message("HTML slide_url for class ", class_num, " on ",
+                as.character(date), " is ", slide_url)
+      }
       schedule <- schedule %>%
         dplyr::mutate(page_lecture =
                         ifelse(comp_na_f(.data$class_num, cal_entry$class_num),
@@ -233,28 +237,36 @@ copy_slides <- function(schedule, date, cal_entry, semester) {
       if (length(slides) > 0) {
         if (length(slides) == 1) {
           these_slides <- slides[1]
-          message("One ppt slide found for class ", class_num, " on ",
-                  as.character(date), ": ", these_slides)
+          if (getOption("semestr.verbose", default = 1) >= 1) {
+            message("One ppt slide found for class ", class_num, " on ",
+                    as.character(date), ": ", these_slides)
+          }
         } else {
           slide_df <- tibble::tibble(slide = slides) %>%
             dplyr::mutate(date = file.mtime(
               file.path(slide_dir, slide_class_dir, .data$slide))) %>%
             dplyr::arrange(dplyr::desc(.data$date))
           these_slides <- slide_df$slide[1]
-          message(length(slides), " ppt slides found for class ", class_num,
-                  " on ", as.character(date),
-                  ". Choosing ", these_slides)
+          if (getOption("semestr.verbose", default = 1) >= 1) {
+            message(length(slides), " ppt slides found for class ", class_num,
+                    " on ", as.character(date),
+                    ". Choosing ", these_slides)
+          }
         }
         slide_url <- file.path(slide_url, these_slides, fsep = "/") %>%
           URLencode()
-        message("slide_url = ", slide_url)
+        if (getOption("semestr.verbose", default = 1) >= 2) {
+          message("slide_url = ", slide_url)
+        }
         schedule <- schedule %>%
           dplyr::mutate(page_lecture =
                           ifelse(comp_na_f(.data$class_num, cal_entry$class_num),
                                  .data$slide_url, .data$page_lecture))
       } else {
-        message("No slides found for class ", class_num, " on ",
-                as.character(date))
+        if (getOption("semestr.verbose", default = 1) >= 1) {
+          message("No slides found for class ", class_num, " on ",
+                  as.character(date))
+        }
       }
     }
   }
@@ -267,8 +279,10 @@ build_reading_assignment <- function(schedule, date, cal_entry, semester) {
   class_num <- cal_entry$class_num
   if (! is.na(cal_entry$id_class) &&
       cal_entry$id_class %in% semester$rd_items$cal_id) {
-    message("Making reading page for class #", cal_entry$class_num,
-            " on ", as.character(date))
+    if (getOption("semestr.verbose", default = 1) >= 1) {
+      message("Making reading page for class #", cal_entry$class_num,
+              " on ", as.character(date))
+    }
     rd_fname <- sprintf("reading_%02d.Rmd", cal_entry$class_num)
     rd_path <- rd_fname %>% file.path(root_dir, "content", "reading", .)
     rd_url <- rd_fname %>% stringr::str_replace("\\.Rmd$", "") %>%
@@ -288,7 +302,9 @@ build_hw_assignment <- function(schedule, date, cal_entry, semester) {
     schedule <- dplyr::mutate(schedule, page_hw = NA_character_)
   }
   if (tibble::has_name(cal_entry, "id_hw") && ! is.na(cal_entry$id_hw)) {
-    message("Making homework page for ", cal_entry$key_hw)
+    if (getOption("semestr.verbose", default = 1) >= 1) {
+      message("Making homework page for ", cal_entry$key_hw)
+    }
     links <- generate_hw_assignment(cal_entry$key_hw, semester, TRUE)
     schedule <- schedule %>%
       dplyr::mutate(page_hw = ifelse(comp_na_f(.data$id_hw, cal_entry$id_hw),
@@ -302,7 +318,9 @@ build_lab_assignment <- function(schedule, date, cal_entry, semester) {
     schedule <- dplyr::mutate(schedule, page_lab = NA_character_)
   }
   if (tibble::has_name(cal_entry, "id_lab") && !is.na(cal_entry$id_lab)) {
-    message("Making lab page for lab ", cal_entry$key_lab )
+    if (getOption("semestr.verbose", default = 1) >= 1) {
+      message("Making lab page for lab ", cal_entry$key_lab )
+    }
     links <- generate_lab_assignment(cal_entry$key_lab, semester, TRUE)
     schedule <- schedule %>%
       dplyr::mutate(page_lab = ifelse(comp_na_f(.data$id_lab, cal_entry$id_lab),
@@ -414,7 +432,9 @@ generate_assignments <- function(semester) {
 
   schedule <- build_assignments(schedule, semester)
 
-  message("Done building assignments...")
+  if (getOption("semestr.verbose", default = 1) >= 1) {
+    message("Done building assignments...")
+  }
 
   context <- list(type = "semester schedule")
 

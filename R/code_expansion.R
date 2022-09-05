@@ -181,7 +181,9 @@ expand_codes <- function(text, context, semester, delim = c("<%", "%>"),
   retval <- eval(expand_body, envir = local_env)
 
   for (sym in unlock_list) {
-    message("Unlock list: unlocking ", sym)
+    if (getOption("semestr.verbose", default = 1) >= 1) {
+      message("Unlock list: unlocking ", sym)
+    }
     # unlockBinding(sym, local_env)
   }
   retval

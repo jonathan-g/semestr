@@ -11,9 +11,11 @@ get_hw_assignment <- function(key, semester) {
 }
 
 make_hw_slug <- function(hw_asgt) {
-  message("Making HW slug for ", hw_asgt$hw_grp_key,
-          ", is_numbered = ", hw_asgt$hw_is_numbered,
-          ", hw_num = ", hw_asgt$hw_num)
+  if (getOption("semestr.verbose", default = 1) >= 2) {
+    message("Making HW slug for ", hw_asgt$hw_grp_key,
+            ", is_numbered = ", hw_asgt$hw_is_numbered,
+            ", hw_num = ", hw_asgt$hw_num)
+  }
   if (hw_asgt$hw_is_numbered) {
     slug <- sprintf("homework_%02d", hw_asgt$hw_num)
   } else {
@@ -27,8 +29,10 @@ make_hw_solution_page <- function(solution, semester, slug = NA_character_) {
     slug = sprintf("homework_%02d", solution$hw_num)
   }
 
-  message("Generating markdown for solutions to homework #", solution$hw_num,
-          ", slug = ", slug)
+  if (getOption("semestr.verbose", default = 1) >= 1) {
+    message("Generating markdown for solutions to homework #",
+            solution$hw_num, ", slug = ", slug)
+  }
 
   delim <- "---"
   header <- list(
@@ -45,7 +49,7 @@ make_hw_solution_page <- function(solution, semester, slug = NA_character_) {
                                 toc = TRUE),
                          pdf_document =
                            list(toc = TRUE, toc_depth = 3)
-                         )
+      )
       )
     ) %>%
     yaml::as.yaml() %>% stringr::str_trim("right") %>% #nolint
@@ -68,8 +72,10 @@ make_hw_solution <- function(solution, assignment, semester, slug = NA_character
     file.path(semester$root_dir, "content", "homework_solutions/", .)
   solution_url <- fname %>% stringr::str_replace("\\.Rmd$", "") %>%
     file.path("/homework_solutions", .)
-  message("Making solutions file for homework #", assignment$hw_num, ": ",
-          solution_path)
+  if (getOption("semestr.verbose", default = 1) >= 1) {
+    message("Making solutions file for homework #", assignment$hw_num, ": ",
+            solution_path)
+  }
   hw_solution_page <- make_hw_solution_page(solution, semester, slug)
   cat(hw_solution_page, file = solution_path)
   c(path = solution_path, url = solution_url)
@@ -77,10 +83,13 @@ make_hw_solution <- function(solution, assignment, semester, slug = NA_character
 
 make_hw_asgt_section_content <- function(items, heading, also_flag) {
   output <- NULL
-  message("Making homework section ", heading, ": ")
-  message("class(items) = [", stringr::str_c(class(items), collapse = ","), "]")
-  message("  dim = (", stringr::str_c(dim(items), collapse = ","),
-          ", length = ", length(items))
+  if (getOption("semestr.verbose", default = 1) >= 2) {
+    message("Making homework section ", heading, ": ")
+    message("class(items) = [", stringr::str_c(class(items), collapse = ","),
+            "]")
+    message("  dim = (", stringr::str_c(dim(items), collapse = ","),
+            ", length = ", length(items))
+  }
   if (nrow(items) > 0) {
     items <- items %>%
       dplyr::mutate(hw_self_assess = tidyr::replace_na(.data$hw_self_assess,
@@ -136,7 +145,9 @@ make_hw_asgt_section_content <- function(items, heading, also_flag) {
 make_hw_asgt_content <- function(key, semester, use_solutions = FALSE) {
   assignment <- get_hw_assignment(key, semester)
 
-  message("Making content for HW ", key)
+  if (getOption("semestr.verbose", default = 1) >= 2) {
+    message("Making content for HW ", key)
+  }
 
   items <- semester$hw_items %>% dplyr::filter(.data$hw_grp_key == key) %>%
     # merge_dates(semester) %>%
@@ -182,19 +193,23 @@ make_hw_asgt_content <- function(key, semester, use_solutions = FALSE) {
   prologue_notes <- notes %>% dplyr::filter(.data$hw_prologue)
   epilogue_notes <- notes %>% dplyr::filter(.data$hw_epilogue)
 
-  message("Building content: ",
-          nrow(prologue), " prologue items, ",
-          nrow(epilogue), " epilogue items, ",
-          nrow(notes), " notes", "\n  ",
-          nrow(everyone_hw), " items for everyone, ",
-          nrow(ugrad_hw), " items for undergrads, ",
-          nrow(grad_hw), " items for grads."
-          )
+  if (getOption("semestr.verbose", default = 1) >= 3) {
+    message("Building content: ",
+            nrow(prologue), " prologue items, ",
+            nrow(epilogue), " epilogue items, ",
+            nrow(notes), " notes", "\n  ",
+            nrow(everyone_hw), " items for everyone, ",
+            nrow(ugrad_hw), " items for undergrads, ",
+            nrow(grad_hw), " items for grads."
+    )
+  }
 
   output <- NULL
 
   if (! is.null(solutions) && nrow(solutions) >= 1) {
-    message("Making homework solutions")
+    if (getOption("semestr.verbose", default = 1) >= 1) {
+      message("Making homework solutions")
+    }
     output <- stringr::str_c(output, "## Solutions:\n\n")
     for (i in seq(nrow(solutions))) {
       this_sol <- solutions[i,]
@@ -205,11 +220,15 @@ make_hw_asgt_content <- function(key, semester, use_solutions = FALSE) {
     output <- stringr::str_c(output, "\n")
   }
 
-  message("Starting content generation")
+  if (getOption("semestr.verbose", default = 1) >= 3) {
+    message("Starting content generation")
+  }
 
   output <- stringr::str_c(output, "## Homework", sep = "\n\n")
   if (nrow(prologue) > 0) {
-    message("  Adding prologue")
+    if (getOption("semestr.verbose", default = 1) >= 3) {
+      message("  Adding prologue")
+    }
     prologue_str <- stringr::str_c(
       purrr::discard(prologue$homework,
                      ~is_mt_or_na(.x) || .x == "") %>%
@@ -223,7 +242,9 @@ make_hw_asgt_content <- function(key, semester, use_solutions = FALSE) {
   }
 
   if (nrow(epilogue) > 0) {
-    message("  Adding epiloque")
+    if (getOption("semestr.verbose", default = 1) >= 3) {
+      message("  Adding epiloque")
+    }
     epilogue_str <- stringr::str_c(
       purrr::discard(epilogue$homework,
                      ~is_mt_or_na(.x) || .x == "") %>%
@@ -237,7 +258,9 @@ make_hw_asgt_content <- function(key, semester, use_solutions = FALSE) {
 
   output <- stringr::str_c(output, prologue_str, "", sep = "\n\n")
   if (nrow(ugrad_hw) > 0) {
-    message("  Making undergrad content")
+    if (getOption("semestr.verbose", default = 1) >= 3) {
+      message("  Making undergrad content")
+    }
     ugrad_hw_items <- make_hw_asgt_section_content(
       ugrad_hw,"Undergraduate Students", nrow(everyone_hw) > 0
     )
@@ -245,7 +268,9 @@ make_hw_asgt_content <- function(key, semester, use_solutions = FALSE) {
     ugrad_hw_items <- NULL
   }
   if (nrow(grad_hw) > 0) {
-    message("  Making grad content")
+    if (getOption("semestr.verbose", default = 1) >= 3) {
+      message("  Making grad content")
+    }
     grad_hw_items <- make_hw_asgt_section_content(
       grad_hw, "Graduate Students", nrow(everyone_hw) > 0
     )
@@ -253,7 +278,9 @@ make_hw_asgt_content <- function(key, semester, use_solutions = FALSE) {
     grad_hw_items <- NULL
   }
   if (nrow(everyone_hw) > 0) {
-    message("  Making everyone content")
+    if (getOption("semestr.verbose", default = 1) >= 3) {
+      message("  Making everyone content")
+    }
     if (nrow(ugrad_hw) + nrow(grad_hw) > 0) {
       sec_hdr = "Everyone"
     } else {
@@ -265,13 +292,17 @@ make_hw_asgt_content <- function(key, semester, use_solutions = FALSE) {
     everyone_hw_items <- NULL
   }
   if (all(is.null(grad_hw_items), is.null(ugrad_hw_items))) {
-    message(" All content is for everyone")
+    if (getOption("semestr.verbose", default = 1) >= 3) {
+      message(" All content is for everyone")
+    }
     output <- stringr::str_c(stringr::str_trim(output), "",
                              "### Homework Exercises:", "",
                              everyone_hw_items,
                              "", sep = "\n")
   } else {
-    message("  Combining undergrad, grad, and everyone content.")
+    if (getOption("semestr.verbose", default = 1) >= 3) {
+      message("  Combining undergrad, grad, and everyone content.")
+    }
     output <- stringr::str_c(stringr::str_trim(output), "",
                              "### Homework Exercises:", "",
                              itemize(c(everyone_hw_items, ugrad_hw_items,
@@ -282,13 +313,17 @@ make_hw_asgt_content <- function(key, semester, use_solutions = FALSE) {
   output <- stringr::str_c(stringr::str_trim(output), epilogue_str, "",
                            sep = "\n\n")
 
-  message(" Making notes.")
+  if (getOption("semestr.verbose", default = 1) >= 3) {
+    message(" Making notes.")
+  }
   everyone_notes <- dplyr::bind_rows(prologue_notes, everyone_notes,
                                      epilogue_notes) %>%
     dplyr::distinct()
 
   if (nrow(everyone_notes) > 0) {
-    message("  Making everyone notes")
+    if (getOption("semestr.verbose", default = 1) >= 3) {
+      message("  Making everyone notes")
+    }
     everyone_note_items <- everyone_notes$homework_notes %>%
       stringr::str_trim("right") %>% stringr::str_c(collapse = "\n\n")
   } else {
@@ -296,7 +331,9 @@ make_hw_asgt_content <- function(key, semester, use_solutions = FALSE) {
   }
 
   if (nrow(ugrad_notes) > 0) {
-    message("  Making undergrad notes")
+    if (getOption("semestr.verbose", default = 1) >= 3) {
+      message("  Making undergrad notes")
+    }
     ugrad_note_items <- ugrad_notes$homework_notes %>%
       stringr::str_trim("right") %>% stringr::str_c(collapse = "\n\n")
   } else {
@@ -304,7 +341,9 @@ make_hw_asgt_content <- function(key, semester, use_solutions = FALSE) {
   }
 
   if (nrow(grad_notes) > 0) {
-    message("  Making grad notes")
+    if (getOption("semestr.verbose", default = 1) >= 3) {
+      message("  Making grad notes")
+    }
     grad_note_items <- grad_notes$homework_notes %>%
       stringr::str_trim("right") %>% stringr::str_c(collapse = "\n\n")
   } else {
@@ -313,7 +352,9 @@ make_hw_asgt_content <- function(key, semester, use_solutions = FALSE) {
 
   if (c(everyone_note_items, ugrad_note_items, grad_note_items) %>%
       purrr::map_lgl(is.null) %>% all() %>% not()) {
-    message("  Appending notes to content")
+    if (getOption("semestr.verbose", default = 1) >= 3) {
+      message("  Appending notes to content")
+    }
     output <- output %>% stringr::str_trim() %>%
       stringr::str_c("### Notes on Homework:", "", sep = "\n\n")
 
@@ -355,8 +396,10 @@ make_hw_asgt_page <- function(key, semester, use_solutions = FALSE,
   short_hw_type = assignment$short_hw_type
   pub_date <- semester$semester_dates$pub_date
 
-  message("Making homework page for HW #", hw_num, " (index = ", hw_idx,
-          ", slug = ", hw_slug, ")")
+  if (getOption("semestr.verbose", default = 1) >= 1) {
+    message("Making homework page for HW #", hw_num, " (index = ", hw_idx,
+            ", slug = ", hw_slug, ")")
+  }
 
   delim <- "---"
   header <- list(
@@ -396,11 +439,13 @@ generate_hw_assignment <- function(key, semester, use_solutions = FALSE) {
 
   hw_slug <- make_hw_slug(assignment)
   hw_fname <- stringr::str_c(hw_slug, ".Rmd")
-  message("Making homework page for assignment ",
-          ifelse(is.na(assignment$hw_num), assignment$hw_grp_key,
-                 stringr::str_c("# ", assignment$hw_num)),
-          " (index = ", assignment$hw_id,
-          ", slug = ", hw_slug, ", filename = ", hw_fname, ")")
+  if (getOption("semestr.verbose", default = 1) >= 1) {
+    message("Making homework page for assignment ",
+            ifelse(is.na(assignment$hw_num), assignment$hw_grp_key,
+                   stringr::str_c("# ", assignment$hw_num)),
+            " (index = ", assignment$hw_id,
+            ", slug = ", hw_slug, ", filename = ", hw_fname, ")")
+  }
   hw_path <- hw_fname %>% file.path(semester$root_dir,
                                     "content", "assignment", .)
   hw_url <- hw_fname %>% stringr::str_replace("\\.Rmd$", "")

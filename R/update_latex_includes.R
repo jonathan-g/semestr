@@ -29,8 +29,10 @@ update_latex_styles <- function(root_dir = NULL, content_path = "content",
 
   for (src in src_files) {
     for (dest in content_dirs) {
-      message("Copying ", stringr::str_replace(src, base_pat, ""),
-              " to ", stringr::str_replace(dest, base_pat, ""))
+      if (getOption("semestr.verbose", default = 1) >= 1) {
+        message("Copying ", stringr::str_replace(src, base_pat, ""),
+                " to ", stringr::str_replace(dest, base_pat, ""))
+      }
       file.copy(src, dest, overwrite = TRUE, recursive = FALSE,
                 copy.mode = TRUE, copy.date = TRUE)
     }

@@ -102,7 +102,9 @@ build_pdf_from_rmd <- function(source_file, root_dir, static_path = "static",
   }
   pdf_output <- build_pdf_output_format(hdr, output_options)
 
-  message("building ", pdf_dest, " from ", basename(source_file))
+  if (getOption("semestr.verbose", default = 1) >= 1) {
+    message("building ", pdf_dest, " from ", basename(source_file))
+  }
 
   rel_dest <- R.utils::getRelativePath(pdf_dest, dirname(source_file))
 
