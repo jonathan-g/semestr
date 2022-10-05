@@ -417,18 +417,7 @@ prepare_schedule <- function(semester) {
 #' }
 #' @export
 generate_assignments <- function(semester) {
-  schedule <- init_schedule(semester)
-  tmp <- schedule_strip_finals(schedule, semester)
-  schedule <- tmp$schedule
-  final_exams <- tmp$final_exams
-
-  tmp <- schedule %>% schedule_add_homework(semester)
-  schedule <- tmp$schedule
-
-  tmp <- schedule_widen(schedule, final_exams, semester, TRUE)
-  schedule <- tmp$schedule
-
-  set_schedule_globals(schedule, semester)
+  schedule <- prepare_schedule(semester)
 
   schedule <- build_assignments(schedule, semester)
 
