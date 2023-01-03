@@ -2,9 +2,9 @@
 
 # The MIT License
 
-The datafsm package for R is licensed under the MIT License.
+The semestr package for R is licensed under the MIT License.
 
-> Copyright (c) 2019: Jonathan M. Gilligan:
+> Copyright (c) 2019–2023: Jonathan M. Gilligan:
 >
 > Permission is hereby granted, free of charge, to any person obtaining
 > a copy of this software and associated documentation files (the

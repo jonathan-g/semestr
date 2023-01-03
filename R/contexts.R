@@ -6,7 +6,9 @@ make_reading_context <- function(asgt, semester) {
     cal_id = asgt$cal_id,
     date = asgt$date,
     class_num = asgt$class_num,
-    title = asgt$topic
+    title = asgt$topic,
+    rd_grp_id = asgt$rd_grp_id,
+    rd_grp_key = asgt$rd_grp_key
   )
   context
 }

@@ -1,3 +1,17 @@
+# semestr 0.2.2
+
+* Add support for expansion codes in markdown content to reference future
+  and past classes and reading assignments using new functions 
+  `lookup_future_class`, `lookup_past_class`, `lookup_future_reading`,
+  and `lookup_past_reading`.
+
+# semestr 0.2.1
+
+* Add support for self-study exercises
+* Updated badges
+* Fixed pkgdown configuration
+* Add control for toc depth in RMarkdown output.
+
 # semestr 0.2.0
 
 * Add database column `hw_self_assess` to the table `homework_items` and 

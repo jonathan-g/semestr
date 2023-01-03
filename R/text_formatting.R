@@ -259,6 +259,7 @@ format_day_date_range<- function(dates, abbr_month = TRUE, abbr_wday = TRUE) {
   })
 }
 
+
 #' Look Up and Format a Date
 #'
 #' Look up a date from the semester schedule and format it.

@@ -20,7 +20,9 @@
     "type2base", "type2idx", "type2prefix", "type2col",
     "col2idx", "col2type",
     "idx2col", "idx2type",
-    "base2type", "item_type", "item_mod"
+    "base2type", "item_type", "item_mod",
+    "lookup_future_class", "lookup_past_class", "lookup_future_reading",
+    "lookup_past_reading"
     )
 
 make_fn_body <- function(..., expr_lst = NULL) {
@@ -96,7 +98,8 @@ merge_fn_bodies <- function(..., body_lst = NULL) {
 # }
 #
 
-expand_codes <- function(text, context, semester, delim = c("<%", "%>"),
+expand_codes <- function(text, context, semester, schedule,
+                         delim = c("<%", "%>"),
                          envir = NULL, extra_packages = NULL,
                          params = NULL) {
   loaded <- .packages()
@@ -127,6 +130,7 @@ expand_codes <- function(text, context, semester, delim = c("<%", "%>"),
     for (sem_sym in c("calendar")) {
       assign(sem_sym, semester[[sem_sym]], envir = local_env)
     }
+    assign("schedule", schedule, envir = local_env)
     ee_globals <- get("globals", envir = .expand_env)
     for (sym in names(ee_globals)) {
       assign(sym, ee_globals[[sym]], envir = local_env)
@@ -159,7 +163,6 @@ expand_codes <- function(text, context, semester, delim = c("<%", "%>"),
     if (! is.null(params)) {
       for (param in names(params)) {
         assign(param, params[[param]], envir = local_env)
-
       }
     }
   }
@@ -189,7 +192,7 @@ expand_codes <- function(text, context, semester, delim = c("<%", "%>"),
   retval
 }
 
-expand_code <- function(text, context, semester) {
-  stringr::str_c("<%", text, "%>") %>% expand_codes(context, semester)
+expand_code <- function(text, context, semester, schedule) {
+  stringr::str_c("<%", text, "%>") %>% expand_codes(context, semester, schedule)
 }
 

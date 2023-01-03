@@ -363,6 +363,8 @@ make_reading_assignment <- function(reading_entry) {
 #' @param cal_id The calendar ID for this assignment.
 #' @param semester A semester object (a list returned by
 #'   `\link{load_semester_db}`).
+#' @param schedule A data frame with the semester schedule (returned by
+#'   \link{prepare_schedule})
 #' @param use_pdfs Add a `pdf_url` field to the YAML header so a PDF file will
 #'   be generated for the reading assignment.
 #'
@@ -370,7 +372,7 @@ make_reading_assignment <- function(reading_entry) {
 #'   assignment page.
 #'
 #' @export
-make_reading_page <- function(cal_id, semester, use_pdfs = TRUE){
+make_reading_page <- function(cal_id, semester, schedule, use_pdfs = TRUE){
   cal_id <- enquo(cal_id)
   reading <- semester$rd_items %>%
     dplyr::filter(.data$cal_id == !!cal_id) %>%
@@ -391,8 +393,8 @@ make_reading_page <- function(cal_id, semester, use_pdfs = TRUE){
   class_key <- unique(reading$class_key)
   assertthat::assert_that(length(class_num) == 1,
                           msg = "A calendar ID should have a unique class # (make_reading)")
-  key <- unique(reading$rd_grp_key)
-  assertthat::assert_that(length(key) == 1,
+  rd_grp <- unique(reading$rd_grp_key)
+  assertthat::assert_that(length(rd_grp) == 1,
                           msg = "A calendar ID should have a unique reading key # (make_reading)")
   if (semester$has_notices) {
     notices <- semester$notices %>%
@@ -440,8 +442,10 @@ make_reading_page <- function(cal_id, semester, use_pdfs = TRUE){
   context <- make_context(asgt, "reading", semester)
 
   rd_page <- rd_page %>%
-    expand_codes(context, semester, params = list(this_class_num = class_num,
-                                                  this_class_date = rd_date))
+    expand_codes(context, semester, schedule,
+                 params = list(this_class_num = class_num,
+                               this_rd_grp = rd_grp,
+                               this_class_date = rd_date))
   rd_page
 }
 

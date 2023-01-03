@@ -1,7 +1,7 @@
 Package: semestr
 Title: Generate Assignments for a Semester from a SQLlite Database
-Version: 0.2.1.9001
-Date: 2022-08-31
+Version: 0.2.1.9101
+Date: 2023-01-02
 Authors@R: 
     person(given = "Jonathan",
            family = "Gilligan",
@@ -47,5 +47,5 @@ Remotes:
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.1
+RoxygenNote: 7.2.3
 Language: en-US

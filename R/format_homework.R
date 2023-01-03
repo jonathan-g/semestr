@@ -24,7 +24,8 @@ make_hw_slug <- function(hw_asgt) {
   slug
 }
 
-make_hw_solution_page <- function(solution, semester, slug = NA_character_) {
+make_hw_solution_page <- function(solution, semester, schedule,
+                                  slug = NA_character_) {
   if (is_mt_or_na(slug) || is.null(slug)) {
     slug = sprintf("homework_%02d", solution$hw_num)
   }
@@ -59,11 +60,12 @@ make_hw_solution_page <- function(solution, semester, slug = NA_character_) {
     header,
     solution$sol_markdown,
     sep = "\n"
-  ) %>% expand_codes(context, semester)
+  ) %>% expand_codes(context, semester, schedule)
   hw_solution_page
 }
 
-make_hw_solution <- function(solution, assignment, semester, slug = NA_character_) {
+make_hw_solution <- function(solution, assignment, semester, schedule,
+                             slug = NA_character_) {
   if (is_mt_or_na(slug)) {
     slug = sprintf("homework_%02d", assignment$hw_num)
   }
@@ -76,7 +78,7 @@ make_hw_solution <- function(solution, assignment, semester, slug = NA_character
     message("Making solutions file for homework #", assignment$hw_num, ": ",
             solution_path)
   }
-  hw_solution_page <- make_hw_solution_page(solution, semester, slug)
+  hw_solution_page <- make_hw_solution_page(solution, semester, schedule, slug)
   cat(hw_solution_page, file = solution_path)
   c(path = solution_path, url = solution_url)
 }
@@ -142,7 +144,8 @@ make_hw_asgt_section_content <- function(items, heading, also_flag) {
   invisible(output)
 }
 
-make_hw_asgt_content <- function(key, semester, use_solutions = FALSE) {
+make_hw_asgt_content <- function(key, semester, schedule,
+                                 use_solutions = FALSE) {
   assignment <- get_hw_assignment(key, semester)
 
   if (getOption("semestr.verbose", default = 1) >= 2) {
@@ -213,7 +216,7 @@ make_hw_asgt_content <- function(key, semester, use_solutions = FALSE) {
     output <- stringr::str_c(output, "## Solutions:\n\n")
     for (i in seq(nrow(solutions))) {
       this_sol <- solutions[i,]
-      sol <- make_hw_solution(this_sol, assignment, semester)
+      sol <- make_hw_solution(this_sol, assignment, semester, schedule)
       output <- output %>% stringr::str_c("* [", this_sol$hw_sol_title, "](",
                                           sol['url'], ")\n")
     }
@@ -383,7 +386,7 @@ make_hw_asgt_content <- function(key, semester, use_solutions = FALSE) {
   output
 }
 
-make_hw_asgt_page <- function(key, semester, use_solutions = FALSE,
+make_hw_asgt_page <- function(key, semester, schedule, use_solutions = FALSE,
                               use_pdfs = TRUE) {
   assignment <- get_hw_assignment(key, semester)
 
@@ -426,16 +429,17 @@ make_hw_asgt_page <- function(key, semester, use_solutions = FALSE,
   context <- make_context(assignment, "homework", semester)
   hw_page <- stringr::str_c(
     header,
-    make_hw_asgt_content(key, semester, use_solutions),
+    make_hw_asgt_content(key, semester, schedule, use_solutions),
     sep = "\n"
-  ) %>% expand_codes(context, semester)
+  ) %>% expand_codes(context, semester, schedule)
   invisible(hw_page)
 }
 
-generate_hw_assignment <- function(key, semester, use_solutions = FALSE) {
+generate_hw_assignment <- function(key, semester, schedule,
+                                   use_solutions = FALSE) {
   assignment <- get_hw_assignment(key, semester)
 
-  hw_page <- make_hw_asgt_page(key, semester, use_solutions)
+  hw_page <- make_hw_asgt_page(key, semester, schedule, use_solutions)
 
   hw_slug <- make_hw_slug(assignment)
   hw_fname <- stringr::str_c(hw_slug, ".Rmd")

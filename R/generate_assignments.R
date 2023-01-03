@@ -65,6 +65,20 @@ schedule_add_homework <- function(schedule, semester) {
   list(schedule = schedule, hw = hw, hw_due = hw_due, missing_hw = missing_hw)
 }
 
+schedule_add_reading <- function(schedule, semester) {
+  has_reading <- semester$has_reading
+
+  if (has_reading) {
+    reading <- semester$rd_items %>%
+      dplyr::select(key_rd = "rd_grp_key", id_rd = "rd_grp_id",
+                    id_class = "class_id") %>%
+      dplyr::distinct()
+    schedule <- schedule %>% dplyr::left_join(reading, by = "id_class")
+  }
+
+  invisible(schedule)
+}
+
 schedule_widen <- function(schedule, final_exams, semester,
                            final_is_take_home = TRUE) {
   has_exams <- semester$has_exams
@@ -287,7 +301,7 @@ build_reading_assignment <- function(schedule, date, cal_entry, semester) {
     rd_path <- rd_fname %>% file.path(root_dir, "content", "reading", .)
     rd_url <- rd_fname %>% stringr::str_replace("\\.Rmd$", "") %>%
       file.path("/reading", .)
-    rd_page <- make_reading_page(cal_entry$id_class, semester)
+    rd_page <- make_reading_page(cal_entry$id_class, semester, schedule)
     cat(rd_page, file = rd_path)
     schedule <- schedule %>%
       dplyr::mutate(page_reading =
@@ -305,7 +319,8 @@ build_hw_assignment <- function(schedule, date, cal_entry, semester) {
     if (getOption("semestr.verbose", default = 1) >= 1) {
       message("Making homework page for ", cal_entry$key_hw)
     }
-    links <- generate_hw_assignment(cal_entry$key_hw, semester, TRUE)
+    links <- generate_hw_assignment(cal_entry$key_hw, semester, schedule,
+                                    TRUE)
     schedule <- schedule %>%
       dplyr::mutate(page_hw = ifelse(comp_na_f(.data$id_hw, cal_entry$id_hw),
                                      links['url'], .data$page_hw))
@@ -321,7 +336,8 @@ build_lab_assignment <- function(schedule, date, cal_entry, semester) {
     if (getOption("semestr.verbose", default = 1) >= 1) {
       message("Making lab page for lab ", cal_entry$key_lab )
     }
-    links <- generate_lab_assignment(cal_entry$key_lab, semester, TRUE)
+    links <- generate_lab_assignment(cal_entry$key_lab, semester, schedule,
+                                     TRUE)
     schedule <- schedule %>%
       dplyr::mutate(page_lab = ifelse(comp_na_f(.data$id_lab, cal_entry$id_lab),
                                       links['url'], .data$page_lab))
@@ -390,8 +406,11 @@ prepare_schedule <- function(semester) {
   schedule <- tmp$schedule
   final_exams <- tmp$final_exams
 
+  schedule <- schedule %>% schedule_add_reading(semester)
+
   tmp <- schedule %>% schedule_add_homework(semester)
   schedule <- tmp$schedule
+
 
   tmp <- schedule_widen(schedule, final_exams, semester, TRUE)
   schedule <- tmp$schedule
@@ -439,7 +458,7 @@ generate_assignments <- function(semester) {
     purrr::map(~purrr::discard(.x, is.na)) %>%
     list(lessons = .) %>%
     yaml::as.yaml() %>%
-    expand_codes(context, semester)
+    expand_codes(context, semester, schedule)
 
   cat(lesson_plan, file = file.path(semester$root_dir, "data", "lessons.yml"))
 

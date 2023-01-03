@@ -25,7 +25,7 @@ make_lab_solution_content <- function(sol, semester) {
   adj_nl(sol$lab_sol_markdown)
 }
 
-make_lab_solution_page <- function(sol, semester) {
+make_lab_solution_page <- function(sol, semester, schedule) {
   sol <- as.list(sol)
   delim <- "---"
   header <- list(
@@ -49,11 +49,11 @@ make_lab_solution_page <- function(sol, semester) {
   context <- make_context(sol, "lab solution", semester)
   lab_solution_page <- cat_nl( header,
                                make_lab_solution_content(sol, semester)) %>%
-    expand_codes(context, semester)
+    expand_codes(context, semester, schedule)
   lab_solution_page
 }
 
-make_lab_solution <- function(sol, semester) {
+make_lab_solution <- function(sol, semester, schedule) {
   if (getOption("semestr.verbose", default = 1) >= 1) {
     message("Making solutions for lab ", sol$lab_num, ".")
   }
@@ -62,7 +62,7 @@ make_lab_solution <- function(sol, semester) {
     file.path(semester$root_dir, "content", "lab_solutions/", .)
   solution_url <- fname %>% stringr::str_replace("\\.Rmd$", "") %>%
     file.path("/lab_solutions", .)
-  lab_solution_page <- make_lab_solution_page(sol, semester)
+  lab_solution_page <- make_lab_solution_page(sol, semester, schedule)
   cat(lab_solution_page, file = solution_path)
   c(title = sol$lab_sol_title, key = sol$lab_grp_key, path = solution_path,
     url = solution_url)
@@ -72,7 +72,7 @@ make_lab_doc_content <- function(doc, semester) {
   doc$lab_document_markdown
 }
 
-make_lab_doc_page <- function(doc, semester) {
+make_lab_doc_page <- function(doc, semester, schedule) {
   doc <- as.list(doc)
   delim <- "---"
   header <- list(
@@ -94,21 +94,21 @@ make_lab_doc_page <- function(doc, semester) {
     stringr::str_c(delim, ., delim, sep = "\n")
   context <- make_context(doc, "lab doc", semester)
   lab_doc_page <- cat_nl(header, make_lab_doc_content(doc, semester)) %>%
-  expand_codes(context, semester)
+  expand_codes(context, semester, schedule)
   lab_doc_page
 }
 
-make_lab_doc <- function(lab, semester) {
+make_lab_doc <- function(lab, semester, schedule) {
   fname <- sprintf("lab_%02d_%s.Rmd", lab$lab_num, lab$doc_filename)
   doc_path <- fname %>% file.path(semester$root_dir, "content", "lab_docs", .)
   doc_url <- fname %>% stringr::str_replace("\\.Rmd$", "") %>%
     file.path("/lab_docs", .)
-  lab_doc_page <- make_lab_doc_page(lab, semester)
+  lab_doc_page <- make_lab_doc_page(lab, semester, schedule)
   cat(lab_doc_page, file = doc_path)
   c(title = lab$lab_document_title, key = lab$lab_grp_key, path = doc_path, url = doc_url)
 }
 
-make_lab_docs <- function(lab_key, semester) {
+make_lab_docs <- function(lab_key, semester, schedule) {
   labs <- semester$lab_items %>%
     dplyr::filter(.data$lab_grp_key == lab_key,
                   ! is.na(.data$doc_filename)) # %>%
@@ -118,11 +118,12 @@ make_lab_docs <- function(lab_key, semester) {
   # of date columns the way purrr::transpose() does.
   lab_docs <- labs %>%
     purrr::pmap(list) %>%
-    purrr::map(~make_lab_doc(.x, semester))
+    purrr::map(~make_lab_doc(.x, semester, schedule))
   invisible(lab_docs)
 }
 
-make_lab_assignment_content <- function(key, semester, use_solutions = FALSE) {
+make_lab_assignment_content <- function(key, semester, schedule,
+                                        use_solutions = FALSE) {
   assignment <- get_lab_assignment(key, semester)
 
   output <- cat_nl("# Overview:", assignment$lab_description, start_par = TRUE,
@@ -138,7 +139,7 @@ make_lab_assignment_content <- function(key, semester, use_solutions = FALSE) {
                      stringr::str_c("**Before you come to lab**, please read the following document",
                                     ifelse(nrow(docs) > 1, "s", ""), ":"),
                      start_par = TRUE, extra_lines = 1)
-    doc_links <- make_lab_docs(key, semester)
+    doc_links <- make_lab_docs(key, semester, schedule)
     if (is.list(doc_links)) {
       doc_links <- purrr::pmap(doc_links, list)
     } else {
@@ -193,11 +194,12 @@ make_lab_assignment_content <- function(key, semester, use_solutions = FALSE) {
     }
   }
   context <- make_context(assignment, "lab", semester)
-  output <- output %>% expand_codes(context, semester)
+  output <- output %>% expand_codes(context, semester, schedule)
   output
 }
 
-make_lab_assignment_page <- function(key, semester, use_solutions = FALSE) {
+make_lab_assignment_page <- function(key, semester, schedule,
+                                     use_solutions = FALSE) {
   assignment <- get_lab_assignment(key, semester)
 
   lab_date <- assignment$date
@@ -237,12 +239,15 @@ make_lab_assignment_page <- function(key, semester, use_solutions = FALSE) {
   context <- make_context(assignment, "lab", semester)
   lab_page <- stringr::str_c(
     header,
-    make_lab_assignment_content(key, semester, use_solutions), sep = "\n") %>%
-    expand_codes(context, semester)
+    make_lab_assignment_content(key, semester, schedule, use_solutions),
+    sep = "\n"
+  ) %>%
+    expand_codes(context, semester, schedule)
   invisible(lab_page)
 }
 
-generate_lab_assignment <- function(key, semester, use_solutions = FALSE) {
+generate_lab_assignment <- function(key, semester, schedule,
+                                    use_solutions = FALSE) {
   assignment <- get_lab_assignment(key, semester)
 
   lab_num <- assignment$lab_num
@@ -256,7 +261,8 @@ generate_lab_assignment <- function(key, semester, use_solutions = FALSE) {
             " (index = ", assignment$lab_id,
             ", filename = ", fname, ")")
   }
-  lab_assignment_page <- make_lab_assignment_page(key, semester, use_solutions)
+  lab_assignment_page <- make_lab_assignment_page(key, semester, schedule,
+                                                  use_solutions)
   cat(lab_assignment_page, file = lab_path)
   c(path = lab_path, url = lab_url)
 }
