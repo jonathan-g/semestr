@@ -45,6 +45,10 @@ reference:
     - lookup_and_format_date_range
     - make_reading_page
     - sanitize_date_range
+- title: Cross-referencing
+  desc: "Cross-referencing functions for expansion codes."
+  contents:
+    - matches("^lookup_(future|past)_(class|reading)")
 - title: Data manipulation
   desc: Access and modify semester data
   contents:
