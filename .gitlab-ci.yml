@@ -21,7 +21,7 @@ before_script:
 test:
   stage: test
   script:
-    - R -e "install.packages(c('janitor', 'R.utils'))"
+    # - R -e "install.packages(c('janitor', 'R.utils'))"
     - R -e "sessionInfo()"
     - R CMD build . --build-vignettes --no-manual
     - PKG_FILE_NAME=$(ls -1t *.tar.gz | head -n 1)
