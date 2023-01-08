@@ -1,4 +1,7 @@
 get_hw_assignment <- function(key, semester) {
+  if (is.na(key) || is.null(key)) {
+    return(NULL)
+  }
   assignment <- semester$hw_asgt %>% dplyr::filter(.data$hw_grp_key == key)
   assertthat::assert_that(nrow(assignment) == 1,
                           msg = stringr::str_c(
@@ -437,6 +440,9 @@ make_hw_asgt_page <- function(key, semester, schedule, use_solutions = FALSE,
 
 generate_hw_assignment <- function(key, semester, schedule,
                                    use_solutions = FALSE) {
+  if (is.null(key) || is.na(key)) {
+    return(c(hw_page = NA_character_, url = NA_character_))
+  }
   assignment <- get_hw_assignment(key, semester)
 
   hw_page <- make_hw_asgt_page(key, semester, schedule, use_solutions)

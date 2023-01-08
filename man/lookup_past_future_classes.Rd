@@ -15,10 +15,10 @@ lookup_past_class(calendar, id, delta = 1)
 
 \item{id}{The \code{cal_id} index of the current class.}
 
-\item{delta}{The number of classes forward or backward}
+\item{delta}{The number of classes forward or backward.}
 }
 \value{
-A row from the calendar table
+A row from the calendar table.
 }
 \description{
 Look up previous or future classes, based on the current class's id.

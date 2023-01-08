@@ -21,6 +21,7 @@
     "col2idx", "col2type",
     "idx2col", "idx2type",
     "base2type", "item_type", "item_mod",
+    "lookup_class",
     "lookup_future_class", "lookup_past_class", "lookup_future_reading",
     "lookup_past_reading"
     )

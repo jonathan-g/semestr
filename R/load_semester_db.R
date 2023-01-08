@@ -150,8 +150,9 @@ load_semester_db <- function(db_file, root_crit = NULL, ignore_root = FALSE) {
 
   calendar <- calendar %>%
     dplyr::mutate(date = lubridate::as_datetime(.data$date, tz = tz),
-                  cal_type = item_type(.data$cal_id)) %>%
-    dplyr::filter(! is.na(date))
+                  cal_type = item_type(.data$cal_id),
+                  cal_id = as.integer(.data$cal_id)) %>%
+    dplyr::filter(! is.na(.data$date))
 
   bare_dates <- calendar %>% dplyr::select("cal_id", "date")
 
@@ -160,34 +161,46 @@ load_semester_db <- function(db_file, root_crit = NULL, ignore_root = FALSE) {
     is_empty(duplicates),
     msg = stringr::str_c("Duplicated cal_ids: (",
                          stringr::str_c(duplicates, collapse = ", "), ").")
-    )
+  )
 
   #==========================================================================
   # Set up due dates
   #==========================================================================
 
-  due_dates <- link_cal_due %>% dplyr::left_join(due_dates, by = "due_id") %>%
-    dplyr::filter(! is.na(.data$due_key), ! is.na(.data$cal_id))
+  has_due_dates <- ! (is.null(due_dates) || is.null(link_cal_due))
 
-  missing_due_dates <- calendar %>%
-    dplyr::filter(.data$cal_type == "due date") %>%
-    dplyr::pull("cal_id") %>%
-    setdiff(due_dates$cal_id)
-  valid_due_dates <- assertthat::validate_that(
-    length(missing_due_dates) == 0,
-    msg = stringr::str_c("Missing due dates: (",
-                         stringr::str_c(missing_due_dates, collapse = ", "),
-                         ").")
-  )
-  if (! isTRUE(valid_due_dates)) {
-    warning(valid_due_dates)
+  if (has_due_dates) {
+    due_dates <- link_cal_due %>% dplyr::left_join(due_dates, by = "due_id") %>%
+      dplyr::filter(! is.na(.data$due_key), ! is.na(.data$cal_id))
+
+    missing_due_dates <- calendar %>%
+      dplyr::filter(.data$cal_type == "due date") %>%
+      dplyr::pull("cal_id") %>%
+      setdiff(due_dates$cal_id)
+    valid_due_dates <- assertthat::validate_that(
+      length(missing_due_dates) == 0,
+      msg = stringr::str_c("Missing due dates: (",
+                           stringr::str_c(missing_due_dates, collapse = ", "),
+                           ").")
+    )
+    if (! isTRUE(valid_due_dates)) {
+      warning(valid_due_dates)
+    }
+    calendar <- calendar %>%
+      dplyr::left_join(
+        dplyr::select(due_dates, "cal_id", "due_type", "due_action"),
+        by = "cal_id"
+      )
+  } else {
+    due_dates <- tibble::tibble(
+      cal_id = integer(0), due_id = integer(0), due_key = character(0),
+      due_desc = character(0), due_action = character(0),
+      due_type = character(0)
+      )
+    calendar <- dplyr::mutate(calendar, due_type = NA_character_,
+                              due_action = NA_character_)
   }
 
-  calendar <- calendar %>%
-    dplyr::left_join(
-      dplyr::select(due_dates, "cal_id", "due_type", "due_action"),
-      by = "cal_id"
-      )
 
   #==========================================================================
   # Set up homework assignments
@@ -273,16 +286,28 @@ load_semester_db <- function(db_file, root_crit = NULL, ignore_root = FALSE) {
 
   has_reading <- ! (is.null(reading_items) || is.null(link_cls_rd))
   if (has_reading) {
+    class_df <- dplyr::inner_join(
+      dplyr::select(classes, "class_id", "class_key"),
+      dplyr::select(link_cal_class, "cal_id", "class_id",
+                    key_chk = "class_key"),
+      by = "class_id"
+    )
+    class_mismatches <- class_df %>%
+      dplyr::filter(.data$class_key != .data$key_chk)
+    if (nrow(class_mismatches) > 0) {
+      warning("WARNING: class links mismatch on ",
+              stringr::str_c(class_mismatches$key_chk, collapse = ", "),
+              ".")
+    }
+    class_df <- class_df %>% dplyr::select(-"key_chk")
+
     rd_items <- reading_items %>%
       dplyr::inner_join(
         dplyr::select(reading_groups, "rd_grp_id", "rd_grp_key"),
         by = "rd_grp_key"
       ) %>%
       dplyr::inner_join(link_cls_rd, by = "rd_grp_key") %>%
-      dplyr::inner_join(dplyr::select(classes, "class_id", "class_key"),
-                        by = "class_key") %>%
-      dplyr::inner_join(dplyr::select(link_cal_class, "cal_id", "class_id"),
-                        by = "class_id") %>%
+      dplyr::inner_join(class_df, by = "class_key") %>%
       dplyr::left_join(reading_sources, by = "src_key") %>%
       dplyr::mutate(dplyr::across(
         c("undergraduate_only", "graduate_only",
@@ -569,7 +594,8 @@ load_semester_db <- function(db_file, root_crit = NULL, ignore_root = FALSE) {
   class_topics <- calendar %>%
     dplyr::filter(.data$cal_type == "class") %>%
     dplyr::select("cal_id") %>%
-    dplyr::left_join(link_cal_class, by = "cal_id") %>%
+    dplyr::left_join(dplyr::select(link_cal_class, -"class_key"),
+                     by = "cal_id") %>%
     dplyr::left_join(dplyr::select(classes, "class_id", "class_key",
                                    topic = "class_title"),
                      by = "class_id")

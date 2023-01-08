@@ -17,13 +17,13 @@ lookup_past_reading(schedule, id = NULL, grp = NULL, delta = 1)
 
 \item{grp}{The \code{rd_grp_key} for the current class's reading group.}
 
-\item{delta}{The number of classes forward or backward}
+\item{delta}{The number of classes forward or backward.}
 }
 \value{
-A row from the calendar table
+A row from the calendar table.
 }
 \description{
-Look up previous or future assignments, based on the current class's id
+Look up previous or future assignments, based on the current class's id.
 }
 \section{Functions}{
 \itemize{

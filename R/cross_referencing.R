@@ -1,12 +1,36 @@
+#' Look Up Classes
+#'
+#' Look up classes from the class key.
+#'
+#' @param calendar The calendar to use for looking up the classes.
+#' @param key The `key_class` index of the target class.
+#'
+#' @return A row from the calendar table.
+#'
+#' @export
+lookup_class <- function(calendar, key) {
+  target <- calendar %>% dplyr::filter(.data$class_key == key)
+  if (nrow(target) == 1) {
+    return(target)
+  } else if (nrow(target == 0)) {
+    warning("Tried to look up a nonexistant class ", key, ".")
+    return(NULL)
+  } else if (nrow(target > 1)) {
+    warning("Looked up class ", key, " and got ",
+            nrow(target), " results.")
+    return(NULL)
+  }
+}
+
 #' Look Up Past and Future Classes
 #'
 #' Look up previous or future classes, based on the current class's id.
 #'
 #' @param calendar The calendar to use for looking up the classes.
 #' @param id The `cal_id` index of the current class.
-#' @param delta The number of classes forward or backward
+#' @param delta The number of classes forward or backward.
 #'
-#' @return A row from the calendar table
+#' @return A row from the calendar table.
 #'
 #' @name lookup_past_future_classes
 NULL
@@ -81,14 +105,14 @@ lookup_past_class <- function(calendar, id, delta = 1) {
 
 #' Look Up Past and Future Reading Assignments
 #'
-#' Look up previous or future assignments, based on the current class's id
+#' Look up previous or future assignments, based on the current class's id.
 #'
 #' @param schedule The schedule to use for looking up the classes.
 #' @param id The `cal_id` index of the current class.
 #' @param grp The `rd_grp_key` for the current class's reading group.
-#' @param delta The number of classes forward or backward
+#' @param delta The number of classes forward or backward.
 #'
-#' @return A row from the calendar table
+#' @return A row from the calendar table.
 #'
 #' @name lookup_past_future_reading
 NULL

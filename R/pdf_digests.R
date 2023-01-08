@@ -30,8 +30,7 @@ pdf_digest_if_exists <- function (file, alg = NA_character_)
       alg <- get_pdf_digest_algorithm()
     }
     dgst <- digest::digest(file, file = TRUE, algo = alg)
-  }
-  else {
+  } else {
     dgst <- NA_character_
     alg <- NA_character_
   }

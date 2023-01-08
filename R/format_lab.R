@@ -182,7 +182,7 @@ make_lab_assignment_content <- function(key, semester, schedule,
                        "**Solutions for Lab Exercises**:",
                        start_par = TRUE)
       sol_links <- purrr::map(purrr::pmap(solutions, list),
-                              ~make_lab_solution(.x, semester))
+                              ~make_lab_solution(.x, semester, schedule))
       if (is.list(sol_links)) {
         sol_links <- purrr::pmap(sol_links, list)
       }
@@ -248,6 +248,9 @@ make_lab_assignment_page <- function(key, semester, schedule,
 
 generate_lab_assignment <- function(key, semester, schedule,
                                     use_solutions = FALSE) {
+  if (is.null(key) || is.na(key)) {
+    return(c(path = NA_character_, url = NA_character_))
+  }
   assignment <- get_lab_assignment(key, semester)
 
   lab_num <- assignment$lab_num

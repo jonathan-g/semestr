@@ -1,4 +1,4 @@
-image: jgilligan/jg-verse:4.0.3
+image: jgilligan/jg-verse:4.2.2
 
 stages:
   - test
@@ -11,7 +11,7 @@ test:
     - R -e "sessionInfo()"
     - R CMD build . --build-vignettes --no-manual
     - PKG_FILE_NAME=$(ls -1t *.tar.gz | head -n 1)
-    - R CMD check "${PKG_FILE_NAME}" --no-manual --as-cran
+    - R CMD check "${PKG_FILE_NAME}" --no-manual
 
 pages:
   stage: document

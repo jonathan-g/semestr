@@ -403,11 +403,15 @@ make_reading_page <- function(cal_id, semester, schedule, use_pdfs = TRUE){
     notices <- NULL
   }
 
-  homework <- semester$hw_asgt %>%
-    dplyr::filter(.data$cal_id == !!cal_id) %>%
-    # merge_dates(semester) %>%
-    dplyr::left_join( dplyr::select(semester$hw_items, -"hw_num", -"cal_id"),
-                      by = "hw_grp_key")
+  if (semester$has_homework && ! is.null(semester$hw_asgt)) {
+    homework <- semester$hw_asgt %>%
+      dplyr::filter(.data$cal_id == !!cal_id) %>%
+      # merge_dates(semester) %>%
+      dplyr::left_join( dplyr::select(semester$hw_items, -"hw_num", -"cal_id"),
+                        by = "hw_grp_key")
+  } else {
+    homework <- NULL
+  }
   delim <- "---"
   header <- tibble::tibble(title = rd_topic,
                            class_date = lubridate::as_date(rd_date) %>% as.character(),
@@ -434,8 +438,8 @@ make_reading_page <- function(cal_id, semester, schedule, use_pdfs = TRUE){
     sep = "\n"
   )
   asgt <- reading %>%
-    dplyr::select("cal_id", "rd_grp_key", "cal_key", "date", "topic",
-                  "class_num") %>%
+    dplyr::select("cal_id", "rd_grp_key", "rd_grp_id", "cal_key", "date",
+                  "topic", "class_num") %>%
     dplyr::distinct()
   assertthat::assert_that(nrow(asgt) == 1,
                           msg = "A calendar ID should have a consistent reading assignment (make_reading)")

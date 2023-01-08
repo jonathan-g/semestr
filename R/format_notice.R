@@ -1,6 +1,6 @@
 make_notice <- function(notice_entries) {
   if (is.null(notice_entries) || nrow(notice_entries) == 0) {
-    return(character(0))
+    return(NULL)
   }
   if (nrow(notice_entries) > 1) {
     output <- stringr::str_c("## Notices:", "",

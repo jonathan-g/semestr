@@ -70,10 +70,14 @@ schedule_add_reading <- function(schedule, semester) {
 
   if (has_reading) {
     reading <- semester$rd_items %>%
-      dplyr::select(key_rd = "rd_grp_key", id_rd = "rd_grp_id",
-                    id_class = "class_id") %>%
-      dplyr::distinct()
-    schedule <- schedule %>% dplyr::left_join(reading, by = "id_class")
+      dplyr::select(key = "rd_grp_key", id_rd = "rd_grp_id",
+                    "cal_id") %>%
+      dplyr::distinct() %>%
+      dplyr::left_join(dplyr::select(schedule, "date", cal_id = "id"),
+                       by = "cal_id") %>%
+      dplyr::select(id = "id_rd", "date", "key") %>%
+      dplyr::mutate(cal_type = "rd")
+    schedule <- schedule %>% dplyr::bind_rows(reading)
   }
 
   invisible(schedule)
@@ -174,7 +178,7 @@ schedule_widen <- function(schedule, final_exams, semester,
 
   for (col in get_semestr_metadata()$type2col) {
     key_col <- stringr::str_c("key_", col)
-    if (key_col %in% names(schedule)) {
+    if (tibble::has_name(schedule, key_col)) {
       q_key_col <- enquo(key_col)
       schedule <- strip_key_prefix(schedule, col2type(col), !!q_key_col)
     }
@@ -348,8 +352,8 @@ build_lab_assignment <- function(schedule, date, cal_entry, semester) {
 build_assignments <- function(schedule, semester) {
   dates <- schedule$date
 
-  has_labs <- "id_lab" %in% names(schedule)
-  has_hw <- "id_homework" %in% names(schedule)
+  has_labs <- tibble::has_name(schedule, "id_lab")
+  has_hw <- tibble::has_name(schedule, "id_hw")
   root_dir <- semester$root_dir
   slide_dir <- semester$slide_dir
 
@@ -408,9 +412,10 @@ prepare_schedule <- function(semester) {
 
   schedule <- schedule %>% schedule_add_reading(semester)
 
-  tmp <- schedule %>% schedule_add_homework(semester)
-  schedule <- tmp$schedule
-
+  if (semester$has_homework) {
+    tmp <- schedule %>% schedule_add_homework(semester)
+    schedule <- tmp$schedule
+  }
 
   tmp <- schedule_widen(schedule, final_exams, semester, TRUE)
   schedule <- tmp$schedule
