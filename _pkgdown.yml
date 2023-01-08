@@ -48,6 +48,7 @@ reference:
 - title: Cross-referencing
   desc: "Cross-referencing functions for expansion codes."
   contents:
+    - lookup_class
     - matches("^lookup_(future|past)_(class|reading)")
 - title: Data manipulation
   desc: Access and modify semester data
