@@ -3,19 +3,19 @@ image: jgilligan/jg-verse:4.2.2
 variables:
   PKGNAME: "semestr"
   R_LIBS_USER: "$CI_PROJECT_DIR/ci/lib"
-  CHECK_DIR: "$CI_PROJECT_DIR/ci/logs"
-  BUILD_LOGS_DIR: "$CI_PROJECT_DIR/ci/logs/$PKGNAME.Rcheck"
+  CRAN_REPOS: "https://cran.rstudio.com/"
 
 cache:
+  key: lib
   paths:
   - $R_LIBS_USER
-  - vendor/apt
 
 stages:
   - test
   - document
 
 before_script:
+  - mkdir -p $R_LIBS_USER
   - R -e 'devtools::install_deps(dep = T)'
 
 test:
