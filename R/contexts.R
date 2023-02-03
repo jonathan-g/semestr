@@ -29,7 +29,7 @@ make_hw_context <- function(asgt, semester) {
 
 make_hw_sol_context <- function(asgt, semester) {
   sol <- asgt
-  asgt <- get_hw_assignment(sol$hw_grp_key, semester)
+  asgt <- get_hw_assignment(sol$sol_grp_key, semester)
   context <- list(
     type = "homework",
     key = asgt$hw_grp_key,

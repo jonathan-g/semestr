@@ -40,12 +40,12 @@ make_hw_solution_page <- function(solution, semester, schedule,
 
   delim <- "---"
   header <- list(
-    title = solution$hw_sol_title,
+    title = solution$sol_title,
     hw_number = solution$hw_num,
-    pubdate = as.character(solution$hw_sol_pub_date),
-    date = as.character(solution$hw_due_date),
-    pdf_url = solution$hw_sol_pdf_url,
-    slug = stringr::str_c(slug, "_", solution$hw_sol_filename)) %>%
+    pubdate = as.character(solution$sol_pub_date),
+    date = as.character(solution$due_date),
+    pdf_url = solution$sol_pdf_url,
+    slug = stringr::str_c(slug, "_", solution$sol_filename)) %>%
     purrr::discard(is_mt_or_na) %>%
     c(
       list(output = list("blogdown::html_page" =
@@ -72,7 +72,7 @@ make_hw_solution <- function(solution, assignment, semester, schedule,
   if (is_mt_or_na(slug)) {
     slug = sprintf("homework_%02d", assignment$hw_num)
   }
-  fname <- stringr::str_c(slug, "_", solution$hw_sol_filename, ".Rmd")
+  fname <- stringr::str_c(slug, "_", solution$sol_filename, ".Rmd")
   solution_path <- fname %>%
     file.path(semester$root_dir, "content", "homework_solutions/", .)
   solution_url <- fname %>% stringr::str_replace("\\.Rmd$", "") %>%
@@ -220,7 +220,7 @@ make_hw_asgt_content <- function(key, semester, schedule,
     for (i in seq(nrow(solutions))) {
       this_sol <- solutions[i,]
       sol <- make_hw_solution(this_sol, assignment, semester, schedule)
-      output <- output %>% stringr::str_c("* [", this_sol$hw_sol_title, "](",
+      output <- output %>% stringr::str_c("* [", this_sol$sol_title, "](",
                                           sol['url'], ")\n")
     }
     output <- stringr::str_c(output, "\n")

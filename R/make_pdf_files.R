@@ -55,6 +55,7 @@ pdf_filename <- function(pdf_url, root_dir, static_path = "static",
                          verbose = FALSE) {
   # message("root = ", root_dir, ", static = ", static_path,
   #         ", URL = ", pdf_url)
+  verbose <- verbose || getOption("semestr.verbose", default=0) >= 2
   if (is.na(pdf_url)) return(NA_character_)
   dest_dir <- file.path(root_dir, static_path) %>%
     cat_path(dirname(pdf_url)) %>% normalizePath(winslash = "/")

@@ -404,7 +404,8 @@ get_current_pdf_digests <- function(files, root_dir = NULL,
     dplyr::filter(! is.na(.data$dest)) %>%
     dplyr::mutate(
       dest = purrr::map_chr(.data$dest, ~pdf_filename(.x, root_dir = root_dir,
-                                                static_path = static_path))
+                                                static_path = static_path,
+                                                force_dest = TRUE))
       )
 
   digest_file <- file.path(root_dir, "pdf_digests.Rds")
