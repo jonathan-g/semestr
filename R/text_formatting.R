@@ -111,7 +111,7 @@ concat_with_nl <- function(s, ..., start_par = FALSE, extra_lines = 0,
 cat_nl <- concat_with_nl
 
 
-#' Escape "\\$" for LaTeX
+#' Escape dollar sign for LaTeX
 #'
 #' Escape single backslashes in front of dollar signs (for LaTeX)
 #'

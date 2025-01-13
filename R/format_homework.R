@@ -158,7 +158,8 @@ make_hw_asgt_content <- function(key, semester, schedule,
   items <- semester$hw_items %>% dplyr::filter(.data$hw_grp_key == key) %>%
     # merge_dates(semester) %>%
     dplyr::arrange(.data$hw_item_id)
-  if (use_solutions && ! is.null(semester$hw_sol)) {
+
+    if (use_solutions && ! is.null(semester$hw_sol)) {
     solutions <- semester$hw_sol %>% dplyr::filter(.data$sol_grp_key == key)
     if (nrow(solutions) > 0) {
       solutions <- solutions %>%
@@ -231,6 +232,22 @@ make_hw_asgt_content <- function(key, semester, schedule,
   }
 
   output <- stringr::str_c(output, "## Homework", sep = "\n\n")
+
+  url <- assignment$hw_assignment_url
+  output <- cat_nl(output, "### Assignment", start_par = TRUE, extra_lines = 1)
+  if (assignment$uses_gh_classroom) {
+    if (! is_mt_or_na(url)) {
+      output <- cat_nl(output,
+                       stringr::str_c("Accept the homework assignment at GitHub Classroom at <",
+                                      url, ">."))
+    } else {
+      output <- cat_nl(output, "The GitHub Classroom assignment has not been posted yet.",
+                       start_par = TRUE)
+    }
+  } else {
+    output <- cat_nl(output, "This homework does not use GitHub Classroom.")
+  }
+
   if (nrow(prologue) > 0) {
     if (getOption("semestr.verbose", default = 1) >= 3) {
       message("  Adding prologue")
@@ -401,6 +418,7 @@ make_hw_asgt_page <- function(key, semester, schedule, use_solutions = FALSE,
   hw_type <- assignment$hw_type
   short_hw_type = assignment$short_hw_type
   pub_date <- semester$semester_dates$pub_date
+  asgt_url = assignment$hw_assignment_url
 
   if (getOption("semestr.verbose", default = 1) >= 1) {
     message("Making homework page for HW #", hw_num, " (index = ", hw_idx,
@@ -414,6 +432,7 @@ make_hw_asgt_page <- function(key, semester, schedule, use_solutions = FALSE,
     assignment_type = hw_type,
     short_assignment_type = short_hw_type,
     assignment_number = hw_num, weight = hw_idx,
+    github_classroom_assignment_url = asgt_url,
     slug = hw_slug,
     pubdate = as.character(pub_date),
     date = as.character(hw_date),
