@@ -2,7 +2,7 @@
 % Please edit documentation in R/text_formatting.R
 \name{escape_dollar}
 \alias{escape_dollar}
-\title{Escape "\\$" for LaTeX}
+\title{Escape dollar sign for LaTeX}
 \usage{
 escape_dollar(txt)
 }

@@ -18,6 +18,7 @@ strip_key_prefix <- function(x, type, ...) {
   UseMethod("strip_key_prefix", x)
 }
 
+#' @exportS3Method semestr::strip_key_prefix
 strip_key_prefix.default <- function(x, type, ...) {
   stop("I don't know how to strip key prefix from an object of class (",
        stringr::str_c(class(x), collapse = ", "), ").")
@@ -78,6 +79,7 @@ add_key_prefix <- function(x, type, ...) {
   UseMethod("add_key_prefix", x)
 }
 
+#' @exportS3Method semestr::add_key_prefix
 add_key_prefix.default <- function(x, type, ...) {
   stop("I don't know how to add key prefix to an object of class (",
        stringr::str_c(class(x), collapse = ", "), ").")
