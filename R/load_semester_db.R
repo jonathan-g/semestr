@@ -216,7 +216,7 @@ load_semester_db <- function(db_file, root_crit = NULL, ignore_root = FALSE) {
         dplyr::select(due_dates, "due_key", due_cal_id = "cal_id"),
         by = c(hw_due_key = "due_key")) %>%
       dplyr::mutate(
-        dplyr::across("hw_is_numbered",
+        dplyr::across(c("hw_is_numbered", "uses_gh_classroom"),
                       ~as.logical(.x) %>% tidyr::replace_na(FALSE))
         ) %>%
       dplyr::arrange(.data$hw_grp_order) %>%
@@ -351,7 +351,8 @@ load_semester_db <- function(db_file, root_crit = NULL, ignore_root = FALSE) {
                         by = "presentation_key") %>%
       dplyr::arrange(.data$lab_grp_order) %>%
       dplyr::mutate(lab_num = seq(dplyr::n()),
-                    uses_gh_classroom = as.logical(.data$uses_gh_classroom)) %>%
+                    uses_gh_classroom = as.logical(.data$uses_gh_classroom) %>%
+                      tidyr::replace_na(FALSE)) %>%
       dplyr::select(-"lab_grp_order")
 
     missing_labs <- calendar %>%
