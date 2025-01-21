@@ -42,6 +42,17 @@ schedule_strip_finals <- function(schedule, semester) {
   list(schedule = schedule, final_exams = final_exams)
 }
 
+
+#' FUNCTION_TITLE
+#'
+#' FUNCTION_DESCRIPTION
+#'
+#' @param schedule DESCRIPTION.
+#' @param semester DESCRIPTION.
+#'
+#' @return RETURN_DESCRIPTION
+#' @examples
+#' # ADD_EXAMPLES_HERE
 schedule_add_homework <- function(schedule, semester) {
   hw_due <- semester$due_dates %>%
     dplyr::filter(.data$due_type %in% c("homework", "project"),
@@ -65,6 +76,17 @@ schedule_add_homework <- function(schedule, semester) {
   list(schedule = schedule, hw = hw, hw_due = hw_due, missing_hw = missing_hw)
 }
 
+
+#' FUNCTION_TITLE
+#'
+#' FUNCTION_DESCRIPTION
+#'
+#' @param schedule DESCRIPTION.
+#' @param semester DESCRIPTION.
+#'
+#' @return RETURN_DESCRIPTION
+#' @examples
+#' # ADD_EXAMPLES_HERE
 schedule_add_reading <- function(schedule, semester) {
   has_reading <- semester$has_reading
 
@@ -83,8 +105,42 @@ schedule_add_reading <- function(schedule, semester) {
   invisible(schedule)
 }
 
+
+#' FUNCTION_TITLE
+#'
+#' FUNCTION_DESCRIPTION
+#'
+#' @param schedule DESCRIPTION.
+#' @param final_exams DESCRIPTION.
+#' @param semester DESCRIPTION.
+#' @param final_is_take_home DESCRIPTION.
+#' @param create_paths DESCRIPTION.
+#'
+#' @return RETURN_DESCRIPTION
+#' @examples
+#' # ADD_EXAMPLES_HERE
 schedule_widen <- function(schedule, final_exams, semester,
-                           final_is_take_home = TRUE) {
+                           final_is_take_home = TRUE,
+                           create_paths = TRUE) {
+  if (create_paths) {
+    for (n in names(semester$file_paths)) {
+      p <- semester$file_paths[n]
+      if (stringr::str_detect(n, "_pdf$")) {
+        p <- file.path(semester$root_dir, "static", p) %>% clean_path()
+      } else if (stringr::str_detect(n, "_dest$")) {
+        # pass
+      } else if (stringr::str_detect(n, "_src$")) {
+        p <- file.path(semester$root_dir, p) %>% clean_path()
+      }
+      if (! dir.exists(p)) {
+        if (getOption("semestr.verbose", default = 1) >= 1) {
+          message("Creating directory ", p)
+        }
+        dir.create(p, recursive = TRUE)
+      }
+    }
+  }
+
   has_exams <- semester$has_exams
   has_holidays <- semester$has_holidays
 
@@ -190,6 +246,17 @@ schedule_widen <- function(schedule, final_exams, semester,
   list(schedule = schedule)
 }
 
+
+#' Check a schedule data frame for consistency
+#'
+#' Runs some basic consistency checks on a schedule data frame
+#'
+#' @param schedule A schedule data frame.
+#' @param semester A list of data for the semester, from the database.
+#'
+#' @return nothing
+#'
+#' @export
 check_schedule <- function(schedule, semester) {
   sched_check <- schedule %>%
     dplyr::group_by(.data$date, .data$cal_type) %>%
@@ -202,10 +269,14 @@ check_schedule <- function(schedule, semester) {
     dplyr::mutate(bad_indices = stringr::str_c(.data$date, .data$bad_indices,
                                                sep = ": "))
 
-  assertthat::assert_that(nrow(sched_check) == 0,
-                          msg = stringr::str_c(
-                            "Multiple assignments per class: ",
-                            stringr::str_c(sched_check, collapse = "; ")))
+  success <- nrow(sched_check) == 0
+  assertthat::assert_that(
+    success,
+    msg = stringr::str_c(
+      "Multiple assignments per class: ",
+      stringr::str_c(sched_check, collapse = "; "))
+  )
+  success
 }
 
 set_schedule_globals <- function(schedule, semester) {
@@ -230,6 +301,28 @@ comp_na_f <- function(x, y) {
   tidyr::replace_na(x == y, FALSE)
 }
 
+
+#' Install Powerpoint slides for a class session
+#'
+#' For class sessions where a Powerpoint slide deck will be used
+#' instead of `reveal.js` slides, copy the Powerpoint slides from
+#' a main directory to the class slide directory.
+#'
+#'  Normally, `semestr` assumes that the user will be using `reveal.js`,
+#'  and that the slides will be installed (e.g., by using `gulp sync`
+#'  from the directory where the slides are authored), but sometimes,
+#'  especially for guest lectures, I use Powerpoint, and this lets me
+#'  copy files from a main directory where I save Powerpoint slides into
+#'  the `/slides/` directory for the website.
+#'
+#' @param schedule A schedule data frame.
+#' @param date The reading due date.
+#' @param cal_entry A calendar entry for the class.
+#' @param semester A list of data for the semester, from the database.
+#'
+#' @return An updated schedule data frame
+#'
+#' @export
 copy_slides <- function(schedule, date, cal_entry, semester) {
   class_num <- cal_entry$class_num
   date <- lubridate::as_date(date)
@@ -291,6 +384,20 @@ copy_slides <- function(schedule, date, cal_entry, semester) {
   invisible(schedule)
 }
 
+
+#' Build a reading assignment
+#'
+#' Build a reading assignment: Generate an `.Rmd` file for a
+#' reading assignment web page and PDF handout.
+#'
+#' @param schedule A schedule data frame.
+#' @param date The reading due date.
+#' @param cal_entry A calendar entry for the class.
+#' @param semester A list of data for the semester, from the database.
+#'
+#' @return An updated schedule data frame
+#'
+#' @export
 build_reading_assignment <- function(schedule, date, cal_entry, semester) {
   date <- lubridate::as_date(date)
   root_dir <- semester$root_dir
@@ -302,9 +409,12 @@ build_reading_assignment <- function(schedule, date, cal_entry, semester) {
               " on ", as.character(date))
     }
     rd_fname <- sprintf("reading_%02d.Rmd", cal_entry$class_num)
-    rd_path <- rd_fname %>% file.path(root_dir, "content", "reading", .)
-    rd_url <- rd_fname %>% stringr::str_replace("\\.Rmd$", "") %>%
-      file.path("/reading", .)
+    rd_path <- file.path(root_dir, semester$file_paths['rd_asgt_src'],
+                         rd_fname) %>%
+      clean_path()
+    rd_url <- file.path(semester$file_paths['rd_asgt_dest'],
+                        stringr::str_replace(rd_fname, "\\.Rmd$", "")) %>%
+      clean_url()
     rd_page <- make_reading_page(cal_entry$id_class, semester, schedule)
     cat(rd_page, file = rd_path)
     schedule <- schedule %>%
@@ -315,6 +425,20 @@ build_reading_assignment <- function(schedule, date, cal_entry, semester) {
   invisible(schedule)
 }
 
+
+#' Build a homework assignment
+#'
+#' Build a homework assignment: Generate an `.Rmd` file for a
+#' homework assignment web page and PDF handout.
+#'
+#' @param schedule A schedule data frame.
+#' @param date The homework due date.
+#' @param cal_entry A calendar entry for the homework due date.
+#' @param semester A list of data for the semester, from the database.
+#'
+#' @return An updated schedule data frame
+#'
+#' @export
 build_hw_assignment <- function(schedule, date, cal_entry, semester) {
   if (! tibble::has_name(schedule, "page_hw")) {
     schedule <- dplyr::mutate(schedule, page_hw = NA_character_)
@@ -332,6 +456,20 @@ build_hw_assignment <- function(schedule, date, cal_entry, semester) {
   invisible(schedule)
 }
 
+
+#' Build a lab assignment
+#'
+#' Build a lab assignment: Generate an `.Rmd` file for a lab assignment
+#' web page and PDF handout.
+#'
+#' @param schedule A schedule data frame.
+#' @param date The date of the lab.
+#' @param cal_entry A calendar entry for the lab session.
+#' @param semester A list of data for the semester, from the database.
+#'
+#' @return An updated schedule data frame
+#'
+#' @export
 build_lab_assignment <- function(schedule, date, cal_entry, semester) {
   if (! tibble::has_name(schedule, "page_lab")) {
     schedule <- dplyr::mutate(schedule, page_lab = NA_character_)
@@ -349,6 +487,18 @@ build_lab_assignment <- function(schedule, date, cal_entry, semester) {
   invisible(schedule)
 }
 
+
+#' Build reading, homework, and lab assignments
+#'
+#' Build reading, homework, and lab assignments from a
+#' schedule dataframe
+#'
+#' @param schedule A schedule dataframe.
+#' @param semester A semester object (list).
+#'
+#' @return An updated schedule dataframe
+#'
+#' @export
 build_assignments <- function(schedule, semester) {
   dates <- schedule$date
 
@@ -357,6 +507,7 @@ build_assignments <- function(schedule, semester) {
   root_dir <- semester$root_dir
   slide_dir <- semester$slide_dir
 
+  generate_handouts(semester, schedule)
 
   for (d in purrr::discard(dates, is.na)) {
     d = lubridate::as_date(d)
@@ -464,6 +615,7 @@ generate_assignments <- function(semester) {
     list(lessons = .) %>%
     yaml::as.yaml() %>%
     expand_codes(context, semester, schedule)
+
 
   cat(lesson_plan, file = file.path(semester$root_dir, "data", "lessons.yml"))
 

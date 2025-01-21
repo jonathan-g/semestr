@@ -135,7 +135,8 @@ build_pdf_files <- function(semester, content_path = "content",
   if (! dir.exists(content_path)) {
     content_path = cat_path(root_dir, content_path)
   }
-  source_paths <- c("labs", "lab_docs", "assignment", "reading",
+  source_paths <- c("labs", "lab_docs", "assignment",
+                    "reading", "handouts",
                     "homework_solutions", "lab_solutions")
   files <- list.files(file.path(content_path, source_paths), pattern = "*.Rmd",
                       full.names = TRUE)

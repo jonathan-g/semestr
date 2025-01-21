@@ -13,6 +13,18 @@ make_reading_context <- function(asgt, semester) {
   context
 }
 
+make_handout_context <- function(doc, semester) {
+  context <- list(
+    type = "handout",
+    key = doc$handout_key,
+    date = doc$date,
+    title = doc$doc_title,
+    author = doc$doc_author
+  )
+  context
+}
+
+
 make_hw_context <- function(asgt, semester) {
   context <- list(
     type = "homework",
@@ -125,6 +137,8 @@ make_context <- function(asgt, type, semester) {
     return(make_hw_sol_context(asgt, semester))
   } else if (type == "exam") {
     return(make_exam_context(asgt, semester))
+  } else if (type == "handout") {
+    return(make_handout_context(asgt, semester))
   } else {
     stop("Unknown context type ", type)
   }
