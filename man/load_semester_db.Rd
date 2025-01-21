@@ -21,13 +21,13 @@ tibbles with details on reading assignments, homework assignments,
 labs, exams, holidays, and other events.
 
 The list contains the following tibbles:
-\code{calendar}, \code{due_dates}, \code{rd_items}, \code{rd_src},
+\code{calendar}, \code{due_dates}, \code{rd_items}, \code{rd_src}, \code{handouts},
 \code{class_topics}, \code{hw_asgt}, \code{hw_items}, \code{hw_sol}, \code{hw_topics},
 \code{lab_asgt}, \code{lab_items}, \code{lab_sol}, \code{exams},
 \code{holidays}, \code{events}, \code{notices},
-\code{has_reading}, \code{has_homework}, \code{has_labs}, \code{has_exams},
-\code{has_holidays}, \code{has_events}, \code{has_notices},
-\code{text_codes},
+\code{has_reading}, \code{has_handouts}, \code{has_homework}, \code{has_labs},
+\code{has_exams}, \code{has_holidays}, \code{has_events}, \code{has_notices},
+\code{file_paths}, \code{text_codes},
 \code{metadata}, \code{semester_dates}, \code{tz}, \code{root_dir}, \code{slide_dir}
 
 and a named list \code{metadata} containing named character vectors of

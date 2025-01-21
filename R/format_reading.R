@@ -413,20 +413,23 @@ make_reading_page <- function(cal_id, semester, schedule, use_pdfs = TRUE){
     homework <- NULL
   }
   delim <- "---"
-  header <- tibble::tibble(title = rd_topic,
-                           class_date = lubridate::as_date(rd_date) %>% as.character(),
-                           class_number = class_num, weight = class_num,
-                           slug = sprintf("reading_%02d", class_num),
-                           pubdate = as.character(semester$semester_dates$pub_date),
-                           date = lubridate::as_date(rd_date) %>% as.character(),
-                           output = list("blogdown::html_page" =
-                                           list(md_extensions = get_md_extensions()))
+  header <- list(
+    title = rd_topic,
+    class_date = lubridate::as_date(rd_date) %>% as.character(),
+    class_number = class_num, weight = class_num,
+    slug = sprintf("reading_%02d", class_num),
+    pubdate = as.character(semester$semester_dates$pub_date),
+    date = lubridate::as_date(rd_date) %>% as.character()
   )
   if (use_pdfs) {
-    header <- header %>%
-      dplyr::mutate(pdf_url = stringr::str_c("/files/reading_asgts/",
-                                             .data$slug, ".pdf"))
+    header$pdf_url <- file.path(semester$file_paths['rd_asgt_pdf'],
+                                stringr::str_c(header$slug, ".pdf")) %>%
+      clean_url()
   }
+  header$output = list(
+    "blogdown::html_page" =
+      list(md_extensions = get_md_extensions())
+  )
   header <- header %>%
     yaml::as.yaml() %>% stringr::str_trim("right") %>%
     stringr::str_c(delim, ., delim, sep = "\n")

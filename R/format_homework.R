@@ -28,7 +28,8 @@ make_hw_slug <- function(hw_asgt) {
 }
 
 make_hw_solution_page <- function(solution, semester, schedule,
-                                  slug = NA_character_) {
+                                  slug = NA_character_,
+                                  use_pdfs = TRUE) {
   if (is_mt_or_na(slug) || is.null(slug)) {
     slug = sprintf("homework_%02d", solution$hw_num)
   }
@@ -39,23 +40,29 @@ make_hw_solution_page <- function(solution, semester, schedule,
   }
 
   delim <- "---"
+  slug <- stringr::str_c(slug, "_", solution$sol_filename)
+
   header <- list(
     title = solution$sol_title,
     hw_number = solution$hw_num,
     pubdate = as.character(solution$sol_pub_date),
     date = as.character(solution$due_date),
-    pdf_url = solution$sol_pdf_url,
-    slug = stringr::str_c(slug, "_", solution$sol_filename)) %>%
+    slug = slug
+  )
+  if (use_pdfs) {
+    header$use_pdfs <- file.path(semester$file_paths['hw_sol_pdf'],
+                                 stringr::str_c(slug, ".pdf")) %>%
+    clean_url()
+  }
+  header$output <- list(
+    "blogdown::html_page" = list(
+      md_extensions = get_md_extensions(),
+      toc = TRUE
+    ),
+    pdf_document = list(toc = TRUE, toc_depth = 3)
+  )
+  header <- header %>%
     purrr::discard(is_mt_or_na) %>%
-    c(
-      list(output = list("blogdown::html_page" =
-                           list(md_extensions = get_md_extensions(),
-                                toc = TRUE),
-                         pdf_document =
-                           list(toc = TRUE, toc_depth = 3)
-      )
-      )
-    ) %>%
     yaml::as.yaml() %>% stringr::str_trim("right") %>% #nolint
     stringr::str_c(delim, ., delim, sep = "\n")
   context <- make_context(solution, "homework solution", semester)
@@ -68,20 +75,25 @@ make_hw_solution_page <- function(solution, semester, schedule,
 }
 
 make_hw_solution <- function(solution, assignment, semester, schedule,
-                             slug = NA_character_) {
+                             slug = NA_character_, use_pdfs = TRUE) {
   if (is_mt_or_na(slug)) {
     slug = sprintf("homework_%02d", assignment$hw_num)
   }
   fname <- stringr::str_c(slug, "_", solution$sol_filename, ".Rmd")
-  solution_path <- fname %>%
-    file.path(semester$root_dir, "content", "homework_solutions/", .)
-  solution_url <- fname %>% stringr::str_replace("\\.Rmd$", "") %>%
-    file.path("/homework_solutions", .)
+  solution_path <- file.path(semester$root_dir,
+                             semester$file_paths['hw_sol'],
+                             fname) %>%
+    clean_path()
+  solution_url <- file.path(semester$file_paths['hw_sol_dest'],
+                            stringr::str_replace(fname, "\\.Rmd$", "")) %>%
+    clean_url()
   if (getOption("semestr.verbose", default = 1) >= 1) {
     message("Making solutions file for homework #", assignment$hw_num, ": ",
             solution_path)
   }
-  hw_solution_page <- make_hw_solution_page(solution, semester, schedule, slug)
+  hw_solution_page <- make_hw_solution_page(solution, semester,
+                                            schedule, slug,
+                                            use_pdfs)
   cat(hw_solution_page, file = solution_path)
   c(path = solution_path, url = solution_url)
 }
@@ -435,16 +447,19 @@ make_hw_asgt_page <- function(key, semester, schedule, use_solutions = FALSE,
     github_classroom_assignment_url = asgt_url,
     slug = hw_slug,
     pubdate = as.character(pub_date),
-    date = as.character(hw_date),
-    output = list("blogdown::html_page" =
-                    list(md_extensions = get_md_extensions()),
-                  pdf_document =
-                    list(toc = TRUE, toc_depth = 3L))
+    date = as.character(hw_date)
   )
   if (use_pdfs) {
-    header$pdf_url = stringr::str_c("/files/homework_asgts/",
-                                    header$slug, ".pdf")
+    header$pdf_url = file.path(semester$file_paths['hw_asgt_pdf'],
+                               stringr::str_c(header$slug, ".pdf")) %>%
+      clean_url()
   }
+  header$output = list(
+    "blogdown::html_page" =
+      list(md_extensions = get_md_extensions()),
+    pdf_document =
+      list(toc = TRUE, toc_depth = 3L)
+    )
   header <- header %>% purrr::discard(is_mt_or_na) %>%
     yaml::as.yaml() %>% stringr::str_trim("right") %>% # nolint
     stringr::str_c(delim, ., delim, sep = "\n")
@@ -458,13 +473,15 @@ make_hw_asgt_page <- function(key, semester, schedule, use_solutions = FALSE,
 }
 
 generate_hw_assignment <- function(key, semester, schedule,
-                                   use_solutions = FALSE) {
+                                   use_solutions = FALSE,
+                                   use_pdfs = TRUE) {
   if (is.null(key) || is.na(key)) {
     return(c(hw_page = NA_character_, url = NA_character_))
   }
   assignment <- get_hw_assignment(key, semester)
 
-  hw_page <- make_hw_asgt_page(key, semester, schedule, use_solutions)
+  hw_page <- make_hw_asgt_page(key, semester, schedule, use_solutions,
+                               use_pdfs)
 
   hw_slug <- make_hw_slug(assignment)
   hw_fname <- stringr::str_c(hw_slug, ".Rmd")
@@ -475,9 +492,16 @@ generate_hw_assignment <- function(key, semester, schedule,
             " (index = ", assignment$hw_id,
             ", slug = ", hw_slug, ", filename = ", hw_fname, ")")
   }
-  hw_path <- hw_fname %>% file.path(semester$root_dir,
-                                    "content", "assignment", .)
-  hw_url <- hw_fname %>% stringr::str_replace("\\.Rmd$", "")
+  hw_path <- file.path(semester$root_dir,
+                       semester$file_paths['hw_asgt_src'], hw_fname) %>%
+    clean_path()
+  hw_url <- file.path(semester$file_paths['hw_asgt_dest'],
+                      stringr::str_replace(hw_fname, "\\.Rmd$", "")) %>%
+    clean_url()
+  if (getOption("semestr.verbose", default = 1) >= 1) {
+    message("Writing homework file ", hw_fname, " to ",
+            hw_path)
+  }
   cat(hw_page, file = hw_path)
   c(page = hw_page, url = hw_url)
 }

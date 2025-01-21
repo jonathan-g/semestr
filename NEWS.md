@@ -1,3 +1,12 @@
+# semestr 0.3.0
+
+* Add support for standalone reading handouts, modeled on lab assignment
+  documents.
+* Refactor handling of paths to put paths for .Rmd content files, the 
+  resulting .html and .pdf files, and URLs (relative to the web root)
+  to access them. These are now specified in the database in a new table
+  called "file_paths".
+
 # semestr 0.2.2
 
 * Add support for expansion codes in markdown content to reference future

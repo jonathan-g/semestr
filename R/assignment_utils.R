@@ -223,3 +223,12 @@ find_assignment_rmds <- function(root_dir = NULL, content_path = "content",
 is_mt_or_na <- function(x) {
   length(x) == 0 || any(is.na(x))
 }
+
+clean_url <- function(s) {
+  stringr::str_replace_all(s, "(^|[^\\:])//+", "\\1/") %>%
+    stringr::str_replace_all("(://)/+", "\\1")
+}
+
+clean_path <- function(s) {
+  stringr::str_replace_all(s, "//+", "/")
+}
