@@ -90,6 +90,8 @@ pdf_filename <- function(pdf_url, root_dir, static_path = "static",
 build_pdf_from_rmd <- function(source_file, root_dir, static_path = "static",
                                force_dest = FALSE, output_options = NULL) {
   # message("building file ", source_file)
+  verbose = getOption("semestr.verbose", 1)
+
   hdr <- grab_header(source_file)
   if (tibble::has_name(hdr, "pdf_url")) {
     pdf_dest <- pdf_filename(hdr$pdf_url, root_dir, static_path, force_dest)
@@ -103,14 +105,77 @@ build_pdf_from_rmd <- function(source_file, root_dir, static_path = "static",
   }
   pdf_output <- build_pdf_output_format(hdr, output_options)
 
-  if (getOption("semestr.verbose", default = 1) >= 1) {
-    message("building ", pdf_dest, " from ", basename(source_file))
+  subtitle <- hdr$params$par_subtitle
+  type = "NULL type"
+  date <- hdr$params$par_date
+  s <- lubridate::stamp("Sunday, May 1, 2000", quiet = TRUE)
+  if ("assignment_type" %in% hdr) {
+    type <- hdr$assignment_type
+    if (verbose >= 1) message("type from assignment_type = ", type)
+  } else {
+    if (stringr::str_starts(hdr$slug, "reading")) {
+      type = "Reading"
+    } else if (stringr::str_starts(hdr$slug, "homework")) {
+      type = "Homework"
+    } else if (stringr::str_starts(hdr$slug, "lab")) {
+      type = "Lab"
+    } else {
+      warning("Can't find type: slug = ", hdr$slug)
+    }
+    if (verbose >= 1) {
+      message("type from slug = ", type)
+    }
   }
+
+  if (type == "Reading") {
+    date <- stringr::str_c("Reading for Class #", hdr$class_number,
+                           ": ",
+                           s(lubridate::ymd(hdr$params$par_date)))
+    if (verbose >= 1) {
+      message("Setting reading asgt date: ", date)
+    }
+  } else if (type == "Homework") {
+    subtitle <- stringr::str_c("Homework #", hdr$assignment_number)
+    date <- stringr::str_c("Due ",
+                           s(lubridate::ymd(hdr$params$par_date)))
+    if (verbose >= 1) {
+      message("Setting homework asgt date: ", date,
+              ", subtitle = ", subtitle)
+    }
+  } else {
+    warning("Unknown type: ", type)
+  }
+
+  options <- list(par_date = date, par_subtitle = subtitle) %>%
+    purrr::discard(is.null)
+
+  if (verbose >= 1) {
+    message("building ", pdf_dest, " from ", basename(source_file),
+            ",\n    type = ", type,
+            ",\n    options = (",
+            stringr::str_c(names(options), options, sep = " = ",
+                           collapse = ", "),
+            ")")
+  }
+
+
 
   rel_dest <- R.utils::getRelativePath(pdf_dest, dirname(source_file))
 
+  sty_src <- list.files(dirname(source_file), pattern = "*.sty",
+                        full.names = TRUE)
+  for (f in sty_src) {
+    sty_dest <- file.path(dirname(pdf_dest), basename(f))
+    if (! file.exists(sty_dest) ||
+        file.info(sty_dest)$size != file.info(f)$size ||
+        file.info(sty_dest)$mtime < file.info(f)$mtime) {
+      file.copy(f, sty_dest, overwrite = TRUE, copy.date = TRUE)
+    }
+  }
+
   result <- rmarkdown::render(source_file, output_format = pdf_output,
-                              output_file = rel_dest)
+                              output_file = rel_dest,
+                              params = options)
   result
 }
 
@@ -131,6 +196,13 @@ build_pdf_from_rmd <- function(source_file, root_dir, static_path = "static",
 build_pdf_files <- function(semester, content_path = "content",
                             static_path = "static", force_dest = TRUE,
                             output_options = NULL) {
+  if (! is.null(semester$latex_style)) {
+    output_options = as.list(output_options)
+    output_options$includes$in_header =
+      c(output_options$includes$in_header, semester$latex_style) %>%
+      unique()
+    }
+
   root_dir <- semester$root_dir
   if (! dir.exists(content_path)) {
     content_path = cat_path(root_dir, content_path)
@@ -138,6 +210,7 @@ build_pdf_files <- function(semester, content_path = "content",
   source_paths <- c("labs", "lab_docs", "assignment",
                     "reading", "handouts",
                     "homework_solutions", "lab_solutions")
+
   files <- list.files(file.path(content_path, source_paths), pattern = "*.Rmd",
                       full.names = TRUE)
   dest_paths <- character(0)

@@ -2,21 +2,21 @@
 % Please edit documentation in R/generate_assignments.R
 \name{schedule_add_homework}
 \alias{schedule_add_homework}
-\title{FUNCTION_TITLE}
+\title{Add homework assignments to a schedule}
 \usage{
 schedule_add_homework(schedule, semester)
 }
 \arguments{
-\item{schedule}{DESCRIPTION.}
+\item{schedule}{A \code{schedule} data frame, as returned from
+\code{\link[=init_schedule]{init_schedule()}}.}
 
-\item{semester}{DESCRIPTION.}
+\item{semester}{A \code{semester} object (a list), as returned from
+\code{\link[=load_semester_db]{load_semester_db()}}}
 }
 \value{
-RETURN_DESCRIPTION
+A \code{schedule} data frame, with the homework assignments
+added.
 }
 \description{
-FUNCTION_DESCRIPTION
-}
-\examples{
-# ADD_EXAMPLES_HERE
+Add homework assignments to a schedule data frame
 }

@@ -22,13 +22,18 @@ make_handout <- function(doc, semester, schedule) {
   slug = sprintf("%s", doc$doc_slug)
   header <- list(
     title = doc$doc_title,
+    subtitle = "`r params$par_subtitle`",
     author = doc$doc_author,
     pubdate = as.character(semester$semester_dates$pub_date),
-    date = as.character(doc$date),
+    date = "`r params$par_date",
     bibliography = doc$bibliography,
     slug = slug,
     pdf_url = file.path(semester$file_paths['handout_pdf'],
-                        stringr::str_c(slug, ".pdf")) %>% clean_url()
+                        stringr::str_c(slug, ".pdf")) %>% clean_url(),
+    params = list(
+      par_date = lubridate::as_date(doc$date) %>% as.character(),
+      par_subtitle = NULL
+    )
   )
   header$output = list(
     "blogdown::html_page" =

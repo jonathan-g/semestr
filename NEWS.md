@@ -57,7 +57,7 @@
 # semestr 0.1.1
 
 * Fix formatting of lab assignments. 
-* Fix formattting for EES 4760.
+* Fix formatting for EES 4760.
 
 # semestr 0.1.0
 

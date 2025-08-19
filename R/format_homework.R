@@ -245,9 +245,9 @@ make_hw_asgt_content <- function(key, semester, schedule,
 
   output <- stringr::str_c(output, "## Homework", sep = "\n\n")
 
-  url <- assignment$hw_assignment_url
-  output <- cat_nl(output, "### Assignment", start_par = TRUE, extra_lines = 1)
   if (semester$uses_gh_classroom) {
+    url <- assignment$hw_assignment_url
+    output <- cat_nl(output, "### Assignment", start_par = TRUE, extra_lines = 1)
     if (assignment$uses_gh_classroom) {
       if (! is_mt_or_na(url)) {
         output <- cat_nl(output,
@@ -442,14 +442,19 @@ make_hw_asgt_page <- function(key, semester, schedule, use_solutions = FALSE,
   delim <- "---"
   header <- list(
     title = hw_topic,
-    due_date = lubridate::as_date(hw_date) %>% as.character(),
+    subtitle = "`r params$par_subtitle`",
+    due_date = "`r params$par_date`",
     assignment_type = hw_type,
     short_assignment_type = short_hw_type,
     assignment_number = hw_num, weight = hw_idx,
     github_classroom_assignment_url = asgt_url,
     slug = hw_slug,
     pubdate = as.character(pub_date),
-    date = as.character(hw_date)
+    date = "`r params$par_date`",
+    params = list(
+      par_date = lubridate::as_date(hw_date) %>% as.character(),
+      par_subtitle = NULL
+    )
   )
   if (use_pdfs) {
     header$pdf_url = file.path(semester$file_paths['hw_asgt_pdf'],

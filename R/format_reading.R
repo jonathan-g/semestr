@@ -415,11 +415,16 @@ make_reading_page <- function(cal_id, semester, schedule, use_pdfs = TRUE){
   delim <- "---"
   header <- list(
     title = rd_topic,
-    class_date = lubridate::as_date(rd_date) %>% as.character(),
+    subtitle = "`r params$par_subtitle`",
+    class_date = "`r params$par_date`",
     class_number = class_num, weight = class_num,
     slug = sprintf("reading_%02d", class_num),
     pubdate = as.character(semester$semester_dates$pub_date),
-    date = lubridate::as_date(rd_date) %>% as.character()
+    date = "`r params$par_date`",
+    params = list (
+      par_date = lubridate::as_date(rd_date) %>% as.character(),
+      par_subtitle = NULL
+    )
   )
   if (use_pdfs) {
     header$pdf_url <- file.path(semester$file_paths['rd_asgt_pdf'],

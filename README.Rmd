@@ -33,7 +33,7 @@ The goal of semestr is to manage a syllabus for a university course.
 The package uses a SQL database with a schedule of reading, homework,
 and laboratory assignments and due dates, exams, holidays, etc.
 There are functions for generating content for a HUGO-based web site
-with the semester schedule and the assignents, as well as PDF copies
+with the semester schedule and the assignments, as well as PDF copies
 of the assignments and a full syllabus.
 
 ## Status

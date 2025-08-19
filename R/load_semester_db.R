@@ -164,7 +164,8 @@ set_up_reading <- function(calendar, classes, reading_items,
     }
     class_df <- class_df %>% dplyr::select(-"key_chk")
 
-    empty_groups <- reading_groups %>% dplyr::filter("rd_empty_grp") %>%
+    empty_groups <- reading_groups %>%
+      dplyr::filter(.data$rd_empty_grp) %>%
       dplyr::inner_join(link_cls_rd, by = "rd_grp_key") %>%
       dplyr::inner_join(class_df, by = "class_key")
 
@@ -576,6 +577,11 @@ read_raw_db <- function(db_file, target_env = parent.frame()) {
 
   assign("db_config", db_config, envir = target_env)
 
+  course_info <- dplyr::tbl(db, "course_info") %>% dplyr::collect() %>%
+    { set_names(.$value, .$key) }
+
+  assign("course_info", course_info, envir = target_env)
+
   type2idx  <- purrr::set_names(md_1$idx, md_1$type)
   idx2type  <- purrr::set_names(md_1$type, md_1$idx)
   type2col  <- purrr::set_names(md_1$col, md_1$type)
@@ -647,12 +653,12 @@ read_raw_db <- function(db_file, target_env = parent.frame()) {
         df <- NULL
         if (! (
           ((stringr::str_starts(t, "homework_") ||
-            t == "link_cal_hw") && ! db_config$has_hw) ||
+            t == "link_cal_hw") && ! db_config['has_hw']) ||
           ((stringr::str_starts(t, "reading_") ||
-            t == "link_cls_rd") && ! db_config$has_reading) ||
+            t == "link_cls_rd") && ! db_config['has_reading']) ||
           ((stringr::str_starts(t, "lab_")  ||
-            t == "link_cal_lab") && ! db_config$has_labs) ||
-          (t %in% c("exams", "link_cal_exam") && ! db_config$has_exams)
+            t == "link_cal_lab") && ! db_config['has_labs']) ||
+          (t %in% c("exams", "link_cal_exam") && ! db_config['has_exams'])
         )) {
           warning("Database table ", t, " is empty.")
         }
@@ -1043,8 +1049,11 @@ load_semester_db <- function(db_file, root_crit = NULL, ignore_root = FALSE) {
     has_handouts = has_handouts, has_labs = has_labs,
     has_exams = has_exams, has_holidays = has_holidays,
     has_events = has_events, has_notices = has_notices,
-    uses_gh_classroom = db_config$uses_gh_classroom,
+    uses_gh_classroom = db_config['uses_gh_classroom'],
     text_codes = text_codes,
+    course_num = course_info['course_num'],
+    course_name = course_info['course_name'],
+    latex_style = course_info['latex_style'],
     metadata = metadata, semester_dates = semester_dates,
     tz = tz, root_dir = root_dir, slide_dir = slide_dir,
     file_paths = file_paths

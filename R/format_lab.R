@@ -261,14 +261,19 @@ make_lab_assignment_page <- function(key, semester, schedule,
 
   header <- list(
     title = lab_title,
-    lab_date = as.character(lab_date),
+    subtitle = "`r params$par_subtitle`",
+    lab_date = "`r params$par_date`",
     presentation_date = as.character(pres_date),
     report_due_date = as.character(report_date),
     lab_number = lab_num,
     github_classroom_assignment_url = asgt_url,
     pubdate = as.character(pub_date),
-    date = as.character(lab_date),
+    date = "`r params$par_date`",
     slug = lab_slug,
+    params = list(
+      par_date = lubridate::as_date(lab_date) %>% as.character(),
+      par_subtitle = NULL
+    ),
     output = list("blogdown::html_page" =
                     list(md_extensions = get_md_extensions()))
   ) %>% purrr::discard(is_mt_or_na) %>%

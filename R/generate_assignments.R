@@ -1,13 +1,13 @@
 
-#' FUNCTION_TITLE (TODO)
+#' Initialize semester schedule
 #'
-#' FUNCTION_DESCRIPTION  (TODO)
+#' Convert a semester data object into a schedule suitable for
+#' generating assignments.
 #'
-#' @param semester DESCRIPTION  (TODO).
+#' @param semester A semester object (a list) returned from
+#' [load_semester_db()]
 #'
-#' @return RETURN_DESCRIPTION  (TODO)
-#' @examples
-#' # ADD_EXAMPLES_HERE  (TODO)
+#' @return A data frame containing the semester schedule.
 #' @export
 init_schedule <- function(semester) {
   schedule <- semester$calendar %>%
@@ -22,16 +22,16 @@ init_schedule <- function(semester) {
 }
 
 
-#' FUNCTION_TITLE  (TODO)
+#' Strip the final exams from a schedule
 #'
-#' FUNCTION_DESCRIPTION  (TODO)
+#' Remove the final exams from a semester schedule.
 #'
-#' @param schedule DESCRIPTION  (TODO).
-#' @param semester DESCRIPTION  (TODO).
-#'
-#' @return RETURN_DESCRIPTION  (TODO)
-#' @examples
-#' # ADD_EXAMPLES_HERE  (TODO)
+#' @param schedule A schedule data frame, as returned from
+#'   [init_schedule()].
+#' @param semester A semester object (a list), returned from
+#'   [load_semester_db()].
+#' @return A list of a `schedule` data frame with the exams removed,
+#'   and a `final_examss` data frame containing the final exams rows.
 #' @export
 schedule_strip_finals <- function(schedule, semester) {
   final_exams <- schedule %>%
@@ -43,16 +43,17 @@ schedule_strip_finals <- function(schedule, semester) {
 }
 
 
-#' FUNCTION_TITLE
+#' Add homework assignments to a schedule
 #'
-#' FUNCTION_DESCRIPTION
+#' Add homework assignments to a schedule data frame
 #'
-#' @param schedule DESCRIPTION.
-#' @param semester DESCRIPTION.
+#' @param schedule A `schedule` data frame, as returned from
+#'   [init_schedule()].
+#' @param semester A `semester` object (a list), as returned from
+#'   [load_semester_db()]
 #'
-#' @return RETURN_DESCRIPTION
-#' @examples
-#' # ADD_EXAMPLES_HERE
+#' @return A `schedule` data frame, with the homework assignments
+#'   added.
 schedule_add_homework <- function(schedule, semester) {
   hw_due <- semester$due_dates %>%
     dplyr::filter(.data$due_type %in% c("homework", "project"),
@@ -77,16 +78,17 @@ schedule_add_homework <- function(schedule, semester) {
 }
 
 
-#' FUNCTION_TITLE
+#' Add reading assignments to a schedule
 #'
-#' FUNCTION_DESCRIPTION
+#' Add reading assignments to a `schedule` data frame.
 #'
-#' @param schedule DESCRIPTION.
-#' @param semester DESCRIPTION.
+#' @param schedule A `schedule` data frame, as returned from
+#'   [init_schedule()].
+#' @param semester A `semester` object (a list), as returned from
+#'   [load_semester_db()]
 #'
-#' @return RETURN_DESCRIPTION
-#' @examples
-#' # ADD_EXAMPLES_HERE
+#' @return A `schedule` data frame, with the reading assignments
+#'   added.
 schedule_add_reading <- function(schedule, semester) {
   has_reading <- semester$has_reading
 
@@ -106,19 +108,23 @@ schedule_add_reading <- function(schedule, semester) {
 }
 
 
-#' FUNCTION_TITLE
+#' Pivot a schedule data frame into wide format.
 #'
-#' FUNCTION_DESCRIPTION
+#' Combine a `schedule` data frame, containing class descriptions,
+#' reading assignments, and homework assignments, along with
+#' other data, merge them, and pivot to a wide format, where
+#' every calendar entry has a column for the reading assignment,
+#' homework due that day, and other information.
 #'
-#' @param schedule DESCRIPTION.
+#' @param schedule A `schedule` data frame, as returned from
+#'   [init_schedule()].
 #' @param final_exams DESCRIPTION.
-#' @param semester DESCRIPTION.
+#' @param semester A `semester` object (a list), as returned from
+#'   [load_semester_db()]
 #' @param final_is_take_home DESCRIPTION.
 #' @param create_paths DESCRIPTION.
 #'
-#' @return RETURN_DESCRIPTION
-#' @examples
-#' # ADD_EXAMPLES_HERE
+#' @return A `schedule` data frame, converted to wide format.
 schedule_widen <- function(schedule, final_exams, semester,
                            final_is_take_home = TRUE,
                            create_paths = TRUE) {

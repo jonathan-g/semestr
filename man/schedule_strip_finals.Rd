@@ -2,21 +2,21 @@
 % Please edit documentation in R/generate_assignments.R
 \name{schedule_strip_finals}
 \alias{schedule_strip_finals}
-\title{FUNCTION_TITLE  (TODO)}
+\title{Strip the final exams from a schedule}
 \usage{
 schedule_strip_finals(schedule, semester)
 }
 \arguments{
-\item{schedule}{DESCRIPTION  (TODO).}
+\item{schedule}{A schedule data frame, as returned from
+\code{\link[=init_schedule]{init_schedule()}}.}
 
-\item{semester}{DESCRIPTION  (TODO).}
+\item{semester}{A semester object (a list), returned from
+\code{\link[=load_semester_db]{load_semester_db()}}.}
 }
 \value{
-RETURN_DESCRIPTION  (TODO)
+A list of a \code{schedule} data frame with the exams removed,
+and a \code{final_examss} data frame containing the final exams rows.
 }
 \description{
-FUNCTION_DESCRIPTION  (TODO)
-}
-\examples{
-# ADD_EXAMPLES_HERE  (TODO)
+Remove the final exams from a semester schedule.
 }

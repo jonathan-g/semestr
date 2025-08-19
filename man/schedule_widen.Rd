@@ -2,7 +2,7 @@
 % Please edit documentation in R/generate_assignments.R
 \name{schedule_widen}
 \alias{schedule_widen}
-\title{FUNCTION_TITLE}
+\title{Pivot a schedule data frame into wide format.}
 \usage{
 schedule_widen(
   schedule,
@@ -13,22 +13,25 @@ schedule_widen(
 )
 }
 \arguments{
-\item{schedule}{DESCRIPTION.}
+\item{schedule}{A \code{schedule} data frame, as returned from
+\code{\link[=init_schedule]{init_schedule()}}.}
 
 \item{final_exams}{DESCRIPTION.}
 
-\item{semester}{DESCRIPTION.}
+\item{semester}{A \code{semester} object (a list), as returned from
+\code{\link[=load_semester_db]{load_semester_db()}}}
 
 \item{final_is_take_home}{DESCRIPTION.}
 
 \item{create_paths}{DESCRIPTION.}
 }
 \value{
-RETURN_DESCRIPTION
+A \code{schedule} data frame, converted to wide format.
 }
 \description{
-FUNCTION_DESCRIPTION
-}
-\examples{
-# ADD_EXAMPLES_HERE
+Combine a \code{schedule} data frame, containing class descriptions,
+reading assignments, and homework assignments, along with
+other data, merge them, and pivot to a wide format, where
+every calendar entry has a column for the reading assignment,
+homework due that day, and other information.
 }

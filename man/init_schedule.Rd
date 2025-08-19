@@ -2,19 +2,18 @@
 % Please edit documentation in R/generate_assignments.R
 \name{init_schedule}
 \alias{init_schedule}
-\title{FUNCTION_TITLE (TODO)}
+\title{Initialize semester schedule}
 \usage{
 init_schedule(semester)
 }
 \arguments{
-\item{semester}{DESCRIPTION  (TODO).}
+\item{semester}{A semester object (a list) returned from
+\code{\link[=load_semester_db]{load_semester_db()}}}
 }
 \value{
-RETURN_DESCRIPTION  (TODO)
+A data frame containing the semester schedule.
 }
 \description{
-FUNCTION_DESCRIPTION  (TODO)
-}
-\examples{
-# ADD_EXAMPLES_HERE  (TODO)
+Convert a semester data object into a schedule suitable for
+generating assignments.
 }
