@@ -109,10 +109,11 @@ build_pdf_from_rmd <- function(source_file, root_dir, static_path = "static",
   type = "NULL type"
   date <- hdr$params$par_date
   s <- lubridate::stamp("Sunday, May 1, 2000", quiet = TRUE)
-  if ("assignment_type" %in% hdr) {
+  if (tibble::has_name(hdr, "assignment_type")) {
     type <- hdr$assignment_type
     if (verbose >= 1) message("type from assignment_type = ", type)
   } else {
+    if (verbose >= 1) message("inferring type from slug ", hdr$slug)
     if (stringr::str_starts(hdr$slug, "reading")) {
       type = "Reading"
     } else if (stringr::str_starts(hdr$slug, "homework")) {
@@ -140,6 +141,22 @@ build_pdf_from_rmd <- function(source_file, root_dir, static_path = "static",
                            s(lubridate::ymd(hdr$params$par_date)))
     if (verbose >= 1) {
       message("Setting homework asgt date: ", date,
+              ", subtitle = ", subtitle)
+    }
+  } else if (type == "Project") {
+    subtitle <- stringr::str_c("Individual Project Assignment")
+    date <- stringr::str_c("Due ",
+                           s(lubridate::ymd(hdr$params$par_date)))
+    if (verbose >= 1) {
+      message("Setting project asgt date: ", date,
+              ", subtitle = ", subtitle)
+    }
+  } else if (type == "Team Project") {
+    subtitle <- stringr::str_c("Team Project Assignment")
+    date <- stringr::str_c("Due ",
+                           s(lubridate::ymd(hdr$params$par_date)))
+    if (verbose >= 1) {
+      message("Setting team project asgt date: ", date,
               ", subtitle = ", subtitle)
     }
   } else {

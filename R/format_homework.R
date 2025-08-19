@@ -430,6 +430,7 @@ make_hw_asgt_page <- function(key, semester, schedule, use_solutions = FALSE,
   hw_num <- assignment$hw_num
   hw_slug <- make_hw_slug(assignment)
   hw_type <- assignment$hw_type
+  med_hw_type = assignment$med_hw_type
   short_hw_type = assignment$short_hw_type
   pub_date <- semester$semester_dates$pub_date
   asgt_url = assignment$hw_assignment_url
@@ -446,6 +447,7 @@ make_hw_asgt_page <- function(key, semester, schedule, use_solutions = FALSE,
     due_date = "`r params$par_date`",
     assignment_type = hw_type,
     short_assignment_type = short_hw_type,
+    med_assignment_type = med_hw_type,
     assignment_number = hw_num, weight = hw_idx,
     github_classroom_assignment_url = asgt_url,
     slug = hw_slug,
