@@ -147,6 +147,8 @@ set_up_reading <- function(calendar, classes, reading_items,
                           link_cls_rd, link_cal_class) {
   has_reading <- ! (is.null(reading_items) || is.null(link_cls_rd))
   if (has_reading) {
+    reading_groups <- reading_groups %>%
+      dplyr::mutate(rd_empty_grp = as.logical(.data$rd_empty_grp))
     class_df <- dplyr::inner_join(
       dplyr::select(classes, "class_id", "class_key"),
       dplyr::select(link_cal_class, "cal_id", "class_id",
@@ -161,6 +163,10 @@ set_up_reading <- function(calendar, classes, reading_items,
               ".")
     }
     class_df <- class_df %>% dplyr::select(-"key_chk")
+
+    empty_groups <- reading_groups %>% dplyr::filter("rd_empty_grp") %>%
+      dplyr::inner_join(link_cls_rd, by = "rd_grp_key") %>%
+      dplyr::inner_join(class_df, by = "class_key")
 
     rd_items <- reading_items %>%
       dplyr::inner_join(
@@ -180,7 +186,12 @@ set_up_reading <- function(calendar, classes, reading_items,
     missing_reading <- calendar %>%
       dplyr::filter(.data$cal_type == "class") %>%
       dplyr::pull("cal_id") %>%
-      setdiff(rd_items$cal_id)
+      setdiff(rd_items$cal_id) %>%
+      setdiff(empty_groups$cal_id)
+    non_empty_groups <- rd_items %>%
+      dplyr::filter(.data$rd_grp_id %in% empty_groups$rd_grp_id) %>%
+      dplyr::pull("rd_grp_key") %>%
+      unique()
     valid_reading <- assertthat::validate_that(
       length(missing_reading) == 0,
       msg = stringr::str_c("Missing reading assignments: (",
@@ -189,6 +200,20 @@ set_up_reading <- function(calendar, classes, reading_items,
     )
     if (! isTRUE(valid_reading)) {
       warning(valid_reading)
+    }
+    valid_empty_groups <- assertthat::validate_that(
+      length(non_empty_groups) == 0,
+      msg = stringr::str_c("Non-empty reading groups marked empty: (",
+                           stringr::str_c(non_empty_groups, collapse = ", "),
+                           ").")
+    )
+    if (! isTRUE(valid_empty_groups)) {
+      warning(valid_empty_groups)
+    }
+    if (nrow(empty_groups) > 0) {
+      message("Reading groups marked empty: ",
+              stringr::str_c(empty_groups$rd_grp_key, collapse = ", "),
+              ".")
     }
   } else {
     rd_items <- NULL
@@ -548,6 +573,9 @@ read_raw_db <- function(db_file, target_env = parent.frame()) {
   db_config <- dplyr::tbl(db, "config") %>% dplyr::collect() %>%
     dplyr::mutate(value = as.logical(.data$value)) %>%
     { set_names(.$value, .$key) }
+
+  assign("db_config", db_config, envir = target_env)
+
   type2idx  <- purrr::set_names(md_1$idx, md_1$type)
   idx2type  <- purrr::set_names(md_1$type, md_1$idx)
   type2col  <- purrr::set_names(md_1$col, md_1$type)
@@ -617,7 +645,17 @@ read_raw_db <- function(db_file, target_env = parent.frame()) {
       df <- dplyr::tbl(db, t) %>% dplyr::collect()
       if (nrow(df) == 0) {
         df <- NULL
-        warning("Database table ", t, " is empty.")
+        if (! (
+          ((stringr::str_starts(t, "homework_") ||
+            t == "link_cal_hw") && ! db_config$has_hw) ||
+          ((stringr::str_starts(t, "reading_") ||
+            t == "link_cls_rd") && ! db_config$has_reading) ||
+          ((stringr::str_starts(t, "lab_")  ||
+            t == "link_cal_lab") && ! db_config$has_labs) ||
+          (t %in% c("exams", "link_cal_exam") && ! db_config$has_exams)
+        )) {
+          warning("Database table ", t, " is empty.")
+        }
       }
     } else {
       df <- NULL
@@ -682,6 +720,7 @@ load_semester_db <- function(db_file, root_crit = NULL, ignore_root = FALSE) {
   # Dummy to prevent R CMD check complaining ===========================
   # about undeclared variables
   #
+  db_config <- NULL
   calendar <- NULL
   classes <- NULL
   due_dates <- NULL
@@ -1004,6 +1043,7 @@ load_semester_db <- function(db_file, root_crit = NULL, ignore_root = FALSE) {
     has_handouts = has_handouts, has_labs = has_labs,
     has_exams = has_exams, has_holidays = has_holidays,
     has_events = has_events, has_notices = has_notices,
+    uses_gh_classroom = db_config$uses_gh_classroom,
     text_codes = text_codes,
     metadata = metadata, semester_dates = semester_dates,
     tz = tz, root_dir = root_dir, slide_dir = slide_dir,

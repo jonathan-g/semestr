@@ -7,6 +7,7 @@ author:
   Jonathan Gilligan:
     href: https://www.jonathangilligan.org/
 template:
+  bootstrap: 5
   params:
     bootswatch: cerulean
   opengraph:
@@ -32,6 +33,13 @@ reference:
     - update_pdf_digests
     - prune_pdf_digests
     - clean_assignment_files
+- title: Syllabus-building subtasks
+  desc: Subtasks for building a syllabus
+  contents:
+    - build_assignments
+    - build_hw_assignment
+    - build_lab_assignment
+    - build_reading_assignment
 - title: Text formatting
   desc: Text formatting functions
   contents:
@@ -45,8 +53,15 @@ reference:
     - lookup_and_format_date_range
     - make_reading_page
     - sanitize_date_range
+- title: Manage schedules
+  desc: "Managing semester schedule"
+  contents:
+    - check_schedule
+    - schedule_add_homework
+    - schedule_add_reading
+    - schedule_widen
 - title: Cross-referencing
-  desc: "Cross-referencing functions for expansion codes."
+  desc: "Cross-referencing functions for expansion codes"
   contents:
     - lookup_class
     - matches("^lookup_(future|past)_(class|reading)")
@@ -68,6 +83,7 @@ reference:
 - title: File manipulation
   desc: Manage files
   contents:
+    - copy_slides
     - get_pdf_url
     - grab_header
     - pdf_filename

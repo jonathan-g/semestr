@@ -1,3 +1,15 @@
+# semestr 0.4.0
+
+* Add support for GitHub classroom for homework and lab assignments.
+* Consult `config` table in database to decide whether to issue
+  warnings for empty lab, homework, and reading tables in the 
+  database.
+* Consult `uses_gh_classroom` variable in `config` table to decide
+  whether to include text about the GitHub Classroom assignment in
+  homework and lab assignment pages.
+* Include a field `rd_empty_grp` in `reading_groups` table to allow
+  consistency checks for empty reading assignments.
+
 # semestr 0.3.0
 
 * Add support for standalone reading handouts, modeled on lab assignment

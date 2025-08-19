@@ -1,7 +1,7 @@
 semestr
 ================
 Jonathan Gilligan
-2023-01-02
+2025-01-13
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
@@ -10,7 +10,7 @@ Jonathan Gilligan
 <!-- badges: start -->
 
 [![Version:
-0.2.1.9101](https://img.shields.io/github/r-package/v/jonathan-g/semestr?label=version)](https://github.com/jonathan-g/semestr/releases/tag/v0.2.1.9101)
+0.4.0](https://img.shields.io/github/r-package/v/jonathan-g/semestr?label=version)](https://github.com/jonathan-g/semestr/releases/tag/v0.4.0)
 [![Lifecycle:
 experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://www.tidyverse.org/lifecycle/#experimental)
 [![CRAN

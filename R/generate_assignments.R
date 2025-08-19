@@ -584,7 +584,7 @@ prepare_schedule <- function(semester) {
 #' [load_semester_db()].
 #'
 #' @return A named list containing the lesson plan in YAML text format and
-#'   the semester schedule, as a [tibble()].
+#'   the semester schedule, as a [`tibble`][tibble::tbl_df-class].
 #' @examples
 #' \dontrun{
 #' sem <- load_semester_db("foo.sqlite3")

@@ -13,17 +13,15 @@ strip_key_prefix(x, type, ...)
 
 \method{strip_key_prefix}{list}(x, type, ...)
 
-\method{strip_key_prefix}{data.frame}(df, type, col = "cal_key")
+\method{strip_key_prefix}{data.frame}(x, type, col = "cal_key", ...)
 }
 \arguments{
-\item{x}{An object to process.}
+\item{x}{The data frame to process.}
 
 \item{type}{The type of calendar entry to strip (e.g., "\code{class}", "\code{lab}",
 etc.)}
 
 \item{...}{Arguments to pass to specialized methods.}
-
-\item{df}{The data frame to process.}
 
 \item{col}{The column where the keys are located (by default "\code{cal_key}").}
 }

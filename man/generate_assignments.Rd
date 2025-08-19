@@ -12,7 +12,7 @@ generate_assignments(semester)
 }
 \value{
 A named list containing the lesson plan in YAML text format and
-the semester schedule, as a \code{\link[=tibble]{tibble()}}.
+the semester schedule, as a \code{\link[tibble:tbl_df-class]{tibble}}.
 }
 \description{
 Generate RMarkdown files for reading, homework, and lab  assignments and

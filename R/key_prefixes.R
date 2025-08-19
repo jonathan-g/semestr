@@ -41,7 +41,7 @@ strip_key_prefix.list <- function(x, type, ...) {
 
 #' @describeIn strip_key_prefix Strip key prefixes from a column in a data frame.
 #'
-#' @param df The data frame to process.
+#' @param x The data frame to process.
 #' @param type The type of calendar entry to strip (e.g., "`class`", "`lab`",
 #' etc.)
 #' @param col The column where the keys are located (by default "`cal_key`").
@@ -50,13 +50,13 @@ strip_key_prefix.list <- function(x, type, ...) {
 #'
 #' @seealso add_key_prefix
 #'
-strip_key_prefix.data.frame <- function(df, type, col = "cal_key") {
+strip_key_prefix.data.frame <- function(x, type, col = "cal_key", ...) {
   col <- ensym(col)
   col <- enquo(col)
 
-  df <- df %>% dplyr::mutate(!!col := strip_key_prefix(!!col, type))
+  x <- x %>% dplyr::mutate(!!col := strip_key_prefix(!!col, type))
 
-  invisible(df)
+  invisible(x)
 }
 
 #' Add prefixes to keys.
@@ -100,7 +100,7 @@ add_key_prefix.list <- function(x, type, ...) {
 }
 
 #' @describeIn add_key_prefix Add key prefix to a column in a data frame.
-#' @param df The object to process.
+#' @param x The object to process.
 #' @param type The type of prefix to add (e.g., "`class`", "`lab`",
 #' etc.)
 #' @param col The column to process
@@ -109,12 +109,12 @@ add_key_prefix.list <- function(x, type, ...) {
 #'
 #' @seealso strip_key_prefix
 #'
-add_key_prefix.data.frame <- function(df, type, col = "cal_key") {
+add_key_prefix.data.frame <- function(x, type, col = "cal_key", ...) {
   col <- ensym(col)
   col <- enquo(col)
 
-  df <- df %>% dplyr::mutate(!!col := add_key_prefix(!!col, type))
-  invisible(df)
+  x <- x %>% dplyr::mutate(!!col := add_key_prefix(!!col, type))
+  invisible(x)
 }
 
 any_true <- function(vec) {

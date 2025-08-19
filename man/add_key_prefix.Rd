@@ -13,7 +13,7 @@ add_key_prefix(x, type, ...)
 
 \method{add_key_prefix}{list}(x, type, ...)
 
-\method{add_key_prefix}{data.frame}(df, type, col = "cal_key")
+\method{add_key_prefix}{data.frame}(x, type, col = "cal_key", ...)
 }
 \arguments{
 \item{x}{The object to process.}
@@ -22,8 +22,6 @@ add_key_prefix(x, type, ...)
 etc.)}
 
 \item{...}{Arguments passed to methods.}
-
-\item{df}{The object to process.}
 
 \item{col}{The column to process}
 }
