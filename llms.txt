@@ -1,0 +1,245 @@
+# semestr
+
+Jonathan Gilligan 2025-01-13
+
+# semestr
+
+The goal of semestr is to manage a syllabus for a university course. The
+package uses a SQL database with a schedule of reading, homework, and
+laboratory assignments and due dates, exams, holidays, etc. There are
+functions for generating content for a HUGO-based web site with the
+semester schedule and the assignments, as well as PDF copies of the
+assignments and a full syllabus.
+
+## Status
+
+This project is at a very early state of development and is not ready
+for general use. Use this at your own risk.
+
+## Installation
+
+This package has not been released to CRAN. You can install the
+development version from GitHub using the `remotes` package:
+
+``` r
+remotes::install_github("jonathan-g/semestr")
+```
+
+## Example
+
+To get started, you need a SQL database. I have not yet written
+instructions or specifications for this database, but there is an
+example database `planning/ees_3310/example_semester_db.sqlite3` and you
+can inspect it and figure out how it works.
+
+``` r
+library(semestr)
+semester <- load_semester_db("planning/example_semester_db.sqlite3")
+generate_assignments(semester)
+build_pdf_files(semester)
+```
+
+# Package index
+
+## Build
+
+Build a syllabus
+
+- [`load_semester_db()`](https://jonathan-g.github.io/semestr/reference/load_semester_db.md)
+  : Load schedule for semester from database
+- [`generate_assignments()`](https://jonathan-g.github.io/semestr/reference/generate_assignments.md)
+  : Generate assignments from database
+- [`build_pdf_files()`](https://jonathan-g.github.io/semestr/reference/build_pdf_files.md)
+  : Build PDF versions of assignments.
+
+## Maintenance
+
+Maintain a syllabus.
+
+- [`update_latex_styles()`](https://jonathan-g.github.io/semestr/reference/update_latex_styles.md)
+  : Update LaTeX style files
+- [`update_pdfs()`](https://jonathan-g.github.io/semestr/reference/update_pdfs.md)
+  : Update all files that are out of date
+- [`update_pdf_digests()`](https://jonathan-g.github.io/semestr/reference/update_pdf_digests.md)
+  : Generates and stores digests for all source and output files.
+- [`prune_pdf_digests()`](https://jonathan-g.github.io/semestr/reference/prune_pdf_digests.md)
+  : Delete stored digests for specified source files
+- [`clean_assignment_files()`](https://jonathan-g.github.io/semestr/reference/clean_assignment_files.md)
+  : Clean up assignment riles.
+
+## Syllabus-building subtasks
+
+Subtasks for building a syllabus
+
+- [`build_assignments()`](https://jonathan-g.github.io/semestr/reference/build_assignments.md)
+  : Build reading, homework, and lab assignments
+- [`build_hw_assignment()`](https://jonathan-g.github.io/semestr/reference/build_hw_assignment.md)
+  : Build a homework assignment
+- [`build_lab_assignment()`](https://jonathan-g.github.io/semestr/reference/build_lab_assignment.md)
+  : Build a lab assignment
+- [`build_reading_assignment()`](https://jonathan-g.github.io/semestr/reference/build_reading_assignment.md)
+  : Build a reading assignment
+
+## Text formatting
+
+Text formatting functions
+
+- [`format_month()`](https://jonathan-g.github.io/semestr/reference/date_parts.md)
+  [`format_wday()`](https://jonathan-g.github.io/semestr/reference/date_parts.md)
+  : Formatting parts of dates
+- [`format_class_date()`](https://jonathan-g.github.io/semestr/reference/format_class_date.md)
+  [`format_class_day_date()`](https://jonathan-g.github.io/semestr/reference/format_class_date.md)
+  : Format a date
+- [`format_date_range()`](https://jonathan-g.github.io/semestr/reference/format_date_range.md)
+  [`format_day_date_range()`](https://jonathan-g.github.io/semestr/reference/format_date_range.md)
+  : Format a range of dates
+- [`format_page_range()`](https://jonathan-g.github.io/semestr/reference/format_page_range.md)
+  : Format a Range of Pages
+- [`format_textbook_reading_item()`](https://jonathan-g.github.io/semestr/reference/format_reading_item.md)
+  [`format_handout_reading_item()`](https://jonathan-g.github.io/semestr/reference/format_reading_item.md)
+  [`format_web_reading_item()`](https://jonathan-g.github.io/semestr/reference/format_reading_item.md)
+  [`format_youtube_reading_item()`](https://jonathan-g.github.io/semestr/reference/format_reading_item.md)
+  : Format a Reading Item
+- [`format_textbook_reading()`](https://jonathan-g.github.io/semestr/reference/format_reading_items.md)
+  [`format_handout_reading()`](https://jonathan-g.github.io/semestr/reference/format_reading_items.md)
+  [`format_web_reading()`](https://jonathan-g.github.io/semestr/reference/format_reading_items.md)
+  [`format_youtube_reading()`](https://jonathan-g.github.io/semestr/reference/format_reading_items.md)
+  : Format a Collection of Reading Items
+- [`format_date_by_cal_id()`](https://jonathan-g.github.io/semestr/reference/lookup_and_format_date.md)
+  [`format_date_by_class_num()`](https://jonathan-g.github.io/semestr/reference/lookup_and_format_date.md)
+  [`format_date_by_key()`](https://jonathan-g.github.io/semestr/reference/lookup_and_format_date.md)
+  [`format_day_date_by_cal_id()`](https://jonathan-g.github.io/semestr/reference/lookup_and_format_date.md)
+  [`format_day_date_by_class_num()`](https://jonathan-g.github.io/semestr/reference/lookup_and_format_date.md)
+  [`format_day_date_by_key()`](https://jonathan-g.github.io/semestr/reference/lookup_and_format_date.md)
+  : Look Up and Format a Date
+- [`format_date_range_by_cal_id()`](https://jonathan-g.github.io/semestr/reference/lookup_and_format_date_range.md)
+  [`format_date_range_by_class_num()`](https://jonathan-g.github.io/semestr/reference/lookup_and_format_date_range.md)
+  [`format_date_range_by_key()`](https://jonathan-g.github.io/semestr/reference/lookup_and_format_date_range.md)
+  [`format_date_range_by_event_id()`](https://jonathan-g.github.io/semestr/reference/lookup_and_format_date_range.md)
+  : Look up and format a range of dates
+- [`add_period()`](https://jonathan-g.github.io/semestr/reference/add_period.md)
+  : Add a Period If Necessary
+- [`append_newline_if_needed()`](https://jonathan-g.github.io/semestr/reference/append_newline_if_needed.md)
+  : Make sure a string ends with a newline.
+- [`concat_with_nl()`](https://jonathan-g.github.io/semestr/reference/concat_with_nl.md)
+  : Concatenate strings as separate lines of text.
+- [`escape_dollar()`](https://jonathan-g.github.io/semestr/reference/escape_dollar.md)
+  : Escape dollar sign for LaTeX
+- [`make_reading_page()`](https://jonathan-g.github.io/semestr/reference/make_reading_page.md)
+  : Make a Reading Assignment Page
+- [`sanitize_date_range()`](https://jonathan-g.github.io/semestr/reference/sanitize_date_range.md)
+  : Create a date range from a list of dates
+
+## Manage schedules
+
+Managing semester schedule
+
+- [`check_schedule()`](https://jonathan-g.github.io/semestr/reference/check_schedule.md)
+  : Check a schedule data frame for consistency
+- [`schedule_add_homework()`](https://jonathan-g.github.io/semestr/reference/schedule_add_homework.md)
+  : Add homework assignments to a schedule
+- [`schedule_add_reading()`](https://jonathan-g.github.io/semestr/reference/schedule_add_reading.md)
+  : Add reading assignments to a schedule
+- [`schedule_widen()`](https://jonathan-g.github.io/semestr/reference/schedule_widen.md)
+  : Pivot a schedule data frame into wide format.
+
+## Cross-referencing
+
+Cross-referencing functions for expansion codes
+
+- [`lookup_class()`](https://jonathan-g.github.io/semestr/reference/lookup_class.md)
+  : Look Up Classes
+- [`lookup_future_class()`](https://jonathan-g.github.io/semestr/reference/lookup_past_future_classes.md)
+  [`lookup_past_class()`](https://jonathan-g.github.io/semestr/reference/lookup_past_future_classes.md)
+  : Look Up Past and Future Classes
+- [`lookup_future_reading()`](https://jonathan-g.github.io/semestr/reference/lookup_past_future_reading.md)
+  [`lookup_past_reading()`](https://jonathan-g.github.io/semestr/reference/lookup_past_future_reading.md)
+  : Look Up Past and Future Reading Assignments
+
+## Data manipulation
+
+Access and modify semester data
+
+- [`col_replace()`](https://jonathan-g.github.io/semestr/reference/col_replace.md)
+  : Search and replace all columns in a data frame.
+- [`col_search()`](https://jonathan-g.github.io/semestr/reference/col_search.md)
+  : Search for a pattern in any column of a data frame
+- [`col_search_sum()`](https://jonathan-g.github.io/semestr/reference/col_search_sum.md)
+  : Count the number of times each column in a data frame matches a
+  pattern.
+- [`global_col_search()`](https://jonathan-g.github.io/semestr/reference/global_col_search.md)
+  : Search data frames for a pattern in any column
+- [`global_col_search_sum()`](https://jonathan-g.github.io/semestr/reference/global_col_search_sum.md)
+  : Count pattern-matches in each column of data frames
+- [`global_replace()`](https://jonathan-g.github.io/semestr/reference/global_replace.md)
+  : Search and replace all columns in a list of data frames.
+- [`global_search()`](https://jonathan-g.github.io/semestr/reference/global_search.md)
+  : Search data frames for a pattern in any column.
+- [`default_semestr_metadata()`](https://jonathan-g.github.io/semestr/reference/default_semestr_metadata.md)
+  : Create default metadata
+- [`get_pdf_url()`](https://jonathan-g.github.io/semestr/reference/get_pdf_url.md)
+  : Get URLs corresponding to generated PDF files.
+- [`get_semestr_metadata()`](https://jonathan-g.github.io/semestr/reference/get_semestr_metadata.md)
+  : Get the metadata for the currently loaded semester
+- [`get_semestr_tz()`](https://jonathan-g.github.io/semestr/reference/get_semestr_tz.md)
+  : Get the time zone for where the course will be taught.
+- [`type2col()`](https://jonathan-g.github.io/semestr/reference/name_conversions.md)
+  [`type2idx()`](https://jonathan-g.github.io/semestr/reference/name_conversions.md)
+  [`type2prefix()`](https://jonathan-g.github.io/semestr/reference/name_conversions.md)
+  [`type2base()`](https://jonathan-g.github.io/semestr/reference/name_conversions.md)
+  [`idx2col()`](https://jonathan-g.github.io/semestr/reference/name_conversions.md)
+  [`idx2type()`](https://jonathan-g.github.io/semestr/reference/name_conversions.md)
+  [`col2idx()`](https://jonathan-g.github.io/semestr/reference/name_conversions.md)
+  [`col2type()`](https://jonathan-g.github.io/semestr/reference/name_conversions.md)
+  [`base2type()`](https://jonathan-g.github.io/semestr/reference/name_conversions.md)
+  : Metadata Name Conversion Functions
+- [`pull_env()`](https://jonathan-g.github.io/semestr/reference/pull_env.md)
+  : Expose contents of an environment in the current environment
+- [`item_mod()`](https://jonathan-g.github.io/semestr/reference/item_mod.md)
+  : Determine the modification type of calendar entry from its calendar
+  id.
+- [`item_type()`](https://jonathan-g.github.io/semestr/reference/item_type.md)
+  : Determine the type of calendar entry from its calendar id.
+- [`add_key_prefix()`](https://jonathan-g.github.io/semestr/reference/add_key_prefix.md)
+  : Add prefixes to keys.
+
+## File manipulation
+
+Manage files
+
+- [`copy_slides()`](https://jonathan-g.github.io/semestr/reference/copy_slides.md)
+  : Install Powerpoint slides for a class session
+- [`get_pdf_url()`](https://jonathan-g.github.io/semestr/reference/get_pdf_url.md)
+  : Get URLs corresponding to generated PDF files.
+- [`grab_header()`](https://jonathan-g.github.io/semestr/reference/grab_header.md)
+  : Extract metadata from an RMD file.
+- [`pdf_filename()`](https://jonathan-g.github.io/semestr/reference/pdf_filename.md)
+  : Extract the local PDF filename corresponding to an URL.
+- [`pdf_digest_if_exists()`](https://jonathan-g.github.io/semestr/reference/pdf_digest_if_exists.md)
+  : Calculate digest for pdf file
+- [`update_pdf_dir()`](https://jonathan-g.github.io/semestr/reference/update_pdf_dir.md)
+  : Rebuild changed files in a subdirectory of "content"
+- [`update_pdf_file_digests()`](https://jonathan-g.github.io/semestr/reference/update_pdf_file_digests.md)
+  : Update digests for PDF files
+
+## Helper functions
+
+Miscellaneous helper functions
+
+- [`build_pdf_from_rmd()`](https://jonathan-g.github.io/semestr/reference/build_pdf_from_rmd.md)
+  : Build a PDF from an RMarkdown source file
+- [`build_pdf_output_format()`](https://jonathan-g.github.io/semestr/reference/build_pdf_output_format.md)
+  : Build an RMarkdown output format for PDF files.
+- [`init_schedule()`](https://jonathan-g.github.io/semestr/reference/init_schedule.md)
+  : Initialize semester schedule
+- [`make_rmd_output_format()`](https://jonathan-g.github.io/semestr/reference/make_rmd_output_format.md)
+  : Make an RMD output format
+- [`prepare_schedule()`](https://jonathan-g.github.io/semestr/reference/prepare_schedule.md)
+  : Prepare schedule from database
+- [`is_mt_or_na()`](https://jonathan-g.github.io/semestr/reference/is_mt_or_na.md)
+  : Extends is.na to report TRUE if the object has length zero.
+- [`schedule_strip_finals()`](https://jonathan-g.github.io/semestr/reference/schedule_strip_finals.md)
+  : Strip the final exams from a schedule
+- [`strip_key_prefix()`](https://jonathan-g.github.io/semestr/reference/strip_key_prefix.md)
+  : Strip prefixes off keys.
+
