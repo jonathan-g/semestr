@@ -36,11 +36,11 @@ The name of the month or day of the week.
 format_month(as.Date("2001-02-25"), FALSE)
 #> [1] "February"
 format_month(Sys.Date(), TRUE)
-#> [1] "Nov."
+#> [1] "Jan."
 
 format_wday(as.Date("2001-02-25"), FALSE)
 #> [1] Sunday
 #> 7 Levels: Sunday < Monday < Tuesday < Wednesday < Thursday < ... < Saturday
 format_wday(Sys.Date(), TRUE)
-#> [1] "Tue."
+#> [1] "Fri."
 ```

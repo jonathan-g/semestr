@@ -1,5 +1,17 @@
 # Changelog
 
+## semestr 0.4.1
+
+- Bugfix: Emitted YAML header for handout Rmd files was missing a
+  backtick in an r expression in the date field.
+- Bugfix:
+  [`load_semester_db()`](https://jonathan-g.github.io/semestr/reference/load_semester_db.md)
+  did not initialize the variable `course_info`. This was a minor thing
+  because the variable is initialized in `read_raw_db()` using
+  [`assign()`](https://rdrr.io/r/base/assign.html), but it throws a
+  `R CMD check` error because the variable should be directly
+  initialized in the local function scope.
+
 ## semestr 0.4.0
 
 - Add support for GitHub classroom for homework and lab assignments.
