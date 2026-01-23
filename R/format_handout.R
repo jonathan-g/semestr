@@ -25,7 +25,7 @@ make_handout <- function(doc, semester, schedule) {
     subtitle = "`r params$par_subtitle`",
     author = doc$doc_author,
     pubdate = as.character(semester$semester_dates$pub_date),
-    date = "`r params$par_date",
+    date = "`r params$par_date`",
     bibliography = doc$bibliography,
     slug = slug,
     pdf_url = file.path(semester$file_paths['handout_pdf'],

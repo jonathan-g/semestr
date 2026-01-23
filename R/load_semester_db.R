@@ -727,6 +727,7 @@ load_semester_db <- function(db_file, root_crit = NULL, ignore_root = FALSE) {
   # about undeclared variables
   #
   db_config <- NULL
+  course_info <- NULL
   calendar <- NULL
   classes <- NULL
   due_dates <- NULL
