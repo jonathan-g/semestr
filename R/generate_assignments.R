@@ -155,33 +155,44 @@ schedule_widen <- function(schedule, final_exams, semester,
     final_is_take_home <- FALSE
   }
   topics <- semester$class_topics %>%
-    dplyr::select(key_class = "cal_key", "topic")
+    dplyr::select(key_class = "cal_key", "topic") %>%
+    dplyr::filter(!is.na(.data$key_class), !is.na(.data$topic))
   if (has_exams) {
     exam_topics <- semester$exams %>%
       dplyr::select(key_exam = "exam_key", topic_exam = "exam") %>%
+      dplyr::filter(!is.na(.data$key_exam),
+                    !is.na(.data$topic_exam)) %>%
       add_key_prefix(type = "exam", col = "key_exam")
   }
 
   class_nums <- semester$calendar %>%
-    dplyr::select(id_class = "cal_id", "class_num")
+    dplyr::select(id_class = "cal_id", "class_num") %>%
+    dplyr::filter(!is.na(.data$id_class), !is.na(.data$class_num))
 
   if (final_is_take_home) {
     if (getOption("semestr.verbose", default = 1) >= 1) {
       message("processing final_exams: (",
-              stringr::str_c(names(final_exams), collapse = ", "), "), with ",
-              nrow(final_exams), " rows.")
+              stringr::str_c(names(final_exams), collapse = ", "),
+              "), with ", nrow(final_exams), " rows.")
     }
     take_home_exam <- dplyr::top_n(final_exams, 1, wt = .data$date)
     take_home_exam$key <- add_key_prefix("TAKE_HOME_FINAL_EXAM", "exam")
-    take_home_exam_topics <- tibble::tibble(key_exam = take_home_exam$key,
-                                            topic_exam = "Take-home final exam due")
-    exam_topics <- dplyr::bind_rows(exam_topics, take_home_exam_topics)
+    take_home_exam_topics <- tibble::tibble(
+      key_exam = take_home_exam$key,
+      topic_exam = "Take-home final exam due"
+      )
+    exam_topics <- dplyr::bind_rows(exam_topics,
+                                    take_home_exam_topics) %>%
+      dplyr::distinct()
   }
 
   if (has_holidays) {
     holiday_topics <- semester$holidays %>%
       dplyr::select(topic_holiday = "holiday_name",
                     key_holiday = "holiday_key") %>%
+      dplyr::distinct() %>%
+      dplyr::filter(!is.na(.data$topic_holiday),
+                    !is.na(.data$key_holiday)) %>%
       add_key_prefix(type = "holiday", col = "key_holiday")
   }
 
@@ -210,6 +221,7 @@ schedule_widen <- function(schedule, final_exams, semester,
     schedule <- schedule %>%
       dplyr::bind_rows(final_entries)
   }
+
   schedule <- schedule %>%
     dplyr::mutate(page = NA_character_) %>%
     tidyr::pivot_wider(names_from = "cal_type",
@@ -226,6 +238,7 @@ schedule_widen <- function(schedule, final_exams, semester,
     schedule <- schedule %>%
       dplyr::left_join( exam_topics, by = "key_exam")
   }
+
   if (has_holidays) {
     if (! tibble::has_name(schedule, "key_holiday")) {
       schedule <- schedule %>% dplyr::mutate(key_holiday = NA_character_)
@@ -608,7 +621,15 @@ generate_assignments <- function(semester) {
 
   context <- list(type = "semester schedule")
 
+  hw <- dplyr::select(semester$hw_asgt, key_hw = "hw_grp_key",
+                      topic_hw = "hw_topic", hw_type = "med_hw_type")
+
   lesson_plan <- schedule %>%
+    dplyr::left_join(hw, by = "key_hw") %>%
+    dplyr::mutate(
+      topic = ifelse(is.na(.data$topic),
+                     stringr::str_c(.data$hw_type, ": ", .data$topic_hw),
+                     .data$topic)) %>%
     # dplyr::filter(! event_id %in% c("FINAL_EXAM", "ALT_FINAL_EXAM")) %>%
     dplyr::select(date, title = "topic", reading = "page_reading",
                   assignment = "page_hw", lecture = "page_lecture",
