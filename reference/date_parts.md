@@ -42,5 +42,5 @@ format_wday(as.Date("2001-02-25"), FALSE)
 #> [1] Sunday
 #> 7 Levels: Sunday < Monday < Tuesday < Wednesday < Thursday < ... < Saturday
 format_wday(Sys.Date(), TRUE)
-#> [1] "Fri."
+#> [1] "Wed."
 ```

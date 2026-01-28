@@ -1,5 +1,11 @@
 # Changelog
 
+## semestr 0.4.2
+
+- Bugfix: Fixed
+  [`schedule_widen()`](https://jonathan-g.github.io/semestr/reference/schedule_widen.md)
+  to fix bug where `NA` items would match in joins.
+
 ## semestr 0.4.1
 
 - Bugfix: Emitted YAML header for handout Rmd files was missing a
